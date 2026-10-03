@@ -1,0 +1,49 @@
+{
+  "name": "quiznet",
+  "version": "1.0.0",
+  "description": "A quiet, offline home for your courses and multiple-choice quizzes.",
+  "main": "src/main.cjs",
+  "author": "iSariiSA",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/core.test.cjs",
+    "test:app": "playwright test",
+    "build": "electron-builder --win portable zip --x64",
+    "build:dir": "electron-builder --win --dir --x64"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.quiznet.desktop",
+    "productName": "Quiznet",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "assets/icon.png",
+      "package.json",
+      "LICENSE"
+    ],
+    "asar": true,
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        "portable",
+        "zip"
+      ],
+      "artifactName": "Quiznet-${version}-Windows.${ext}"
+    },
+    "portable": {
+      "requestExecutionLevel": "user"
+    }
+  },
+  "overrides": {
+    "@electron/get": "5.1.0"
+  }
+}

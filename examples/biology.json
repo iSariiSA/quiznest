@@ -1,0 +1,19 @@
+{
+  "course": "Biology",
+  "unit": "Unit 1: Cells",
+  "title": "Quiz 1",
+  "questions": [
+    {
+      "prompt": "Which organelle contains most of the cell's DNA?",
+      "options": ["Nucleus", "Ribosome", "Golgi apparatus", "Lysosome"],
+      "correctAnswer": 0,
+      "explanation": "Most DNA in a eukaryotic cell is stored in the nucleus."
+    },
+    {
+      "prompt": "Which structure is present in plant cells but not animal cells?",
+      "options": ["Cell membrane", "Mitochondrion", "Cell wall", "Ribosome"],
+      "correctAnswer": 2,
+      "explanation": "Plant cells have a cellulose cell wall."
+    }
+  ]
+}
