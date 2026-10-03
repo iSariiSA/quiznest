@@ -1,18 +1,19 @@
 # Quiznet
 
-A quiet, offline home for your curiosity. A Windows desktop app for organizing **Courses → Units → Quizzes** and practicing multiple-choice questions.
+A local Windows app for organizing **Courses → Units → Quizzes** and practicing multiple-choice questions. The interface uses a dark theme, compact lists, and menus for secondary actions.
 
 ![Quiznet library](assets/screenshots/library.png)
 
 ## Use it
 
-Download `Quiznet-1.0.0-Windows.exe` and double-click it. No installation, account, browser, server, Node.js, or internet connection is required to use the packaged app. The build supports Windows 10/11 on x64 computers. This personal-use build is unsigned.
+Download `Quiznet-1.1.0-Windows.exe` and double-click it. No installation, account, browser, server, Node.js, or internet connection is required to use the packaged app. The build supports Windows 10/11 on x64 computers. This personal-use build is unsigned. Version 1.1 uses the same local library as version 1.0; no migration is needed.
 
 Start with the included Biology, Chemistry, and Mathematics sample courses, or create your own. You can edit or delete the samples.
 
 - Create, rename, and delete courses and units.
 - Create and edit quizzes, including explanations and 2–8 answer options.
-- Import JSON and CSV, preview the contents, and choose a destination course/unit.
+- Use the top-right **…** menu to import JSON/CSV, open Settings, or view Help.
+- Preview imports and choose a destination course/unit.
 - Take quizzes with optional question shuffling, question navigation, and keyboard shortcuts.
 - Leave a quiz and resume it later, including after closing the app.
 - See your score, correct answers, explanations, and practice history.
@@ -20,13 +21,13 @@ Start with the included Biology, Chemistry, and Mathematics sample courses, or c
 
 ## Local storage
 
-Your library lives in `%APPDATA%\Quiznet\data\library.json`. **Settings & backups → Open data folder** shows its exact location.
+Your library lives in `%APPDATA%\Quiznet\data\library.json`. **… → Settings → Open folder** shows its exact location.
 
 Changes are serialized and saved using a flushed temporary file and atomic replacement. `library.json.bak` holds the previous successful state. If the main file is damaged, Quiznet recovers the previous state when possible and keeps the damaged file. If neither file is valid, Quiznet preserves both and reports the problem instead of silently resetting your library.
 
 Restoring a backup also saves `before-restore-<timestamp>.json` in the data folder. These files may contain your study material; copy or manage them as you would any personal document.
 
-The executable can be moved without losing your library on the same computer. To move to another computer, use **Save a backup** and **Restore a backup**.
+The executable can be moved without losing your library on the same computer. To move to another computer, use **Save backup** and **Restore** in Settings.
 
 ## Import questions
 
@@ -88,7 +89,7 @@ npm run build
 
 Windows builds appear in `dist/`. The ZIP includes `Quiznet.exe` and its runtime files; extract the full folder before launching it. The single-file portable EXE extracts its runtime automatically.
 
-The UI is plain HTML, CSS, and JavaScript, with original local SVG illustrations and Windows system fonts. There are no runtime npm dependencies or remote assets. Electron uses a sandboxed renderer, context isolation, a narrow IPC bridge, restrictive CSP, denied permissions, blocked external navigation, and blocked HTTP/WebSocket requests. Quiz content is rendered as text.
+The UI is plain HTML, CSS, and JavaScript with Windows system fonts and local SVG icons. There are no runtime npm dependencies or remote assets. Electron uses a sandboxed renderer, context isolation, a narrow IPC bridge, restrictive CSP, denied permissions, blocked external navigation, and blocked HTTP/WebSocket requests. Quiz content is rendered as text.
 
 Tests exercise import validation, hierarchy operations, scoring, historical snapshots, concurrent saves, recovery, and a real Electron workflow covering creation, editor input, restart/resume, scoring, native-dialog import/backup/restore paths (file pickers are stubbed), and blocked renderer network requests.
 
