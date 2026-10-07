@@ -2,9 +2,13 @@
 
 A local Windows app for organizing **Courses → Units → Quizzes** and practicing multiple-choice questions. The interface uses a dark theme, compact lists, and menus for secondary actions.
 
+Quiznet runs offline and stores your material on your computer. The repository is currently private; its contributor and maintenance guides prepare it for future development and eventual public release.
+
 ![Quiznet library](assets/screenshots/library.png)
 
 ## Use it
+
+Download the `Quiznet-Windows` artifact from a successful [Windows app build](https://github.com/iSariiSA/quiznest/actions/workflows/build.yml), extract it, and find `Quiznet-Setup.exe`. GitHub sign-in and repository read access are required for artifact downloads. [Download instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts).
 
 Run `Quiznet-Setup.exe` once, then open **Quiznet** from your Desktop or Start menu. It installs for your Windows account without administrator access. No account, browser, server, Node.js, or internet connection is required to use the app. The build supports Windows 10/11 on x64 computers. This personal-use build is unsigned.
 
@@ -84,8 +88,10 @@ Node.js 22.12+ and npm are needed for development only. Dependency installation 
 ```sh
 npm ci
 npm start
+npm run check
 npm test
 npm run test:app
+npm audit --audit-level=high
 npm run build
 ```
 
@@ -94,5 +100,14 @@ The offline Windows installer appears as `dist/Quiznet-Setup.exe`. Keep the app 
 The UI is plain HTML, CSS, and JavaScript with Windows system fonts and local SVG icons. There are no runtime npm dependencies or remote assets. Electron uses a sandboxed renderer, context isolation, a narrow IPC bridge, restrictive CSP, denied permissions, blocked external navigation, and blocked HTTP/WebSocket requests. Quiz content is rendered as text.
 
 Tests exercise import validation, hierarchy operations, scoring, historical snapshots, concurrent saves, recovery, and a real Electron workflow covering creation, editor input, restart/resume, repeat launches, scoring, native-dialog import/backup/restore paths (file pickers are stubbed), and blocked renderer network requests. Before delivering a release, verify reinstalling keeps the install location, one shortcut, and the existing library unchanged.
+
+For development, use a disposable library as described in [CONTRIBUTING.md](CONTRIBUTING.md). The Windows workflow also scans commit history for secrets and audits development dependencies before building the installer.
+
+## Contribute and maintain
+
+- [Contributing](CONTRIBUTING.md): setup, isolated study data, checks, and pull requests.
+- [Maintenance](docs/MAINTENANCE.md): architecture, data compatibility, updates, releases, and publication checks.
+- [Roadmap](docs/ROADMAP.md): suggested priorities for reliability and study workflows.
+- [Changelog](CHANGELOG.md): application changes and development improvements.
 
 MIT licensed.

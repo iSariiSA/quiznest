@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a reproducible Quiznet problem.
+title: '[Bug] '
+body:
+  - type: markdown
+    attributes:
+      value: Use synthetic questions and remove personal information from attachments. For a security concern, request a private reporting channel without posting sensitive details.
+  - type: input
+    id: versions
+    attributes:
+      label: Quiznet and Windows versions
+      description: Find the Quiznet version in Settings.
+      placeholder: Quiznet 1.2.0, Windows 11 x64
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest demo input needed to reproduce the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include any error message and a screenshot using demo material if helpful.
+    validations:
+      required: true

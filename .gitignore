@@ -4,3 +4,17 @@ test-results/
 playwright-report/
 .test-data/
 *.log
+
+# Workspace artifacts, private study material, and local credentials
+/work/
+/outputs/
+private/
+data/
+.env
+.env.*
+!.env.example
+library.json*
+Quiznet-backup-*.json
+before-restore-*.json
+library-damaged-*.json
+*.bundle

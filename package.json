@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
+    "check": "node scripts/check-syntax.cjs",
     "test": "node --test tests/core.test.cjs",
     "test:app": "playwright test",
     "build": "electron-builder --win nsis --x64 --publish never",

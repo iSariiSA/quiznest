@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest a focused improvement to studying or managing quizzes.
+title: '[Feature] '
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: What task would this improve?
+      description: Explain the problem from the perspective of someone using Quiznet.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested interaction
+      description: Describe the smallest useful change, keeping the app local and the interface simple.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: How would we know it works?
+      description: Include a short example using synthetic material.
