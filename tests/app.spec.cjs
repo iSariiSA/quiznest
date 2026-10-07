@@ -2,6 +2,7 @@ const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const os=require('node:os');
+const {spawn}=require('node:child_process');
 let app,page,directory;
 const outputs=process.env.QUIZNET_SCREENSHOTS || path.resolve(__dirname,'../test-results/screenshots');
 async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
@@ -21,6 +22,21 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   await expect(page.locator('.quiz-row [data-action="editQuiz"]')).toHaveCount(0);
   await page.locator('.quiz-row').first().locator('[data-action="start"]').click();
   await page.locator('[data-action="answer"][data-index="1"]').click();
+  await expect(page.locator('.answer-option.chosen')).toHaveCount(1);
+  // Opening the app again restores this window and preserves the current answer.
+  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].minimize());
+  await expect.poll(()=>app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isMinimized())).toBe(true);
+  const secondaryEnv={...process.env,QUIZNET_TEST_DATA:directory};delete secondaryEnv.ELECTRON_RUN_AS_NODE;
+  const executable=process.env.QUIZNET_ELECTRON_PATH||require('electron');
+  const secondary=spawn(executable,[path.resolve(__dirname,'..')],{env:secondaryEnv,windowsHide:true,stdio:'ignore'});
+  const secondaryExit=await new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>{secondary.kill();reject(new Error('Second launch did not exit.'));},15000);
+    secondary.once('error',error=>{clearTimeout(timer);reject(error);});
+    secondary.once('exit',code=>{clearTimeout(timer);resolve(code);});
+  });
+  expect(secondaryExit).toBe(0);
+  await expect.poll(()=>app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isMinimized())).toBe(false);
+  expect(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().length)).toBe(1);
   await expect(page.locator('.answer-option.chosen')).toHaveCount(1);
   await page.screenshot({path:path.join(outputs,'Quiznet-quiz.png')});
   await page.getByRole('button',{name:'Next',exact:true}).click();

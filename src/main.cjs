@@ -7,9 +7,18 @@ const core = require('./core.cjs');
 const { sampleLibrary } = require('./sample.cjs');
 app.setName('Quiznet');
 if (process.env.QUIZNET_TEST_DATA && !app.isPackaged) app.setPath('userData',path.resolve(process.env.QUIZNET_TEST_DATA));
+app.setAppUserModelId('com.quiznet.desktop');
+const primaryInstance=app.requestSingleInstanceLock();
+if (!primaryInstance) app.quit();
 app.commandLine.appendSwitch('disable-background-networking');
 const entry=pathToFileURL(path.join(__dirname,'ui/index.html')).href;
 let window, store;
+app.on('second-instance',()=>{
+  if(window && !window.isDestroyed()) {
+    if(window.isMinimized()) window.restore();
+    window.show(); window.focus();
+  }
+});
 const pending=new Map();
 const safeName=name=>name.replace(/[<>:"/\\|?*\x00-\x1F]/g,'_').slice(0,100);
 const meta=()=>({dataPath:store.file,notice:store.notice,version:app.getVersion()});
@@ -34,7 +43,7 @@ async function saveFile(defaultPath,content) {
   await fs.writeFile(result.filePath,content,'utf8'); return true;
 }
 function addPending(value) { pending.clear(); const token=core.id(); pending.set(token,value); return token; }
-app.whenReady().then(async()=>{
+if(primaryInstance) app.whenReady().then(async()=>{
   Menu.setApplicationMenu(null);
   store=new Store(path.join(app.getPath('userData'),'data'));
   try { await store.load(sampleLibrary); }

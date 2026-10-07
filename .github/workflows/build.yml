@@ -24,6 +24,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Quiznet-Windows
-          path: |
-            dist/*.exe
-            dist/*.zip
+          path: dist/Quiznet-Setup.exe

@@ -6,7 +6,9 @@ A local Windows app for organizing **Courses → Units → Quizzes** and practic
 
 ## Use it
 
-Download `Quiznet-1.1.0-Windows.exe` and double-click it. No installation, account, browser, server, Node.js, or internet connection is required to use the packaged app. The build supports Windows 10/11 on x64 computers. This personal-use build is unsigned. Version 1.1 uses the same local library as version 1.0; no migration is needed.
+Run `Quiznet-Setup.exe` once, then open **Quiznet** from your Desktop or Start menu. It installs for your Windows account without administrator access. No account, browser, server, Node.js, or internet connection is required to use the app. The build supports Windows 10/11 on x64 computers. This personal-use build is unsigned.
+
+For updates, run the new `Quiznet-Setup.exe`. It replaces the existing installation and keeps the same shortcut, courses, questions, history, and saved quiz progress. Versions 1.0 and 1.1 already use the same data folder; no migration is needed. Opening Quiznet again focuses the existing window.
 
 Start with the included Biology, Chemistry, and Mathematics sample courses, or create your own. You can edit or delete the samples.
 
@@ -27,7 +29,7 @@ Changes are serialized and saved using a flushed temporary file and atomic repla
 
 Restoring a backup also saves `before-restore-<timestamp>.json` in the data folder. These files may contain your study material; copy or manage them as you would any personal document.
 
-The executable can be moved without losing your library on the same computer. To move to another computer, use **Save backup** and **Restore** in Settings.
+To move to another computer, install Quiznet there and use **Save backup** and **Restore** in Settings. Updating or uninstalling the app keeps the data folder.
 
 ## Import questions
 
@@ -87,10 +89,10 @@ npm run test:app
 npm run build
 ```
 
-Windows builds appear in `dist/`. The ZIP includes `Quiznet.exe` and its runtime files; extract the full folder before launching it. The single-file portable EXE extracts its runtime automatically.
+The offline Windows installer appears as `dist/Quiznet-Setup.exe`. Keep the app ID, product name, install identity, and data folder stable so future releases update the same application. Internal version numbers change; the installer and shortcut names stay the same. See [AGENTS.md](AGENTS.md) for maintenance instructions.
 
 The UI is plain HTML, CSS, and JavaScript with Windows system fonts and local SVG icons. There are no runtime npm dependencies or remote assets. Electron uses a sandboxed renderer, context isolation, a narrow IPC bridge, restrictive CSP, denied permissions, blocked external navigation, and blocked HTTP/WebSocket requests. Quiz content is rendered as text.
 
-Tests exercise import validation, hierarchy operations, scoring, historical snapshots, concurrent saves, recovery, and a real Electron workflow covering creation, editor input, restart/resume, scoring, native-dialog import/backup/restore paths (file pickers are stubbed), and blocked renderer network requests.
+Tests exercise import validation, hierarchy operations, scoring, historical snapshots, concurrent saves, recovery, and a real Electron workflow covering creation, editor input, restart/resume, repeat launches, scoring, native-dialog import/backup/restore paths (file pickers are stubbed), and blocked renderer network requests. Before delivering a release, verify reinstalling keeps the install location, one shortcut, and the existing library unchanged.
 
 MIT licensed.
