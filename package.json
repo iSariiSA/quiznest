@@ -9,8 +9,8 @@
     "start": "electron .",
     "test": "node --test tests/core.test.cjs",
     "test:app": "playwright test",
-    "build": "electron-builder --win nsis --x64",
-    "build:dir": "electron-builder --win --dir --x64"
+    "build": "electron-builder --win nsis --x64 --publish never",
+    "build:dir": "electron-builder --win --dir --x64 --publish never"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
