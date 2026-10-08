@@ -38,7 +38,7 @@ The development app uses that directory. The packaged app always uses the normal
 - Keep `com.quiznet.desktop`, product name `Quiznet`, and `%APPDATA%\Quiznet\data` stable.
 - Ship `Quiznet-Setup.exe` and update the same installation and shortcut.
 - Keep the dark interface compact. Put secondary actions in menus and use clear labels with accessible names.
-- Treat imported questions as untrusted text. Preserve the sandbox, IPC validation, blocked navigation, denied permissions, and network restrictions.
+- Treat imported questions and HTML as untrusted content. Keep the HTML element/attribute allowlist, raster-only embedded images, sandbox, IPC validation, blocked navigation, denied permissions, and network restrictions. Never insert raw question HTML directly into the live document.
 - Use synthetic questions and temporary data in tests. Keep personal libraries, backups, credentials, and original-history bundles out of Git.
 
 ## Check your change

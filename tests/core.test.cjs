@@ -7,6 +7,46 @@ const core=require('../src/core.cjs');
 const {Store}=require('../src/store.cjs');
 const {sampleLibrary}=require('../src/sample.cjs');
 const q={prompt:'A question?',options:['One','Two'],correctAnswer:0,explanation:'Because.'};
+const media=require('../examples/images-html.json').questions[0];
+const policy=require('../src/ui/content-policy.js');
+test('rich questions survive JSON, CSV, backup, saved attempts, and storage restart',async()=>{
+  const imported=core.parseImport(JSON.stringify({title:'Media',questions:[media,q]}));
+  assert.equal(imported[0].questions[0].format,'html');
+  assert.equal(imported[0].questions[0].image,media.image);
+  assert.equal(imported[0].questions[1].format,undefined);
+  const csv='question,option_a,option_b,answer,format,image,image_alt\n<p>Pick</p>,<b>One</b>,Two,A,html,"'+media.image+'",Cell diagram';
+  const csvQuestion=core.parseImport(csv,'csv')[0].questions[0];
+  assert.equal(csvQuestion.image,media.image);assert.equal(csvQuestion.imageAlt,'Cell diagram');
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-rich-'));
+  try {
+    const store=new Store(directory);await store.load();
+    await store.change(data=>core.importPacks(data,imported));
+    const quiz=store.data.courses[0].units[0].quizzes[0];
+    await store.change(data=>core.mutate(data,{type:'start',quizId:quiz.id}));
+    for (const question of quiz.questions) await store.change(data=>core.mutate(data,{type:'answer',questionId:question.id,answer:0}));
+    await store.change(data=>core.mutate(data,{type:'finish'}));
+    assert.deepEqual(core.validateLibrary(store.data),store.data);
+    const edited=structuredClone(quiz.questions);delete edited[0].image;delete edited[0].imageAlt;
+    const course=store.data.courses[0],unit=course.units[0];
+    await store.change(data=>core.mutate(data,{type:'saveQuiz',courseId:course.id,unitId:unit.id,quizId:quiz.id,title:quiz.title,questions:edited}));
+    assert.equal(store.data.attempts[0].questions[0].image,media.image);
+    const restarted=new Store(directory);await restarted.load();
+    assert.equal(restarted.data.courses[0].units[0].quizzes[0].questions[0].image,undefined);
+    assert.equal(restarted.data.attempts[0].questions[0].image,media.image);
+    assert.equal(restarted.data.attempts[0].questions[0].format,'html');
+  } finally { await fs.rm(directory,{recursive:true,force:true}); }
+});
+test('rejects unsupported formats, nonlocal images, MIME spoofing, and oversized media',()=>{
+  for (const image of Object.values(require('./fixtures/image-types.json'))) assert.equal(core.question({...q,image}).image,image);
+  assert.throws(()=>core.question({...q,format:'markdown'}),/text or html/);
+  for(const image of ['https://example.com/picture.png','file:///C:/private.png','data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=']) assert.throws(()=>core.question({...q,image}),/embedded/);
+  assert.throws(()=>core.question({...q,image:media.image.replace('image/png','image/jpeg')}),/file type/);
+  assert.throws(()=>core.question({...q,image:media.image,imageAlt:'x'.repeat(501)}),/description/);
+  const tooLarge=Buffer.alloc(policy.MAX_IMAGE_BYTES+1);Buffer.from(media.image.split(',')[1],'base64').copy(tooLarge);
+  assert.throws(()=>policy.imageData('data:image/png;base64,'+tooLarge.toString('base64')),/2 MB/);
+  assert.throws(()=>core.question({...q,format:'html',prompt:'x'.repeat(policy.MAX_HTML_LENGTH+1)}),/characters/);
+  assert.equal(core.question(q).prompt,q.prompt);
+});
 test('imports canonical JSON, aliases, letters, option text and multiple packs',()=>{
   const packs=core.parseImport(JSON.stringify({quizzes:[{course:'Biology',unit:'Cells',title:'Test',questions:[q,{question:'Pick two',choices:['First','Second'],answer:'B'},{prompt:'Which?',options:['A','B'],answer:'B'}]}]}));
   assert.deepEqual(packs[0].questions.map(q=>q.correctAnswer),[0,1,1]);

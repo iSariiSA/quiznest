@@ -5,6 +5,7 @@ const { pathToFileURL } = require('node:url');
 const { Store } = require('./store.cjs');
 const core = require('./core.cjs');
 const { sampleLibrary } = require('./sample.cjs');
+const contentPolicy = require('./ui/content-policy.js');
 app.setName('Quiznet');
 if (process.env.QUIZNET_TEST_DATA && !app.isPackaged) app.setPath('userData',path.resolve(process.env.QUIZNET_TEST_DATA));
 app.setAppUserModelId('com.quiznet.desktop');
@@ -30,11 +31,11 @@ function handle(name,fn) {
     } catch(e) { return {ok:false,error:e.message || 'Something went wrong.'}; }
   });
 }
-async function readSelected(filters) {
+async function readSelected(filters, maxBytes=20*1024*1024) {
   const result=await dialog.showOpenDialog(window,{title:'Open a local file',properties:['openFile'],filters});
   if(result.canceled) return null;
   const file=result.filePaths[0]; const stat=await fs.stat(file);
-  if(stat.size>20*1024*1024) throw new Error('Files must be smaller than 20 MB.');
+  if(stat.size>maxBytes) throw new Error('Files must be smaller than 20 MB.');
   return {file,source:await fs.readFile(file,'utf8')};
 }
 async function saveFile(defaultPath,content) {
@@ -57,6 +58,15 @@ if(primaryInstance) app.whenReady().then(async()=>{
   window.webContents.on('will-attach-webview',event=>event.preventDefault());
   handle('get',async()=>{await store.queue;return {library:structuredClone(store.data),meta:meta()};});
   handle('change',action=>store.change(data=>core.mutate(data,action)));
+  handle('selectImage',async()=>{
+    const result=await dialog.showOpenDialog(window,{title:'Add an image',properties:['openFile'],filters:[{name:'Images',extensions:['png','jpg','jpeg','gif','webp']}]});
+    if (result.canceled) return null;
+    const file=result.filePaths[0],stat=await fs.stat(file);
+    if (!stat.isFile() || stat.size>contentPolicy.MAX_IMAGE_BYTES) throw new Error('Choose an image file up to 2 MB.');
+    const bytes=await fs.readFile(file),type=contentPolicy.imageType(bytes);
+    if (!type) throw new Error('Choose a PNG, JPEG, GIF, or WebP image.');
+    return {image:contentPolicy.imageData(`data:image/${type};base64,${bytes.toString('base64')}`)};
+  });
   handle('importPreview',async()=>{
     const selected=await readSelected([{name:'Quiz questions',extensions:['json','csv']}]); if(!selected)return null;
     const packs=core.parseImport(selected.source,path.extname(selected.file).slice(1),path.basename(selected.file,path.extname(selected.file)));
@@ -74,7 +84,8 @@ if(primaryInstance) app.whenReady().then(async()=>{
   });
   handle('backup',async()=>{await store.queue;return saveFile(`Quiznet-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(store.data,null,2));});
   handle('restorePreview',async()=>{
-    const selected=await readSelected([{name:'Quiznet backup',extensions:['json']}]); if(!selected)return null;
+    // Embedded images and historical attempts can make backups larger than quiz imports.
+    const selected=await readSelected([{name:'Quiznet backup',extensions:['json']}],Infinity); if(!selected)return null;
     let raw;try{raw=JSON.parse(selected.source);}catch{throw new Error('This file is not valid JSON.');}
     const library=core.validateLibrary(raw), token=addPending({type:'restore',library});
     return {token,filename:path.basename(selected.file),courses:library.courses.length,quizzes:library.courses.flatMap(c=>c.units.flatMap(u=>u.quizzes)).length};

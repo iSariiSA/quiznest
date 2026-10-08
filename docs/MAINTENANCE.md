@@ -10,11 +10,17 @@ The owner controls releases and repository visibility. Keep the current reposito
 | `src/store.cjs` | Serialized transactions, atomic saves, rolling backup, and recovery |
 | `src/main.cjs` | Windows application, single-instance lock, file dialogs, and validated IPC |
 | `src/preload.cjs` | Narrow renderer API |
-| `src/ui/renderer.js` | Navigation, quiz runner, editor, and escaped question text |
+| `src/ui/renderer.js` | Navigation, quiz runner, editor, and formatted question presentation |
+| `src/ui/content.js` | Inert HTML parsing and reconstruction using safe formatting tags |
+| `src/ui/content-policy.js` | Shared raster image validation and size limits |
 | `src/ui/dark.css` | Compact dark interface |
 | `src/sample.cjs` | Disposable demo material for a new library |
 
 The installer version in `package.json` is separate from the stored library's `version`. The current library schema is version 1. Bumping an app version does not require changing that schema.
+
+Version 1.3 adds optional question fields: `format: "html"`, an embedded raster data URL in `image`, and `imageAlt`. Omitted fields retain the original plain-text behavior. Quiz exports and historical snapshots carry these fields. No migration or installation-time rewrite is required. Version 1.2 and earlier discard these extensions on validation, so do not recommend downgrading an image/HTML library; preserve a backup before any rollback.
+
+Images are stored inside library JSON, not as absolute paths or online resources. Each image is limited to 2 MB, and editor quizzes to 19 MB. Quiz imports retain their 20 MB limit. Full library backups can be larger and are restored through Settings without applying the quiz-import limit. Keep regression coverage for large media backups, historical snapshots, and file independence.
 
 Study data is stored in `%APPDATA%\Quiznet\data`, outside the installation. Updates and uninstalls preserve that folder. The main file is `library.json`; `library.json.bak` is the previous successful state. Restores preserve a separate pre-restore copy. Recovered damaged files are retained for the owner.
 

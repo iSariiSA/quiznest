@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 1.3.0
+
+- Attach local PNG, JPEG, GIF, and WebP images to questions, with optional descriptions.
+- Support HTML formatting in prompts, options, and explanations, with an editor preview.
+- Embed images in exports, backups, saved progress, and historical quiz reviews.
+- Rebuild imported HTML from a formatting allowlist, keeping scripts and online resources blocked.
+- Preserve existing plain-text questions and allow full media backups beyond the quiz-import limit.
 
 - Add contributor, maintenance, release, and roadmap guidance.
 - Add issue and pull-request templates using synthetic study data.

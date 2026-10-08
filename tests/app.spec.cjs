@@ -104,7 +104,7 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();
   await expect(page.locator('.course-row')).toHaveCount(4);
   expect((await fs.readdir(path.join(directory,'data'))).some(f=>f.startsWith('before-restore-'))).toBeTruthy();
-  // No renderer network connectivity; imported markup stays plain text.
+  // No renderer network connectivity; HTML is opt-in and restricted separately.
   const blocked=await page.evaluate(async()=>{try{await fetch('https://example.com');return false;}catch{return true;}});expect(blocked).toBe(true);
   expect(errors).toEqual([]);
   // Compact windows keep controls reachable, including direct question jumps.

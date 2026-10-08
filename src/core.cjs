@@ -1,4 +1,5 @@
 const { randomUUID } = require('node:crypto');
+const { MAX_HTML_LENGTH, imageData } = require('./ui/content-policy.js');
 const id = () => randomUUID();
 const COLORS = ['sage', 'peach', 'lavender', 'blue', 'sand'];
 function text(value, label, max = 200) {
@@ -9,11 +10,13 @@ function text(value, label, max = 200) {
 function question(raw, index = 0) {
   const label = `Question ${index + 1}`;
   if (!raw || typeof raw !== 'object') throw new Error(`${label} must be an object.`);
-  const prompt = text(raw.prompt ?? raw.question, `${label}: prompt`, 10000);
+  const format = raw.format ?? 'text';
+  if (!['text','html'].includes(format)) throw new Error(`${label}: format must be text or html.`);
+  const prompt = text(raw.prompt ?? raw.question, `${label}: prompt`, format==='html'?MAX_HTML_LENGTH:10000);
   const choices = raw.options ?? raw.choices;
   if (!Array.isArray(choices) || choices.length < 2 || choices.length > 8)
     throw new Error(`${label} needs 2–8 options.`);
-  const options = choices.map((v, i) => text(typeof v === 'object' && v ? v.text : v, `${label}: option ${i + 1}`, 5000));
+  const options = choices.map((v, i) => text(typeof v === 'object' && v ? v.text : v, `${label}: option ${i + 1}`, format==='html'?MAX_HTML_LENGTH:5000));
   if (new Set(options).size !== options.length) throw new Error(`${label} has duplicate options.`);
   let answer = raw.correctAnswer ?? raw.answer ?? raw.correctIndex;
   if (answer === undefined && choices.every(v => v && typeof v === 'object')) {
@@ -27,8 +30,15 @@ function question(raw, index = 0) {
   if (!Number.isInteger(answer) || answer < 0 || answer >= options.length)
     throw new Error(`${label}: answer must be a zero-based option index, a letter (A–H), or exact option text.`);
   const explanation = raw.explanation ?? '';
-  if (typeof explanation !== 'string' || explanation.length > 10000) throw new Error(`${label}: invalid explanation.`);
-  return { id: typeof raw.id === 'string' ? raw.id : id(), prompt, options, correctAnswer: answer, explanation };
+  if (typeof explanation !== 'string' || explanation.length > (format==='html'?MAX_HTML_LENGTH:10000)) throw new Error(`${label}: invalid explanation.`);
+  const result = { id: typeof raw.id === 'string' ? raw.id : id(), prompt, options, correctAnswer: answer, explanation };
+  if (format==='html') result.format='html';
+  if (raw.image) {
+    result.image=imageData(raw.image);
+    if (raw.imageAlt !== undefined && (typeof raw.imageAlt!=='string' || raw.imageAlt.length>500)) throw new Error(`${label}: image description must be 500 characters or fewer.`);
+    result.imageAlt=raw.imageAlt || '';
+  }
+  return result;
 }
 function parseCSV(source) {
   const rows = []; let row = [], cell = '', quoted = false, closed = false;
@@ -69,7 +79,7 @@ function parseImport(source, extension = 'json', filename = 'Imported quiz') {
       const last = cells.findLastIndex(v => v?.trim());
       const options = cells.slice(0,last+1);
       if(options.some(v => !v?.trim())) throw new Error('CSV options must be consecutive, starting with option_a.');
-      groups.get(key).questions.push({ prompt: r.question, options, answer: r.answer, explanation: r.explanation || '' });
+      groups.get(key).questions.push({ prompt: r.question, options, answer: r.answer, explanation: r.explanation || '', format:r.format?.trim()||'text', image:r.image||undefined, imageAlt:r.image_alt||'' });
     }
     packs = [...groups.values()];
   } else {
@@ -163,11 +173,14 @@ function mutate(data, action) {
       if (!unit) throw new Error('Unit not found.');
       if (!Array.isArray(action.questions) || !action.questions.length || action.questions.length > 10000) throw new Error('Add at least one question (up to 10,000).');
       const questions = action.questions.map((q,i)=>({...question(q,i),id:id()}));
+      const title=text(action.title,'Quiz title');
+      const portable={course:course.title,unit:unit.title,title,questions:questions.map(({id,...q})=>q)};
+      if (Buffer.byteLength(JSON.stringify(portable,null,2))>19*1024*1024) throw new Error('Keep a quiz below 19 MB so it can be exported and imported. Use smaller images or split it into quizzes.');
       if (action.quizId) {
         if (!found || found.unit.id !== unit.id) throw new Error('Quiz not found.');
         if (data.activeSession?.quizId === action.quizId) throw new Error('Finish or discard this quiz attempt before editing it.');
-        found.quiz.title = text(action.title,'Quiz title'); found.quiz.questions = questions;
-      } else unit.quizzes.push({id:id(),title:text(action.title,'Quiz title'),questions,createdAt:new Date().toISOString()});
+        found.quiz.title = title; found.quiz.questions = questions;
+      } else unit.quizzes.push({id:id(),title,questions,createdAt:new Date().toISOString()});
       break;
     }
     case 'rename': {

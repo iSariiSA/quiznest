@@ -18,6 +18,7 @@ Start with the included Biology, Chemistry, and Mathematics sample courses, or c
 
 - Create, rename, and delete courses and units.
 - Create and edit quizzes, including explanations and 2–8 answer options.
+- Add local images and use HTML formatting in questions, options, and explanations.
 - Use the top-right **…** menu to import JSON/CSV, open Settings, or view Help.
 - Preview imports and choose a destination course/unit.
 - Take quizzes with optional question shuffling, question navigation, and keyboard shortcuts.
@@ -61,6 +62,26 @@ Aliases: `question` for `prompt`, `choices` for `options`, and `answer` or `corr
 
 Missing course/unit names default to `Imported course` and `Unit 1`. The preview lets you override the destination. Matching course/unit names reuse the existing items; duplicate quiz titles receive a numeric suffix so existing quizzes are preserved.
 
+### Images and HTML
+
+In the quiz editor, choose **Add image** for a local PNG, JPEG, GIF, or WebP file (up to 2 MB). An optional image description helps accessibility. **Replace image** and the image's remove button update that attachment. Open **Preview** to check the question before saving.
+
+Turn on **HTML** for a question to format its prompt, options, and explanation. Supported formatting includes paragraphs, bold/italic text, lists, tables, code, and superscripts/subscripts. Images may also appear inside HTML using embedded raster data URLs. Scripts, styles, forms, embedded pages, event handlers, and external links or image sources are removed from the displayed content. Existing questions stay plain text unless HTML is explicitly enabled.
+
+For JSON imports, set `"format": "html"`. Attach an image with `"image": "data:image/png;base64,..."` and optional `"imageAlt": "Description"`. The image field must contain the complete base64 data URL, not a filename or an online URL. The editor creates that value for you; export a quiz to reuse it. See the complete [images and HTML example](examples/images-html.json).
+
+```json
+{
+  "format": "html",
+  "prompt": "<p>Which formula represents <strong>water</strong>?</p>",
+  "options": ["H<sub>2</sub>O", "CO<sub>2</sub>"],
+  "correctAnswer": 0,
+  "explanation": "Two hydrogen atoms and one oxygen atom."
+}
+```
+
+Images are embedded in the local library, exports, backups, and historical attempts. The original image file is no longer needed after saving. Keep images small for faster saves and smaller backups. Version 1.3 reads existing version-1 libraries without a migration; earlier apps do not preserve these new optional fields, so use 1.3 or newer for image/HTML libraries.
+
 ### CSV
 
 ```csv
@@ -70,7 +91,9 @@ Biology,Unit 1: Cells,Quiz 1,Where is most DNA stored?,Nucleus,Ribosome,A,Inside
 
 Use consecutive `option_a` through `option_h` columns for 2–8 answers. CSV answers are letters or exact option text. Course, unit, title, and explanation are optional columns. Quotes support commas, escaped double quotes, and multiline text. Rows are grouped by course/unit/title.
 
-Files are limited to 20 MB, 1,000 quizzes, and 10,000 questions per import. Validation is all-or-nothing. Examples are in [examples/](examples/). Full library backups are restored from Settings rather than imported as questions.
+Optional `format`, `image`, and `image_alt` columns support the same HTML mode and embedded images. Quote data URLs because they contain a comma, and escape double quotes in HTML as CSV requires.
+
+Quiz import files are limited to 20 MB, 1,000 quizzes, and 10,000 questions per import. The editor limits each quiz to 19 MB to keep exports importable. Validation is all-or-nothing. Examples are in [examples/](examples/). Full library backups are restored from Settings rather than imported as questions; the quiz-import file limit does not apply to backups.
 
 ## Keyboard shortcuts
 
@@ -97,9 +120,11 @@ npm run build
 
 The offline Windows installer appears as `dist/Quiznet-Setup.exe`. Keep the app ID, product name, install identity, and data folder stable so future releases update the same application. Internal version numbers change; the installer and shortcut names stay the same. See [AGENTS.md](AGENTS.md) for maintenance instructions.
 
-The UI is plain HTML, CSS, and JavaScript with Windows system fonts and local SVG icons. There are no runtime npm dependencies or remote assets. Electron uses a sandboxed renderer, context isolation, a narrow IPC bridge, restrictive CSP, denied permissions, blocked external navigation, and blocked HTTP/WebSocket requests. Quiz content is rendered as text.
+The UI is plain HTML, CSS, and JavaScript with Windows system fonts and local SVG icons. There are no runtime npm dependencies or remote assets. Electron uses a sandboxed renderer, context isolation, a narrow IPC bridge, restrictive CSP, denied permissions, blocked external navigation, and blocked HTTP/WebSocket requests. Plain-text questions are escaped. HTML questions are parsed in an inert template and rebuilt using an allowlist of formatting tags and embedded raster images; imported attributes cannot become app controls.
 
 Tests exercise import validation, hierarchy operations, scoring, historical snapshots, concurrent saves, recovery, and a real Electron workflow covering creation, editor input, restart/resume, repeat launches, scoring, native-dialog import/backup/restore paths (file pickers are stubbed), and blocked renderer network requests. Before delivering a release, verify reinstalling keeps the install location, one shortcut, and the existing library unchanged.
+
+Media regressions cover HTML and images through editing, portable exports/imports, restart/resume, results, backups, malformed markup, and blocked active content.
 
 For development, use a disposable library as described in [CONTRIBUTING.md](CONTRIBUTING.md). The Windows workflow also scans commit history for secrets and audits development dependencies before building the installer.
 
