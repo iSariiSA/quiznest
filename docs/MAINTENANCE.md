@@ -1,6 +1,6 @@
 # Maintaining Quiznet
 
-The owner controls releases and repository visibility. Keep the current repository private until explicitly instructed otherwise.
+The owner controls releases and repository visibility. Change visibility only with explicit owner authorization, and keep the repository name and URL unchanged unless a change is requested.
 
 Public releases are named Alpha, Beta, and Official Release. The current release is **Quiznet Alpha 7**, using internal installer build `1.10.0`. Keep public release names, the stage plan, and development milestones in the GitHub repository and release notes only; Settings shows the technical app version for diagnostics. Remain in Alpha until the owner explicitly approves Beta. Plugins and Explore are the two major Alpha goals; Beta is for wider testing, feedback, and fixes, followed by an owner-approved Official Release. See [RELEASES.md](RELEASES.md) for the stage policy and [ROADMAP.md](ROADMAP.md) for feature status.
 

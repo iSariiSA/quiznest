@@ -11,7 +11,7 @@ Stage: **Alpha**. Internal installer build: `1.10.0`.
 
 Validation: syntax, core and Electron workflows, dependency/secret checks, visual review, installer build, in-place reinstall, and unchanged library hashes.
 
-Known limitations: question wording imported from a file stays unchanged. Practice answers lock once feedback appears. Plugins and Explore discovery remain Alpha goals.
+Known limitations: question wording imported from a file stays unchanged. Practice answers lock once feedback appears. A very quick Next or Finish click while an answer is saving can be ignored; wait for the answer highlight and click again. Plugins and Explore discovery remain Alpha goals.
 
 ## Quiznet Alpha 6
 

@@ -14,7 +14,7 @@ Updates must preserve courses, questions, practice history, and unfinished attem
 
 For packaged releases, run the core and Electron workflow tests, build the installer, and verify a reinstall updates the existing install location and shortcut without changing the library file. Only test destructive library operations in isolated test data directories. Update the existing installation when delivering an authorized local update, rather than asking the user to manage multiple app copies.
 
-The repository is private. Keep its name, URL, and visibility unless the owner explicitly requests a change. Use a GitHub noreply email for maintainer commits and the public GitHub handle rather than a private author name. Never reintroduce the original private commit history from backups or old clones.
+The owner controls repository visibility. Keep its name, URL, and visibility unless the owner explicitly requests a change. Use a GitHub noreply email for maintainer commits and the public GitHub handle rather than a private author name. Never reintroduce the original private commit history from backups or old clones.
 
 Keep personal questions, libraries, exports, credentials, audit logs, and original-history backups out of Git. `work/` and `outputs/` are ignored workspace directories. Use synthetic examples and isolated temporary data in tests and screenshots.
 

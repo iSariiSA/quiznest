@@ -2,7 +2,7 @@
 
 A local Windows app for organizing **Courses → Units → Quizzes** and testing yourself with single-answer, multiple-answer, and true/false questions. The interface uses a dark theme, compact lists, and menus for secondary actions.
 
-Quiznet runs offline and stores your material on your computer. The repository is currently private; its contributor and maintenance guides prepare it for future development and eventual public release.
+Quiznet runs offline and stores your material on your computer. This repository contains the source code, development guides, and Windows build workflow.
 
 The current release is **Quiznet Alpha 7**. Releases progress through **Alpha → Beta → Official Release**, with stage changes only when the owner approves them. **Plugins** and **Explore** (discovering tests shared by others) are the two major Alpha goals; both are planned. Beta will focus on wider testing, feedback, and fixes before the first Official Release. See the [release plan](docs/RELEASES.md) and [roadmap](docs/ROADMAP.md).
 
@@ -12,13 +12,15 @@ The Focus identity uses a geometric Q, forest green, and sage on charcoal. See t
 
 ## Use it
 
-Download the `Quiznet-Windows` artifact from a successful [Windows app build](https://github.com/iSariiSA/quiznest/actions/workflows/build.yml), extract it, and find `Quiznet-Setup.exe`. GitHub sign-in and repository read access are required for artifact downloads. [Download instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts).
+[Download Quiznet Alpha 7 for Windows](https://github.com/iSariiSA/quiznest/releases/download/v1.10.0/Quiznet-Setup.exe), or open [Releases](https://github.com/iSariiSA/quiznest/releases) and choose `Quiznet-Setup.exe` under **Assets**. Use the installer rather than the automatically generated source-code archives. Alpha builds are previews for testing and feedback.
 
 Run `Quiznet-Setup.exe` once, then open **Quiznet** from your Desktop or Start menu. It installs for your Windows account without administrator access. No account, browser, server, Node.js, or internet connection is required to use the app. The build supports Windows 10/11 on x64 computers. This personal-use build is unsigned.
 
 For updates, run the new `Quiznet-Setup.exe`. It replaces the existing installation and keeps the same shortcut, courses, questions, history, and saved quiz progress. Versions 1.0 and 1.1 already use the same data folder; no migration is needed. Opening Quiznet again focuses the existing window.
 
 Start with the included Biology, Chemistry, and Mathematics sample courses, or create your own. You can edit or delete the samples.
+
+Known Alpha limitation: a very quick **Next** or **Finish** click while an answer is still saving can be ignored. If this happens, wait for the answer highlight and click again; the saved answer is retained.
 
 - Create, rename, and delete courses and units.
 - Create and edit mixed quizzes: single answer, multiple answers, and true/false, with optional explanations.
