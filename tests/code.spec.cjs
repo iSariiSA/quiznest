@@ -1,0 +1,82 @@
+const {test,expect,_electron:electron}=require('@playwright/test');
+const fs=require('node:fs/promises');
+const path=require('node:path');
+const os=require('node:os');
+let app,page,directory;
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-code-ui-'));await launch();});
+test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true,force:true});});
+const python='\n# Print each value\nvalues = [1, 2, 3]\nfor value in values:\n    print(value)\n';
+const markdown='**What is the output?**\n\n```javascript\nconst values = [1, 2, 3];\nconsole.log(values.length);\n```\n\n`length` counts the items.';
+
+test('author code and Markdown, preview, export, restart, review and restore offline',async()=>{
+  const errors=[];const track=()=>page.on('pageerror',error=>errors.push(error.message));track();
+  await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();
+  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();
+  await page.getByLabel('Quiz title').fill('Code questions');
+  let section=page.locator('.editor-question').first();
+  await section.getByLabel('Question format',{exact:true}).selectOption('html');
+  await section.locator('[data-editor="prompt"]').fill('<p><strong>What values are printed?</strong></p>');
+  await section.getByRole('button',{name:'Add code',exact:true}).click();
+  await expect(section.getByLabel('Code language',{exact:true})).toHaveValue('python');
+  await section.locator('[data-editor="code"]').fill(python);
+  await section.locator('[data-editor="option"][data-option="0"]').fill('1, 2, 3');await section.locator('[data-editor="option"][data-option="1"]').fill('6');
+  await section.locator('[data-editor="explanation"]').fill('The loop prints one value at a time.');
+  await section.getByLabel('Code language',{exact:true}).selectOption('javascript');await section.getByLabel('Code language',{exact:true}).selectOption('python');
+  await section.locator('.editor-preview summary').click();
+  await expect(section.locator('.preview-content .code-block code')).toHaveText(python,{useInnerText:false});
+  await expect(section.locator('.preview-content .hljs-keyword')).not.toHaveCount(0);
+  await page.getByRole('button',{name:'Add question',exact:true}).click();
+  await expect(page.locator('[data-editor="code"]').first()).toHaveValue(python);
+  section=page.locator('.editor-question').nth(1);
+  await section.getByLabel('Question format',{exact:true}).selectOption('markdown');
+  await section.locator('[data-editor="prompt"]').fill(markdown);
+  await section.locator('[data-editor="option"][data-option="0"]').fill('`3`');await section.locator('[data-editor="option"][data-option="1"]').fill('`6`');
+  await section.locator('[data-editor="explanation"]').fill('There are **three** items.\n\n```python\nprint(len([1, 2, 3]))\n```');
+  await section.locator('.editor-preview summary').click();await expect(section.locator('.preview-content strong')).toHaveText(['What is the output?','three']);
+  const outputs=process.env.QUIZNET_SCREENSHOTS||path.resolve(__dirname,'../test-results/screenshots');await fs.mkdir(outputs,{recursive:true});
+  await section.locator('.editor-preview').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(outputs,'Quiznet-markdown-editor.png')});
+  await page.getByRole('button',{name:'Save quiz',exact:true}).click();
+  const exported=path.join(directory,'code.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},exported);
+  await page.getByRole('button',{name:'Options for Code questions'}).click();await page.getByRole('menuitem',{name:'Export…',exact:true}).click();await expect(page.locator('#toast')).toContainText('Exported');
+  const pack=JSON.parse(await fs.readFile(exported,'utf8'));expect(pack.questions[0].code).toBe(python);expect(pack.questions[1].format).toBe('markdown');
+  // Reimport a portable file using the real parser and native-dialog path.
+  await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},exported);
+  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Import…',exact:true}).click();await page.getByRole('button',{name:'Import',exact:true}).click();
+  await page.getByRole('button',{name:'Start Code questions (2)',exact:true}).click();
+  await expect(page.locator('.question-prompt strong')).toHaveText('What values are printed?');
+  expect(await page.locator('.question-prompt .code-block code').textContent()).toBe(python);
+  await page.screenshot({path:path.join(outputs,'Quiznet-python-question.png')});
+  await page.locator('[data-action="answer"][data-index="0"]').click();await app.close();await launch();track();
+  await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(page.locator('.answer-option.chosen')).toHaveCount(1);
+  expect(await page.locator('.question-prompt .code-block code').textContent()).toBe(python);
+  await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.locator('.question-prompt .code-language')).toHaveText('JavaScript');
+  await expect(page.locator('.answer-option code')).toHaveText(['3','6']);
+  await page.locator('[data-action="answer"][data-index="0"]').click();await page.getByRole('button',{name:'Finish',exact:true}).click();
+  await expect(page.locator('.score-value')).toHaveText('100%');await expect(page.locator('.review-list .code-block')).toHaveCount(3);
+  await expect(page.locator('.explanation .hljs-built_in')).not.toHaveCount(0);
+  const backup=path.join(directory,'backup.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
+  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
+  await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},backup);
+  await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();
+  await page.getByRole('button',{name:'History',exact:true}).click();await page.locator('.history-row').first().click();await expect(page.locator('.review-list .code-block')).toHaveCount(3);
+  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setBounds({width:760,height:560}));
+  expect(await page.evaluate(()=>document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('code is inert, Markdown cannot activate HTML or URLs, and all advertised languages render',async()=>{
+  const result=await page.evaluate(()=>{
+    window.__codeExecuted=false;
+    const raw='</code><script>window.__codeExecuted=true</script><img src=x onerror="window.__codeExecuted=true">';
+    const markdown='[bad](javascript:window.__codeExecuted=true)\n\n![online](https://example.com/tracker.png)\n\n<img src=x onerror="window.__codeExecuted=true">\n\n```python\n'+raw+'\n```';
+    const box=document.createElement('div');box.id='code-safety-test';box.innerHTML=window.QuiznetContent.code({code:raw,codeLanguage:'javascript'})+window.QuiznetContent.render(markdown,'markdown')+window.QuiznetContent.render('<pre><code class="language-python" data-action="delete">print(42)</code></pre>','html');document.body.append(box);
+    return {raw,first:box.querySelector('code').textContent,unknown:window.QuiznetContent.code({code:'future <syntax>',codeLanguage:'unknown-language'}),long:window.QuiznetContent.code({code:'x'.repeat(13000),codeLanguage:'python'}),languages:window.QuiznetCodePolicy.languages.map(language=>({id:language.id,loaded:language.id==='plaintext'||!!window.hljs.getLanguage(language.id)}))};
+  });
+  expect(result.first).toBe(result.raw);expect(result.languages.every(item=>item.loaded)).toBe(true);
+  expect(result.unknown).toContain('future &lt;syntax&gt;');expect(result.long).not.toContain('<span');
+  await expect(page.locator('#code-safety-test script, #code-safety-test img, #code-safety-test a, #code-safety-test [onerror], #code-safety-test [data-action]')).toHaveCount(0);
+  expect(await page.evaluate(()=>window.__codeExecuted)).toBe(false);
+  await page.locator('#code-safety-test').evaluate(node=>node.remove());
+  const blocked=await page.evaluate(async()=>{try{await fetch('https://example.com');return false;}catch{return true;}});expect(blocked).toBe(true);
+});

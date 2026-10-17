@@ -1,6 +1,6 @@
 # Quiznet releases
 
-Quiznet is currently **Alpha**. The first release under this naming scheme is **Quiznet Alpha 1**. Remain in Alpha until the owner explicitly approves changing the stage.
+Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 2**; the first release under this naming scheme was Alpha 1. Remain in Alpha until the owner explicitly approves changing the stage.
 
 ## Names and stages
 
@@ -17,7 +17,7 @@ There is no automatic stage promotion, scheduled launch date, or change of stage
 - **Plugins — planned:** let Quiznet grow through optional capabilities for studying. Agree on the first useful extension and its interface before selecting the implementation.
 - **Explore — planned:** let people discover tests shared by others and add chosen tests to their own library. Agree on discovery, sharing, and distribution before selecting hosting or account requirements.
 
-These are development goals, not features available in Alpha 1. See [ROADMAP.md](ROADMAP.md) for intended outcomes and readiness checks. Core studying and saved material must continue to work offline. Sharing must be explicit; do not automatically publish or upload private libraries.
+These are development goals, not features available in Alpha 2. See [ROADMAP.md](ROADMAP.md) for intended outcomes and readiness checks. Core studying and saved material must continue to work offline. Sharing must be explicit; do not automatically publish or upload private libraries.
 
 ## Release metadata
 
@@ -26,7 +26,7 @@ These are development goals, not features available in Alpha 1. See [ROADMAP.md]
 ```json
 "quiznetRelease": {
   "stage": "alpha",
-  "number": 1
+  "number": 2
 }
 ```
 
@@ -34,7 +34,7 @@ These are development goals, not features available in Alpha 1. See [ROADMAP.md]
 
 For the next Alpha release, increment `quiznetRelease.number` while keeping `stage` equal to `alpha`. Only after explicit owner approval, set `stage` to `beta` or `official` and start that stage at number 1. The internal `version` must continue increasing for Windows installer ordering and diagnostics. Never set the technical version to the word Alpha or lower its numeric value just to match a public name.
 
-Alpha 1 currently uses internal installer build `1.4.3`, correcting the earlier `1.4.2` build to keep release planning out of Settings. Earlier numeric build records are retained for compatibility and traceability; they were not published GitHub releases. Do not rewrite Git history, old technical references, or the library schema to rename releases.
+Alpha 2 uses internal installer build `1.5.0`. Alpha 1 used `1.4.3`, correcting the earlier `1.4.2` build to keep release planning out of Settings. Earlier numeric build records are retained for compatibility and traceability; they were not published GitHub releases. Do not rewrite Git history, old technical references, or the library schema to rename releases.
 
 ## Preparing release notes
 

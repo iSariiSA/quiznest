@@ -1,6 +1,7 @@
 const { randomUUID } = require('node:crypto');
 const { MAX_HTML_LENGTH, imageData } = require('./ui/content-policy.js');
 const questionModel = require('./ui/question-types.js');
+const codePolicy = require('./ui/code-policy.js');
 const id = () => randomUUID();
 const COLORS = ['sage', 'peach', 'lavender', 'blue', 'sand'];
 function text(value, label, max = 200) {
@@ -13,12 +14,14 @@ function question(raw, index = 0) {
   if (!raw || typeof raw !== 'object') throw new Error(`${label} must be an object.`);
   const type = questionModel.typeOf(raw);
   const format = raw.format ?? 'text';
-  if (!['text','html'].includes(format)) throw new Error(`${label}: format must be text or html.`);
-  const prompt = text(raw.prompt ?? raw.question, `${label}: prompt`, format==='html'?MAX_HTML_LENGTH:10000);
+  if (!['text','html','markdown'].includes(format)) throw new Error(`${label}: format must be text, html, or markdown.`);
+  const contentLimit=format==='html'?MAX_HTML_LENGTH:format==='markdown'?codePolicy.MAX_MARKDOWN_LENGTH:10000;
+  const contentText=(value,...args)=>{const checked=text(value,...args);return format==='markdown'?value:checked;};
+  const prompt = contentText(raw.prompt ?? raw.question, `${label}: prompt`, contentLimit);
   const choices = raw.options ?? raw.choices;
   if (!Array.isArray(choices) || choices.length < type.minOptions || choices.length > type.maxOptions)
     throw new Error(`${label}: ${type.label} needs ${type.minOptions}–${type.maxOptions} options.`);
-  const options = choices.map((v, i) => text(typeof v === 'object' && v ? v.text : v, `${label}: option ${i + 1}`, format==='html'?MAX_HTML_LENGTH:5000));
+  const options = choices.map((v, i) => contentText(typeof v === 'object' && v ? v.text : v, `${label}: option ${i + 1}`, format==='text'?5000:contentLimit));
   if (new Set(options).size !== options.length) throw new Error(`${label} has duplicate options.`);
   const multiple = type.selection === 'multiple';
   if (multiple ? raw.correctAnswer !== undefined || raw.correctIndex !== undefined : raw.correctAnswers !== undefined)
@@ -30,17 +33,21 @@ function question(raw, index = 0) {
   }
   const resolve = value => {
     if (typeof value !== 'string') return value;
-    const exact = options.indexOf(value.trim());
+    const exact = options.indexOf(value)>=0?options.indexOf(value):options.indexOf(value.trim());
     return exact >= 0 ? exact : options.findIndex((_, i) => questionModel.optionLabel(i) === value.trim().toUpperCase());
   };
   answer = multiple && Array.isArray(answer) ? answer.map(resolve) : resolve(answer);
   if (!questionModel.validAnswer({ type:type.id, options }, answer))
     throw new Error(`${label}: ${multiple ? 'correctAnswers must be a nonempty array of distinct' : 'answer must be a'} zero-based option ${multiple ? 'indices, letters, or exact option texts' : 'index, letter, or exact option text'}.`);
   const explanation = raw.explanation ?? '';
-  if (typeof explanation !== 'string' || explanation.length > (format==='html'?MAX_HTML_LENGTH:10000)) throw new Error(`${label}: invalid explanation.`);
+  if (typeof explanation !== 'string' || explanation.length > contentLimit) throw new Error(`${label}: invalid explanation.`);
   const result = { id: typeof raw.id === 'string' ? raw.id : id(), prompt, options, ...(multiple ? { correctAnswers:answer.sort((a,b)=>a-b) } : { correctAnswer:answer }), explanation };
   if (raw.type !== undefined || multiple) result.type=type.id;
-  if (format==='html') result.format='html';
+  if (format!=='text') result.format=format;
+  if (raw.code!==undefined) {
+    if(typeof raw.code!=='string'||!raw.code.trim()||raw.code.length>codePolicy.MAX_CODE_LENGTH)throw new Error(`${label}: code must contain 1–${codePolicy.MAX_CODE_LENGTH.toLocaleString('en-US')} characters.`);
+    result.code=raw.code;result.codeLanguage=codePolicy.language(raw.codeLanguage);
+  } else if(raw.codeLanguage!==undefined)throw new Error(`${label}: add code before setting its language.`);
   if (raw.image) {
     result.image=imageData(raw.image);
     if (raw.imageAlt !== undefined && (typeof raw.imageAlt!=='string' || raw.imageAlt.length>500)) throw new Error(`${label}: image description must be 500 characters or fewer.`);
@@ -94,7 +101,7 @@ function parseImport(source, extension = 'json', filename = 'Imported quiz') {
       if (questionModel.typeOf({type}).selection==='multiple') {
         try { answer=JSON.parse(answer); } catch { throw new Error('CSV multiple-answer answers must be a JSON array, such as [0,2] or ["A","C"].'); }
       }
-      groups.get(key).questions.push({ type, prompt: r.question, options, answer, explanation: r.explanation || '', format:r.format?.trim()||'text', image:r.image||undefined, imageAlt:r.image_alt||'' });
+      groups.get(key).questions.push({ type, prompt: r.question, options, answer, explanation: r.explanation || '', format:r.format?.trim()||'text', image:r.image||undefined, imageAlt:r.image_alt||'', ...(r.code?.trim()?{code:r.code,codeLanguage:r.code_language?.trim()||'plaintext'}:{}) });
     }
     packs = [...groups.values()];
   } else {

@@ -1,9 +1,9 @@
 {
   "name": "quiznet",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "quiznetRelease": {
     "stage": "alpha",
-    "number": 1
+    "number": 2
   },
   "description": "Offline multiple-choice quizzes for Windows.",
   "main": "src/main.cjs",
@@ -11,8 +11,9 @@
   "license": "MIT",
   "scripts": {
     "assets:brand": "node scripts/build-brand.cjs",
+    "assets:content": "node scripts/sync-content-vendor.cjs",
     "start": "electron .",
-    "check": "node scripts/check-syntax.cjs",
+    "check": "node scripts/check-syntax.cjs && node scripts/sync-content-vendor.cjs --check",
     "test": "node --test tests/core.test.cjs",
     "test:app": "playwright test",
     "release:info": "node scripts/release-info.cjs",
@@ -20,9 +21,11 @@
     "build:dir": "node scripts/release-info.cjs && electron-builder --win --dir --x64 --publish never"
   },
   "devDependencies": {
+    "@highlightjs/cdn-assets": "11.12.0",
     "@playwright/test": "1.63.0",
     "electron": "44.5.1",
-    "electron-builder": "26.15.3"
+    "electron-builder": "26.15.3",
+    "markdown-it": "15.0.3"
   },
   "build": {
     "appId": "com.quiznet.desktop",

@@ -9,6 +9,46 @@ const {sampleLibrary}=require('../src/sample.cjs');
 const q={prompt:'A question?',options:['One','Two'],correctAnswer:0,explanation:'Because.'};
 const media=require('../examples/images-html.json').questions[0];
 const policy=require('../src/ui/content-policy.js');
+const codePolicy=require('../src/ui/code-policy.js');
+
+test('code and Markdown validation preserves code whitespace and existing plain questions',()=>{
+  const code='\nfor number in range(3):\n    print(number)\n';
+  const coded=core.question({...q,code,codeLanguage:'py',format:'markdown'});
+  assert.equal(coded.code,code);assert.equal(coded.codeLanguage,'python');assert.equal(coded.format,'markdown');
+  assert.equal(core.question({...q,code}).codeLanguage,'plaintext');
+  assert.equal(core.question({...q,code,codeLanguage:'future-lang'}).codeLanguage,'future-lang');
+  assert.equal(core.question(q).code,undefined);
+  assert.equal(core.question({...q,format:'markdown',prompt:'    print(42)\n',options:['    print(42)\n','Other']}).prompt,'    print(42)\n');
+  assert.equal(core.question({...q,format:'markdown',options:['    print(42)\n','Other'],correctAnswer:'    print(42)\n'}).correctAnswer,0);
+  for(const code of ['',42,' '.repeat(5),'a'.repeat(codePolicy.MAX_CODE_LENGTH+1)])assert.throws(()=>core.question({...q,code}),/code must contain/);
+  assert.throws(()=>core.question({...q,code,codeLanguage:'python" onclick="bad()'}),/language name/);
+  assert.throws(()=>core.question({...q,codeLanguage:'python'}),/add code/);
+  assert.throws(()=>core.question({...q,format:'markdown',prompt:'a'.repeat(codePolicy.MAX_MARKDOWN_LENGTH+1)}),/characters/);
+  const csv=['question,option_a,option_b,answer,format,code,code_language','Output?,One,Two,A,markdown,"'+code+'",py'].join('\n');
+  const imported=core.parseImport(csv,'csv')[0].questions[0];assert.equal(imported.code,code);assert.equal(imported.codeLanguage,'python');
+});
+
+test('code and Markdown survive export, storage restart, saved progress, history and backup',async()=>{
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-code-'));
+  try{
+    const coded={...media,prompt:'**What is the output?**',format:'markdown',code:'\nvalues = [1, 2, 3]\nprint(sum(values))\n',codeLanguage:'python',options:['`6`','`3`'],explanation:'The sum is **6**.\n\n```python\nprint(1 + 2 + 3)\n```'};
+    let store=new Store(directory);await store.load(sampleLibrary);
+    await store.change(data=>core.importPacks(data,core.parseImport(JSON.stringify({title:'Code',questions:[coded]}))));
+    const course=store.data.courses.at(-1),unit=course.units[0],quiz=unit.quizzes[0],item=quiz.questions[0];
+    await store.change(data=>core.mutate(data,{type:'start',quizId:quiz.id}));await store.change(data=>core.mutate(data,{type:'answer',questionId:item.id,answer:0}));
+    store=new Store(directory);await store.load();assert.equal(core.findQuiz(store.data,quiz.id).quiz.questions[0].code,coded.code);assert.equal(store.data.activeSession.answers[item.id],0);
+    assert.deepEqual(core.validateLibrary(store.data),store.data);
+    const exported=core.parseImport(JSON.stringify({title:'Again',questions:core.findQuiz(store.data,quiz.id).quiz.questions}))[0].questions[0];
+    assert.equal(exported.code,coded.code);assert.equal(exported.format,'markdown');assert.equal(exported.image,coded.image);
+    await store.change(data=>core.mutate(data,{type:'finish'}));
+    const edited={...coded};delete edited.code;delete edited.codeLanguage;
+    await store.change(data=>core.mutate(data,{type:'saveQuiz',courseId:course.id,unitId:unit.id,quizId:quiz.id,title:'Edited',questions:[edited]}));
+    assert.equal(store.data.attempts.at(-1).questions[0].code,coded.code);
+    assert.equal(store.data.attempts.at(-1).questions[0].explanation,coded.explanation);
+    assert.deepEqual(core.validateLibrary(store.data),store.data);
+    const restarted=new Store(directory);await restarted.load();assert.equal(restarted.data.attempts.at(-1).score,1);
+  }finally{await fs.rm(directory,{recursive:true,force:true});}
+});
 
 test('question types validate variable choices, multilingual binary content and answer sets',()=>{
   const options=Array.from({length:30},(_,i)=>`Choice ${i}`);
@@ -101,7 +141,7 @@ test('rich questions survive JSON, CSV, backup, saved attempts, and storage rest
 });
 test('rejects unsupported formats, nonlocal images, MIME spoofing, and oversized media',()=>{
   for (const image of Object.values(require('./fixtures/image-types.json'))) assert.equal(core.question({...q,image}).image,image);
-  assert.throws(()=>core.question({...q,format:'markdown'}),/text or html/);
+  assert.throws(()=>core.question({...q,format:'rtf'}),/text, html, or markdown/);
   for(const image of ['https://example.com/picture.png','file:///C:/private.png','data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=']) assert.throws(()=>core.question({...q,image}),/embedded/);
   assert.throws(()=>core.question({...q,image:media.image.replace('image/png','image/jpeg')}),/file type/);
   assert.throws(()=>core.question({...q,image:media.image,imageAlt:'x'.repeat(501)}),/description/);

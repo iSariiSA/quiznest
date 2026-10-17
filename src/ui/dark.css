@@ -191,8 +191,25 @@ kbd { font: 11px 'Segoe UI', sans-serif; border: 1px solid #47515e; padding: 2px
 .question-instruction { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 12px 0; }
 .answer-option .option-checkbox { border-radius: 3px; }
 .editor-tools { display: flex; align-items: center; gap: 10px; }
-.modal label.html-switch { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); }
-.html-switch input { accent-color: var(--accent); }
+.modal label.format-switch { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); }
+.modal .format-switch select { width: auto; padding: 4px 6px; margin: 0; font-size: 12px; }
+.editor-question-heading { gap: 10px; flex-wrap: wrap; }
+.editor-tools { flex-wrap: wrap; }
+.editor-code { margin: 16px 0; }
+.editor-code-heading { display: flex; align-items: center; gap: 14px; justify-content: space-between; }
+.editor-code-heading label { flex: 1; margin-bottom: 8px; }
+.modal textarea.code-source { font: 13px/1.7 Consolas, 'Cascadia Mono', monospace; white-space: pre; tab-size: 4; overflow: auto; }
+.code-block { margin: 16px 0; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; font-weight: 400; text-align: left; }
+.code-language { padding: 6px 12px; background: #23282e; color: var(--muted); font: 11px/1.5 'Segoe UI', sans-serif; border-bottom: 1px solid var(--line); }
+.html-content .code-language { margin: 0; }
+.code-block pre, .html-content .code-block pre { margin: 0; border: 0; padding: 14px; background: #14181e; border-radius: 0; white-space: pre; overflow: auto; max-height: 460px; tab-size: 4; }
+.code-block code { display: block; width: max-content; min-width: 100%; font: 13px/1.75 Consolas, 'Cascadia Mono', monospace; color: #e0e5ed; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal { color: #c5a7e5; }
+.hljs-string, .hljs-regexp, .hljs-attr { color: #bfd5aa; }
+.hljs-number, .hljs-symbol { color: #e4b88d; }
+.hljs-comment, .hljs-quote { color: #98a5b5; font-style: italic; }
+.hljs-title, .hljs-built_in, .hljs-type { color: #8fc8e4; }
+.hljs-meta, .hljs-tag, .hljs-name { color: #dfafac; }
 .editor-tools .btn { padding: 5px; font-size: 12px; }
 .editor-image { position: relative; margin: 0 0 16px; }
 .editor-image > .question-image { max-height: 150px; margin: 0 0 10px; }

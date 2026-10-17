@@ -1,5 +1,20 @@
 # Changelog
 
+## Quiznet Alpha 2
+
+Stage: **Alpha**. Internal installer build: `1.5.0`.
+
+- Add a code attachment with a language selector and syntax highlighting for Python and other common programming languages.
+- Add Markdown formatting, including fenced code blocks, to prompts, options, and explanations.
+- Preserve code indentation and show code in preview, practice, and historical reviews without executing it.
+- Keep snippets and Markdown in JSON/CSV imports, exports, backups, and unfinished attempts.
+- Bundle pinned Markdown and syntax-highlighting browser files and licenses for offline use; verify them during source checks.
+- Retain existing plain-text/HTML questions and the stable installation, shortcut, and local data.
+
+Validation: syntax and offline-asset checks, core and Electron workflows, dependency and secret checks, Windows installer build, and in-place reinstall with unchanged library hashes.
+
+Known limitations: code is for reading, not execution; unknown languages and very long blocks display as plain code. Plugins and Explore remain planned Alpha goals. Stage changes still require owner approval.
+
 ## Quiznet Alpha 1
 
 Stage: **Alpha**. Current internal installer build: `1.4.3`.

@@ -2,7 +2,7 @@
 
 The owner controls releases and repository visibility. Keep the current repository private until explicitly instructed otherwise.
 
-Public releases are named Alpha, Beta, and Official Release. The current release is **Quiznet Alpha 1**, using internal installer build `1.4.3`. Keep public release names, the stage plan, and development milestones in the GitHub repository and release notes only; Settings shows the technical app version for diagnostics. Remain in Alpha until the owner explicitly approves Beta. Plugins and Explore are the two major Alpha goals; Beta is for wider testing, feedback, and fixes, followed by an owner-approved Official Release. See [RELEASES.md](RELEASES.md) for the stage policy and [ROADMAP.md](ROADMAP.md) for feature status.
+Public releases are named Alpha, Beta, and Official Release. The current release is **Quiznet Alpha 2**, using internal installer build `1.5.0`. Keep public release names, the stage plan, and development milestones in the GitHub repository and release notes only; Settings shows the technical app version for diagnostics. Remain in Alpha until the owner explicitly approves Beta. Plugins and Explore are the two major Alpha goals; Beta is for wider testing, feedback, and fixes, followed by an owner-approved Official Release. See [RELEASES.md](RELEASES.md) for the stage policy and [ROADMAP.md](ROADMAP.md) for feature status.
 
 ## Code and data
 
@@ -16,11 +16,19 @@ Public releases are named Alpha, Beta, and Official Release. The current release
 | `src/ui/renderer.js` | Navigation, quiz runner, editor, and formatted question presentation |
 | `src/ui/question-types.js` | Shared type catalog, choice limits/labels, answer validation, selection, and scoring |
 | `src/ui/content.js` | Inert HTML parsing and reconstruction using safe formatting tags |
+| `src/ui/code-policy.js` | Shared language catalog, aliases, and code/Markdown limits |
+| `scripts/sync-content-vendor.cjs` | Reproducible offline browser libraries and license verification |
 | `src/ui/content-policy.js` | Shared raster image validation and size limits |
 | `src/ui/dark.css` | Compact dark interface |
 | `src/sample.cjs` | Disposable demo material for a new library |
 
 The installer version in `package.json` is separate from the stored library's `version`. The current library schema is version 1. Bumping an app version does not require changing that schema.
+
+Internal version 1.5 adds `format: "markdown"`, optional `code` text, and `codeLanguage`. Code retains its exact stored whitespace; renderer code blocks preserve indentation and use LTR layout and scrolling. These fields travel through question validation, portable imports/exports, snapshots, backup/restore, and saved attempts. Old libraries need no migration or startup rewrite. Do not downgrade a Markdown/code library to an older reader; preserve a backup before rollback.
+
+Code attachments allow 50,000 characters; Markdown fields allow 100,000. Highlighting stops at 12,000 characters per block and uses escaped code thereafter. Unknown code language names are retained for future compatibility and fall back to readable text. Add supported languages through `code-policy.js`, regenerate with `npm run assets:content`, and run the code workflow tests. Markdown raw HTML is disabled and rendered output passes through the existing HTML allowlist. Only a validated language hint survives from imported code attributes; classes for highlighting are generated locally. Snippets are never executed.
+
+The exact development packages `markdown-it` and `@highlightjs/cdn-assets` supply committed offline browser files and licenses in `src/ui/vendor`. `npm run check` verifies their content against locked package versions (normalizing Windows line endings). No runtime npm resolution, servers, or CDN resources are used. Re-audit and regenerate assets when updating either package. Existing image and quiz-size limits still apply.
 
 Version 1.4 adds optional question `type`: `single-choice` (the default when omitted), `multiple-answer`, and `true-false`. Single answers retain scalar `correctAnswer` and scalar attempt/session answers. Multiple answers use `correctAnswers` and array attempt/session answers; sets are order-independent and scored with exact equality. Empty selection arrays are valid unfinished progress but cannot finish an attempt. Binary questions store two editable option labels and a scalar answer, without depending on English text. Choice questions share a configurable 2–100 limit; labels and CSV columns extend past Z. The shared type catalog separates persistent IDs from display labels and behavior, so adding choice-based types or translating their labels does not change storage IDs. Other response families will still need their own input and validation behavior. The full application interface is currently English.
 

@@ -4,7 +4,7 @@ A local Windows app for organizing **Courses → Units → Quizzes** and testing
 
 Quiznet runs offline and stores your material on your computer. The repository is currently private; its contributor and maintenance guides prepare it for future development and eventual public release.
 
-The current release is **Quiznet Alpha 1**. Releases progress through **Alpha → Beta → Official Release**, with stage changes only when the owner approves them. **Plugins** and **Explore** (discovering tests shared by others) are the two major Alpha goals; both are planned. Beta will focus on wider testing, feedback, and fixes before the first Official Release. See the [release plan](docs/RELEASES.md) and [roadmap](docs/ROADMAP.md).
+The current release is **Quiznet Alpha 2**. Releases progress through **Alpha → Beta → Official Release**, with stage changes only when the owner approves them. **Plugins** and **Explore** (discovering tests shared by others) are the two major Alpha goals; both are planned. Beta will focus on wider testing, feedback, and fixes before the first Official Release. See the [release plan](docs/RELEASES.md) and [roadmap](docs/ROADMAP.md).
 
 The Focus identity uses a geometric Q, forest green, and sage on charcoal. See the [brand guide](docs/BRAND.md) for editable artwork, colors, and the icon export command.
 
@@ -24,6 +24,7 @@ Start with the included Biology, Chemistry, and Mathematics sample courses, or c
 - Create and edit mixed quizzes: single answer, multiple answers, and true/false, with optional explanations.
 - Add or remove choices as needed (2–100 for choice questions); edit true/false labels in your language.
 - Add local images and use HTML formatting in questions, options, and explanations.
+- Display syntax-highlighted code, including Python, and use Markdown with fenced code blocks.
 - Use the top-right **…** menu to import JSON/CSV, open Settings, or view Help.
 - Preview imports and choose a destination course/unit.
 - Take quizzes with optional question shuffling, question navigation, and keyboard shortcuts.
@@ -75,7 +76,7 @@ Missing course/unit names default to `Imported course` and `Unit 1`. The preview
 
 In the quiz editor, choose **Add image** for a local PNG, JPEG, GIF, or WebP file (up to 2 MB). An optional image description helps accessibility. **Replace image** and the image's remove button update that attachment. Open **Preview** to check the question before saving.
 
-Turn on **HTML** for a question to format its prompt, options, and explanation. Supported formatting includes paragraphs, bold/italic text, lists, tables, code, and superscripts/subscripts. Images may also appear inside HTML using embedded raster data URLs. Scripts, styles, forms, embedded pages, event handlers, and external links or image sources are removed from the displayed content. Existing questions stay plain text unless HTML is explicitly enabled.
+Choose **HTML** in the **Format** selector to format the prompt, options, and explanation. Supported formatting includes paragraphs, bold/italic text, lists, tables, code, and superscripts/subscripts. Images may also appear inside HTML using embedded raster data URLs. Scripts, styles, forms, embedded pages, event handlers, and external links or image sources are removed from the displayed content. Existing questions retain their format.
 
 For JSON imports, set `"format": "html"`. Attach an image with `"image": "data:image/png;base64,..."` and optional `"imageAlt": "Description"`. The image field must contain the complete base64 data URL, not a filename or an online URL. The editor creates that value for you; export a quiz to reuse it. See the complete [images and HTML example](examples/images-html.json).
 
@@ -106,6 +107,18 @@ Optional `format`, `image`, and `image_alt` columns support the same HTML mode a
 
 Quiz import files are limited to 20 MB, 1,000 quizzes, and 10,000 questions per import. The editor limits each quiz to 19 MB to keep exports importable. Validation is all-or-nothing. Examples are in [examples/](examples/). Full library backups are restored from Settings rather than imported as questions; the quiz-import file limit does not apply to backups.
 
+### Code and Markdown
+
+In the editor, choose **Add code**, select a **Code language**, and paste the snippet. Code is displayed with syntax colors, preserved indentation, and horizontal scrolling; it is never executed. Code attachments work with plain-text, HTML, and Markdown questions and can accompany images.
+
+Choose **Markdown** in the **Format** selector for headings, emphasis, lists, tables, inline code, and fenced code blocks in prompts, answer options, and explanations. Start a fenced block with three backticks followed by its language (for example, `python`), put the code on the following lines, and close it with three backticks. The same selector offers Text and HTML; existing questions retain their format.
+
+The language catalog includes Python, JavaScript, TypeScript, Java, C, C++, C#, SQL, JSON, HTML/XML, CSS, Bash, Markdown, and plain text. Unknown language names render as plain text. All libraries and language definitions are bundled with the app for offline use. Raw HTML in Markdown is shown literally; external links and images remain inactive.
+
+For JSON imports, add `"code": "print(1 + 2)"` and `"codeLanguage": "python"`, or set `"format": "markdown"` and include fenced blocks. CSV has optional `code` and `code_language` columns; quote multiline snippets. See [code-markdown.json](examples/code-markdown.json) for a complete mixed example. Code and Markdown survive exports, backups, saved attempts, and results.
+
+Code attachments are limited to 50,000 characters and Markdown fields to 100,000. Blocks above 12,000 characters display as plain code to keep the interface responsive. Version 1.5 reads earlier libraries without rewriting them on startup; older apps do not preserve code fields or understand Markdown, so keep a backup before rollback.
+
 ## Keyboard shortcuts
 
 | Shortcut | Action |
@@ -132,7 +145,7 @@ npm run build
 
 The offline Windows installer appears as `dist/Quiznet-Setup.exe`. Keep the app ID, product name, install identity, and data folder stable so future releases update the same application. Internal version numbers change; the installer and shortcut names stay the same. See [AGENTS.md](AGENTS.md) for maintenance instructions.
 
-The UI is plain HTML, CSS, and JavaScript with Windows system fonts and local SVG icons. There are no runtime npm dependencies or remote assets. Electron uses a sandboxed renderer, context isolation, a narrow IPC bridge, restrictive CSP, denied permissions, blocked external navigation, and blocked HTTP/WebSocket requests. Plain-text questions are escaped. HTML questions are parsed in an inert template and rebuilt using an allowlist of formatting tags and embedded raster images; imported attributes cannot become app controls.
+The UI is plain HTML, CSS, and JavaScript with Windows system fonts and local SVG icons. Markdown and syntax highlighting use pinned, locally bundled browser libraries with their licenses. There are no runtime npm dependencies or remote assets. Electron uses a sandboxed renderer, context isolation, a narrow IPC bridge, restrictive CSP, denied permissions, blocked external navigation, and blocked HTTP/WebSocket requests. Plain-text questions are escaped. HTML questions are parsed in an inert template and rebuilt using an allowlist of formatting tags and embedded raster images; imported attributes cannot become app controls.
 
 Tests exercise import validation, hierarchy operations, scoring, historical snapshots, concurrent saves, recovery, and a real Electron workflow covering creation, editor input, restart/resume, repeat launches, scoring, native-dialog import/backup/restore paths (file pickers are stubbed), and blocked renderer network requests. Before delivering a release, verify reinstalling keeps the install location, one shortcut, and the existing library unchanged.
 

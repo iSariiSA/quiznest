@@ -1,0 +1,22 @@
+{
+  "course": "Programming",
+  "unit": "Reading code",
+  "title": "Code output",
+  "questions": [
+    {
+      "prompt": "What does this Python code print?",
+      "code": "values = [1, 2, 3]\nprint(sum(values))",
+      "codeLanguage": "python",
+      "options": ["6", "3", "[1, 2, 3]"],
+      "correctAnswer": 0,
+      "explanation": "sum adds the three values: 1 + 2 + 3 = 6."
+    },
+    {
+      "format": "markdown",
+      "prompt": "**What is the output?**\n\n```javascript\nconst values = [1, 2, 3];\nconsole.log(values.length);\n```",
+      "options": ["`3`", "`6`", "`undefined`"],
+      "correctAnswer": 0,
+      "explanation": "The array contains **three** items."
+    }
+  ]
+}
