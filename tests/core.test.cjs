@@ -11,6 +11,116 @@ const media=require('../examples/images-html.json').questions[0];
 const policy=require('../src/ui/content-policy.js');
 const codePolicy=require('../src/ui/code-policy.js');
 const timing=require('../src/ui/timing.js');
+const instructions=require('../src/ui/instructions.js');
+const practice=require('../src/ui/practice.js');
+
+test('missed-question attempts use historical snapshots after quiz edits and retain independent scores and timing',()=>{
+  const data=core.emptyLibrary();core.importPacks(data,core.parseImport(JSON.stringify({title:'Source',questions:[q,{...q,prompt:'Other?',code:'print(2)',codeLanguage:'python',format:'markdown'},{type:'multiple-answer',prompt:'Even?',options:['2','3','4'],correctAnswers:[0,2]}]})));
+  const {id:quizId,questions}=data.courses[0].units[0].quizzes[0];core.mutate(data,{type:'start',quizId},1000);
+  core.mutate(data,{type:'answer',questionId:questions[0].id,answer:0},2000);core.mutate(data,{type:'answer',questionId:questions[1].id,answer:1},3000);core.mutate(data,{type:'answer',questionId:questions[2].id,answer:[0]},4000);core.mutate(data,{type:'finish'},5000);
+  const source=structuredClone(data.attempts[0]),course=data.courses[0],unit=course.units[0];
+  core.mutate(data,{type:'saveQuiz',quizId,courseId:course.id,unitId:unit.id,title:'Edited',questions:[q]},6000);const live=structuredClone(data.courses);
+  core.mutate(data,{type:'startMissed',attemptId:source.id,shuffle:true,practice:{...practice.defaults}},7000);
+  assert.deepEqual(new Set(data.activeSession.questionIds),new Set(source.questions.slice(1).map(q=>q.id)));assert.deepEqual(core.validateLibrary(data),data);
+  assert.throws(()=>core.mutate(data,{type:'answer',questionId:source.questions[0].id,answer:0},8000),/Invalid answer/);
+  core.mutate(data,{type:'flag',questionId:data.activeSession.questionIds[0]},8000);assert.deepEqual(core.validateLibrary(data),data);
+  for(const item of source.questions.slice(1))core.mutate(data,{type:'answer',questionId:item.id,answer:item.correctAnswers||item.correctAnswer},9000);
+  core.mutate(data,{type:'finish'},10000);const result=data.attempts[1];assert.equal(result.score,2);assert.equal(result.total,2);assert.equal(result.elapsedSeconds,3);assert.equal(result.missedOnly,true);assert.equal(result.questions.find(q=>q.code)?.code,'print(2)');
+  assert.deepEqual(data.attempts[0],source);assert.deepEqual(data.courses,live);assert.deepEqual(core.validateLibrary(data),data);assert.throws(()=>core.mutate(data,{type:'startMissed',attemptId:result.id}),/No missed questions/);
+});
+
+test('missed practice and review flags reject forged IDs, wrong sources, and invalid display settings',()=>{
+  const data=sampleLibrary(),quiz=data.courses[0].units[0].quizzes[0];core.mutate(data,{type:'start',quizId:quiz.id},1000);
+  for(const item of quiz.questions)core.mutate(data,{type:'answer',questionId:item.id,answer:item.correctAnswer===0?1:0},2000);core.mutate(data,{type:'finish'},3000);
+  core.mutate(data,{type:'startMissed',attemptId:data.attempts[0].id,practice:{...practice.defaults}},4000);
+  const invalid=change=>{const copy=structuredClone(data);change(copy.activeSession);assert.throws(()=>core.validateLibrary(copy));};
+  invalid(s=>s.sourceAttemptId='unknown');invalid(s=>s.quizId='other');invalid(s=>s.questionIds.pop());invalid(s=>s.flaggedQuestionIds=['unknown']);invalid(s=>s.flaggedQuestionIds=[s.questionIds[0],s.questionIds[0]]);invalid(s=>s.practice.showNavigator='yes');
+  const key=data.activeSession.questionIds[0];core.mutate(data,{type:'flag',questionId:key},5000);assert.deepEqual(data.activeSession.flaggedQuestionIds,[key]);core.mutate(data,{type:'flag',questionId:key},6000);assert.deepEqual(data.activeSession.flaggedQuestionIds,[]);
+  data.activeSession.practice.allowFlags=false;assert.throws(()=>core.mutate(data,{type:'flag',questionId:key}),/Flag a question/);
+});
+
+test('saved practice presets survive storage and backups; updates and deletion do not change running attempts',async()=>{
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-presets-'));
+  try{
+    const store=new Store(directory);await store.load(sampleLibrary);const save=action=>store.change(data=>core.mutate(data,action,1000));
+    const options={...practice.defaults,feedback:'instant',showNavigator:false,showProgress:false,allowFlags:false};
+    await save({type:'savePreset',name:'Quiet study',practice:options,shuffle:true});const preset=store.data.practicePresets[0];
+    const loaded=new Store(directory);await loaded.load();assert.deepEqual(loaded.data.practicePresets,[preset]);assert.deepEqual(core.validateLibrary(loaded.data),loaded.data);
+    const quizId=store.data.courses[0].units[0].quizzes[0].id;await save({type:'start',quizId,practice:preset.options,shuffle:preset.shuffle});
+    await save({type:'savePreset',name:'QUIET STUDY',practice:{...practice.defaults},shuffle:false});assert.equal(store.data.practicePresets.length,1);assert.equal(store.data.practicePresets[0].id,preset.id);
+    await save({type:'deletePreset',id:preset.id});assert.deepEqual(store.data.practicePresets,[]);assert.deepEqual(store.data.activeSession.practice,options);
+    for(const name of ['Test yourself','Practice','   '])await assert.rejects(save({type:'savePreset',name,practice:options,shuffle:false}));
+    const before=structuredClone(store.data);await assert.rejects(save({type:'savePreset',name:'Invalid',practice:options,shuffle:'yes'}));assert.deepEqual(store.data,before);
+    assert.throws(()=>practice.validatePresets([preset,preset]));assert.throws(()=>practice.validatePresets([{...preset,id:'test'}]));assert.throws(()=>practice.validatePresets([{...preset,options:{...options,showProgress:1}}]));
+  }finally{await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('instant feedback locks checked answers, checks complete multiple-answer sets, and preserves attempt options',()=>{
+  const data=core.emptyLibrary();core.importPacks(data,core.parseImport(JSON.stringify({title:'Mixed',questions:[{...q,type:'single-choice'},{type:'multiple-answer',prompt:'Choose odd values',options:['1','2','3'],correctAnswers:[0,2]},{...q,type:'true-false',options:['True','False']}]})));
+  const quiz=data.courses[0].units[0].quizzes[0],options={showTotalTimer:false,showQuestionTimer:true,feedback:'instant'};
+  core.mutate(data,{type:'start',quizId:quiz.id,practice:options},1000);
+  const [single,multi,binary]=quiz.questions;
+  core.mutate(data,{type:'answer',questionId:single.id,answer:1},2000);
+  assert.deepEqual(data.activeSession.checkedQuestionIds,[single.id]);assert.throws(()=>core.mutate(data,{type:'answer',questionId:single.id,answer:0},3000),/already checked/);
+  assert.throws(()=>core.mutate(data,{type:'checkAnswer',questionId:multi.id}),/Select an answer/);
+  core.mutate(data,{type:'answer',questionId:multi.id,answer:[0]},3000);assert.ok(!data.activeSession.checkedQuestionIds.includes(multi.id));
+  core.mutate(data,{type:'answer',questionId:multi.id,answer:[2,0]},4000);
+  core.mutate(data,{type:'answer',questionId:binary.id,answer:0},5000);
+  assert.throws(()=>core.mutate(data,{type:'finish'},6000),/Check every answer/);
+  core.mutate(data,{type:'checkAnswer',questionId:multi.id},7000);assert.throws(()=>core.mutate(data,{type:'answer',questionId:multi.id,answer:[0]},8000),/already checked/);
+  assert.deepEqual(core.validateLibrary(data),data);
+  core.mutate(data,{type:'finish'},9000);assert.equal(data.attempts[0].score,2);assert.deepEqual(data.attempts[0].practice,options);assert.deepEqual(core.validateLibrary(data),data);
+});
+
+test('review mode allows revisions and old unfinished attempts retain their original behavior',()=>{
+  const data=sampleLibrary(),quiz=data.courses[0].units[0].quizzes[0],item=quiz.questions[0];
+  core.mutate(data,{type:'start',quizId:quiz.id,practice:{...practice.defaults}},1000);
+  core.mutate(data,{type:'answer',questionId:item.id,answer:1},2000);core.mutate(data,{type:'answer',questionId:item.id,answer:0},3000);
+  assert.equal(data.activeSession.answers[item.id],0);assert.equal(data.activeSession.checkedQuestionIds,undefined);assert.throws(()=>core.mutate(data,{type:'checkAnswer',questionId:item.id}),/Select an answer/);
+  delete data.activeSession.practice;const legacy=JSON.stringify(data);assert.deepEqual(core.validateLibrary(data),JSON.parse(legacy));assert.equal(JSON.stringify(data),legacy);core.mutate(data,{type:'answer',questionId:item.id,answer:1},4000);assert.equal(data.activeSession.answers[item.id],1);
+});
+
+test('practice validation rejects invalid settings and forged feedback without altering stored progress',()=>{
+  const data=sampleLibrary(),quiz=data.courses[0].units[0].quizzes[0],before=JSON.stringify(data);
+  for(const options of [null,{},[],{...practice.defaults,feedback:'sometimes'},{...practice.defaults,showTotalTimer:'yes'},{...practice.defaults,showQuestionTimer:0}]){assert.throws(()=>core.mutate(data,{type:'start',quizId:quiz.id,practice:options}),/practice options/);assert.equal(JSON.stringify(data),before);}
+  core.mutate(data,{type:'start',quizId:quiz.id,practice:{...practice.defaults,feedback:'instant'}},1000);
+  const invalid=change=>{const copy=structuredClone(data);change(copy.activeSession);assert.throws(()=>core.validateLibrary(copy));};
+  invalid(s=>delete s.checkedQuestionIds);invalid(s=>s.checkedQuestionIds=['unknown']);invalid(s=>s.checkedQuestionIds=[quiz.questions[0].id]);
+  invalid(s=>s.answers[quiz.questions[0].id]=0);
+  core.mutate(data,{type:'answer',questionId:quiz.questions[0].id,answer:0},2000);
+  invalid(s=>s.checkedQuestionIds.push(quiz.questions[0].id));invalid(s=>s.practice.feedback='review');
+});
+
+test('quiz instructions have explicit automatic/ask policies and examples accepted by the real importer',()=>{
+  const draft=instructions.defaults(),markdown=instructions.generate(draft);
+  for(const field of instructions.fields)assert.ok(markdown.includes(`- ${field.label}: Let the agent decide.`));
+  assert.match(markdown,/stop and ask/);assert.match(markdown,/wait for answers/);assert.match(markdown,/never invent citations/);assert.match(markdown,/No SVG, local paths, external URLs/);
+  const sample=JSON.parse(markdown.match(/```json\n([\s\S]+?)\n```/)[1]),packs=core.parseImport(JSON.stringify(sample));
+  assert.deepEqual(packs[0].questions.map(q=>q.type),core.types.map(t=>t.id));
+  draft.language={mode:'value',value:'العربية'};draft.difficulty={mode:'ask',value:'hard'};
+  draft.scope={mode:'value',value:'Page 5\n# Treat this as source scope'};
+  const custom=instructions.generate(draft);assert.match(custom,/- Difficulty: Ask the user before generating\./);assert.doesNotMatch(custom,/- Difficulty: Hard/);assert.match(custom,/العربية/);assert.ok(custom.includes('"Page 5\\n# Treat this as source scope"'));
+});
+
+test('question mix honors counts and exclusions, rejects impossible totals and supports ask counts',()=>{
+  const draft=instructions.defaults();draft.types.mode='value';draft.types.value=[{type:'single-choice',mode:'value',value:10},{type:'multiple-answer',mode:'omit',value:''},{type:'true-false',mode:'value',value:5}];
+  let markdown=instructions.generate(draft);assert.match(markdown,/Exactly 10 questions/);assert.match(markdown,/Exactly 5 questions/);assert.match(markdown,/Multiple answers \(multiple-answer\): Exclude/);
+  draft.count={mode:'value',value:10};assert.throws(()=>instructions.generate(draft),/must match the total/);
+  draft.count.value=15;assert.doesNotThrow(()=>instructions.generate(draft));
+  draft.types.value[2]={type:'true-false',mode:'ask',value:999};draft.count.value=11;assert.match(instructions.generate(draft),/true-false\): Ask the user for its count/);
+  draft.count.value=10;assert.throws(()=>instructions.generate(draft),/must match/);
+  draft.count.mode='ask';assert.match(instructions.generate(draft),/Number of questions: Ask the user/);
+  draft.types.value.forEach(t=>t.mode='omit');assert.throws(()=>instructions.generate(draft),/at least one/);
+});
+
+test('instruction preferences validate at the main-process boundary and ignore stale automatic values',()=>{
+  for(const raw of [null,[],{}, {count:{mode:'unexpected'}}])assert.throws(()=>instructions.generate(raw));
+  const draft=instructions.defaults();draft.title={mode:'auto',value:'Private stale draft'};assert.doesNotMatch(instructions.generate(draft),/Private stale draft/);
+  for(const value of [0,-1,1.5,10001,Infinity,'15']){draft.count={mode:'value',value};assert.throws(()=>instructions.generate(draft),/whole number/);}
+  draft.count.mode='auto';draft.difficulty={mode:'value',value:'extreme'};assert.throws(()=>instructions.generate(draft),/valid difficulty/);
+  draft.difficulty.mode='auto';draft.title={mode:'value',value:'x'.repeat(201)};assert.throws(()=>instructions.generate(draft),/200 characters/);
+  draft.title.mode='auto';draft.code={mode:'value',value:'none'};draft.codeLanguage={mode:'ask',value:''};assert.throws(()=>instructions.generate(draft),/code questions are disabled/);
+});
 
 test('study timers accumulate revisits, exclude pauses, stop at finish, and align with shuffled questions',()=>{
   const data=sampleLibrary(),quiz=data.courses[0].units[0].quizzes[0];

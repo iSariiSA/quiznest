@@ -1,0 +1,51 @@
+const {test,expect,_electron:electron}=require('@playwright/test');
+const fs=require('node:fs/promises');
+const os=require('node:os');
+const path=require('node:path');
+const core=require('../src/core.cjs');
+let app,page,directory;
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function library(){return page.evaluate(async()=>(await window.quiznet.get()).library);}
+async function now(value){await app.evaluate((_,value)=>{Date.now=()=>value;},value);await page.evaluate(value=>{Date.now=()=>value;},value);}
+test.beforeAll(async()=>{
+  directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-practice-'));await fs.mkdir(path.join(directory,'data'));
+  const data=core.emptyLibrary();core.importPacks(data,core.parseImport(JSON.stringify({course:'Mathematics',unit:'Basics',title:'Practice choices',questions:[{prompt:'Which value equals 2 + 2?',options:['4','5','6'],correctAnswer:0,explanation:'Adding two and two gives four.'},{type:'multiple-answer',prompt:'Select all even numbers.',options:['2','3','4'],correctAnswers:[0,2],explanation:'Two and four are divisible by two.'},{type:'true-false',prompt:'One is an even number.',options:['True','False'],correctAnswer:1,explanation:'One is odd.'}]})));
+  await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(data,null,2));await launch();
+});
+test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true,force:true});});
+
+test('agent entry from New quiz, start options, instant feedback, restart, restore, and delayed review',async()=>{
+  const errors=[];const track=()=>page.on('pageerror',error=>errors.push(error.message));track();
+  const outputs=process.env.QUIZNET_SCREENSHOTS||path.resolve(__dirname,'../test-results/screenshots');await fs.mkdir(outputs,{recursive:true});
+  await page.locator('.course-row').getByRole('button').click();await page.getByRole('button',{name:'Basics',exact:true}).click();
+  await page.getByRole('button',{name:'New quiz',exact:true}).click();await expect(page.getByLabel('Quiz title',{exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Write manually',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Import file',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Prepare with an agent',exact:true})).toBeVisible();
+  await page.screenshot({path:path.join(outputs,'Quiznet-new-quiz-method.png')});
+  const before=await fs.readFile(path.join(directory,'data/library.json'),'utf8');
+  await page.getByRole('button',{name:'Prepare with an agent',exact:true}).click();await expect(page.getByRole('heading',{name:'Prepare a quiz',exact:true})).toBeVisible();expect(await fs.readFile(path.join(directory,'data/library.json'),'utf8')).toBe(before);
+  const returned=path.join(directory,'returned.json');await fs.writeFile(returned,JSON.stringify({course:'Agent course',unit:'Agent unit',title:'Agent example',questions:[{prompt:'Is zero even?',options:['Yes','No'],correctAnswer:0}]}));
+  await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},returned);
+  await page.getByRole('button',{name:'Import quiz…',exact:true}).click();const seeded=await library();await expect(page.locator('#import-target')).toHaveValue(seeded.courses[0].id);await expect(page.locator('select[name=unit]')).toHaveValue(seeded.courses[0].units[0].id);
+  await page.getByRole('dialog').getByRole('button',{name:'Import',exact:true}).click();await expect(page.locator('.quiz-row')).toHaveCount(2);
+  const base=Date.now();await now(base);await page.getByRole('button',{name:'Start Practice choices',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Before you start');expect((await library()).activeSession).toBeNull();
+  await page.getByRole('button',{name:'Cancel',exact:true}).click();expect((await library()).activeSession).toBeNull();
+  await page.getByRole('button',{name:'Start Practice choices',exact:true}).click();await page.getByLabel('Answer feedback',{exact:true}).selectOption('instant');await page.getByRole('checkbox',{name:'Show total timer',exact:true}).uncheck();await page.getByRole('checkbox',{name:'Show question timer',exact:true}).check();
+  await page.screenshot({path:path.join(outputs,'Quiznet-before-start.png')});
+  await now(base+60000);await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();await expect(page.locator('#quiz-timer')).toHaveCount(0);await expect(page.getByRole('timer',{name:'Time spent on this question'})).toHaveText('Question 00:00');
+  await now(base+65000);await expect(page.getByRole('timer')).toHaveText('Question 00:05');await page.locator('[data-action="answer"][data-index="1"]').click();await expect(page.locator('.answer-feedback')).toContainText('Incorrect');await expect(page.locator('.answer-feedback')).toContainText('Adding two and two');for(const option of await page.locator('.answer-option').all())await expect(option).toBeDisabled();
+  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setBounds({width:760,height:700}));expect(await page.evaluate(()=>document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth)).toBe(true);await page.screenshot({path:path.join(outputs,'Quiznet-instant-feedback.png')});
+  expect(await page.evaluate(async()=>{const s=(await window.quiznet.get()).library.activeSession;try{await window.quiznet.change({type:'answer',questionId:s.questionIds[0],answer:0});return 'changed';}catch(error){return error.message;}})).toContain('already checked');
+  await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.locator('.answer-feedback')).toHaveCount(0);await expect(page.getByRole('button',{name:'Check answer',exact:true})).toHaveCount(0);await expect(page.locator('.question-instruction')).toHaveText('Multiple answers');await page.keyboard.press('1');await expect(page.locator('.answer-option.chosen')).toHaveCount(1);await expect(page.locator('.answer-feedback')).toHaveCount(0);await page.keyboard.press('3');await expect(page.locator('.answer-option.chosen')).toHaveCount(2);await expect(page.locator('.answer-feedback')).toHaveCount(0);
+  await app.close();await launch();track();await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(page.locator('#quiz-timer')).toHaveCount(0);await expect(page.locator('#question-timer')).toBeVisible();await expect(page.locator('.answer-option.chosen')).toHaveCount(2);
+  await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.locator('.answer-feedback')).toContainText('Correct');
+  await page.getByRole('button',{name:'Previous',exact:true}).click();await expect(page.locator('.answer-feedback')).toContainText('Incorrect');
+  await page.locator('#question-jump').selectOption('2');await page.locator('[data-action="answer"][data-index="1"]').click();await expect(page.locator('.answer-feedback')).toContainText('Correct');
+  const backup=path.join(directory,'instant-backup.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
+  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
+  await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},backup);await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(page.locator('.answer-feedback')).toContainText('Correct');
+  await page.getByRole('button',{name:'Finish',exact:true}).click();await expect(page.locator('.score-value')).toHaveText('67%');await expect(page.locator('.result-summary')).toContainText('Instant feedback');await expect(page.locator('.question-time')).toHaveCount(3);
+  expect((await library()).attempts[0].practice).toEqual({showTotalTimer:false,showQuestionTimer:true,feedback:'instant',showNavigator:true,showProgress:true,allowFlags:true});
+  await page.getByRole('button',{name:'Retry',exact:true}).click();await expect(page.getByLabel('Answer feedback',{exact:true})).toHaveValue('review');await page.getByRole('checkbox',{name:'Show total timer',exact:true}).uncheck();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();await expect(page.getByRole('timer')).toHaveCount(0);await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.locator('.question-prompt')).toContainText('Which value equals 2 + 2?');
+  await page.keyboard.press('2');await expect(page.locator('[data-index="1"].chosen')).toHaveCount(1);await expect(page.locator('.answer-feedback')).toHaveCount(0);await page.keyboard.press('1');await expect(page.locator('[data-index="0"].chosen')).toHaveCount(1);
+  await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.locator('.question-prompt')).toContainText('Select all even numbers.');await page.keyboard.press('1');await expect(page.locator('.answer-option.chosen')).toHaveCount(1);await page.keyboard.press('3');await expect(page.locator('.answer-option.chosen')).toHaveCount(2);await expect(page.getByRole('button',{name:'Check answer',exact:true})).toHaveCount(0);await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.locator('.question-prompt')).toContainText('One is an even number.');await page.keyboard.press('2');await expect(page.locator('.answer-option.chosen')).toHaveCount(1);await page.getByRole('button',{name:'Finish',exact:true}).click();await expect(page.locator('.score-value')).toHaveText('100%');await expect(page.locator('.attempt-comparison')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

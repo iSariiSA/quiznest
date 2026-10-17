@@ -21,7 +21,7 @@ test('small stopwatch, hidden question timing, revisits, Explore, restart, resto
   await page.getByRole('button',{name:'Explore',exact:true}).click();await expect(page.getByRole('heading',{name:'Explore',exact:true})).toBeVisible();await expect(page.locator('.explore-placeholder')).toHaveText('ExploreComing soon.');
   await page.screenshot({path:path.join(outputs,'Quiznet-explore.png')});
   await page.getByRole('button',{name:'Library',exact:true}).first().click();await page.locator('.course-row').getByRole('button').click();
-  await now(base);await page.getByRole('button',{name:'Start Quick practice',exact:true}).click();await expect(page.getByRole('timer')).toHaveText('00:00');
+  await now(base);await page.getByRole('button',{name:'Start Quick practice',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();await expect(page.getByRole('timer')).toHaveText('00:00');
   await now(base+5000);await expect(page.getByRole('timer')).toHaveText('00:05');await expect(page.locator('.question-time')).toHaveCount(0);
   await page.screenshot({path:path.join(outputs,'Quiznet-small-timer.png')});
   await page.locator('[data-action="answer"][data-index="1"]').click();await page.getByRole('button',{name:'Next',exact:true}).click();
@@ -41,7 +41,7 @@ test('small stopwatch, hidden question timing, revisits, Explore, restart, resto
   await now(base+day*2+2000);await page.getByRole('button',{name:'Finish',exact:true}).click();await expect(page.locator('.score-value')).toHaveText('50%');
   await expect(page.locator('.question-time')).toHaveText(['Time spent 00:07','Time spent 00:08']);await expect(page.locator('.result-summary')).toContainText('Time 00:15');await expect(page.locator('.attempt-comparison')).toHaveCount(0);
   saved=await library();expect(saved.attempts[0].questionTimesMs).toEqual([7000,8000]);
-  const retry=base+day*2+100000;await now(retry);await page.getByRole('button',{name:'Retry',exact:true}).click();
+  const retry=base+day*2+100000;await now(retry);await page.getByRole('button',{name:'Retry',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await now(retry+3000);await page.locator('[data-action="answer"][data-index="0"]').click();await page.getByRole('button',{name:'Next',exact:true}).click();
   await now(retry+8000);await page.locator('[data-action="answer"][data-index="0"]').click();await page.locator('[data-action="answer"][data-index="2"]').click();await page.getByRole('button',{name:'Finish',exact:true}).click();
   await expect(page.locator('.attempt-comparison')).toContainText('Previous: 50% · 00:15. 50 points higher · 00:07 faster.');await expect(page.locator('.question-time')).toHaveText(['Time spent 00:03','Time spent 00:05']);

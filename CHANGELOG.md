@@ -1,5 +1,59 @@
 # Changelog
 
+## Quiznet Alpha 7
+
+Stage: **Alpha**. Internal installer build: `1.10.0`.
+
+- Open New quiz with three clear choices: write manually, import a finished file, or prepare with an agent.
+- Keep question squares neutral with small status triangles, put color meanings behind an info button, and move the flag beside the progress controls.
+- Show only the question type label during a quiz.
+- Replace the separate Check answer button with Next to reveal multiple-answer feedback, followed by Continue/Finish; preserve single-answer and end-review behavior.
+
+Validation: syntax, core and Electron workflows, dependency/secret checks, visual review, installer build, in-place reinstall, and unchanged library hashes.
+
+Known limitations: question wording imported from a file stays unchanged. Practice answers lock once feedback appears. Plugins and Explore discovery remain Alpha goals.
+
+## Quiznet Alpha 6
+
+Stage: **Alpha**. Internal installer build: `1.9.0`.
+
+- Add Practice missed questions using saved historical questions, with independent results and unchanged original quizzes.
+- Add compact numbered squares, position progress, and persistent flags for review; keep correctness hidden in review mode.
+- Refine pre-quiz setup with Test yourself/Practice presets, saved custom presets, and independent display, feedback, and shuffle choices.
+- Preserve presets and unfinished flags/missed-question attempts through restart and backup/restore; bound large palettes to 100 squares.
+
+Validation: syntax, core and Electron workflows, dependency/secret checks, visual review, installer build, in-place reinstall, and unchanged library hashes.
+
+Known limitations: flags belong to unfinished attempts; progress colors show completion, not answer correctness. Older readers cannot resume missed-only sessions or retain presets/flags. Plugins and Explore discovery remain Alpha goals.
+
+## Quiznet Alpha 5
+
+Stage: **Alpha**. Internal installer build: `1.8.0`.
+
+- Add **Prepare with an agent** inside New quiz alongside manual creation; keep the selected unit in the returned-file import preview.
+- Show pre-start choices for feedback, total/question timer visibility, and question shuffling on every new attempt.
+- Add instant Correct/Incorrect feedback and explanations, with explicit checking for multiple answers.
+- Lock checked responses in the core and preserve settings/feedback across navigation, restart, and backup/restore.
+- Retain the existing editable-answer review mode by default, and compare previous results only within the same feedback mode.
+
+Validation: syntax, core and Electron workflows, dependency/secret checks, visual review, installer build, in-place reinstall, and unchanged library hashes.
+
+Known limitations: hiding timers affects the live quiz, while timing remains available in results. Checked instant-feedback answers require a new attempt to change. Older versions discard practice metadata. Plugins and Explore discovery remain Alpha goals.
+
+## Quiznet Alpha 4
+
+Stage: **Alpha**. Internal installer build: `1.7.0`.
+
+- Add **Prepare a quiz**, a compact offline instruction builder with optional Advanced preferences.
+- Let users choose exact question mixes/counts, delegate choices to the agent, or require the agent to ask first.
+- Configure difficulty, connected ideas, thinking skills, coverage, language, attachments, explanations, references, and names.
+- Save or copy Markdown instructions containing the existing JSON import contract, dynamic type/attachment limits, examples, and source-grounded quality checks.
+- Keep drafts in memory and import the complete returned JSON through the existing validated preview. No library migration, dependency, or AI/network service is added.
+
+Validation: syntax, core and Electron workflows, dependency/secret checks, visual review, installer build, in-place reinstall, and unchanged library hashes.
+
+Known limitations: external agents must follow the instructions and their answers need review. Image embedding depends on the agent’s tools. Draft preferences last for the current app session. Plugins and Explore discovery remain Alpha goals.
+
 ## Quiznet Alpha 3
 
 Stage: **Alpha**. Internal installer build: `1.6.0`.

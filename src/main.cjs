@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, session, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session, shell, Menu, clipboard } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { pathToFileURL } = require('node:url');
@@ -6,6 +6,7 @@ const { Store } = require('./store.cjs');
 const core = require('./core.cjs');
 const { sampleLibrary } = require('./sample.cjs');
 const contentPolicy = require('./ui/content-policy.js');
+const instructions = require('./ui/instructions.js');
 app.setName('Quiznet');
 if (process.env.QUIZNET_TEST_DATA && !app.isPackaged) app.setPath('userData',path.resolve(process.env.QUIZNET_TEST_DATA));
 app.setAppUserModelId('com.quiznet.desktop');
@@ -63,6 +64,14 @@ if(primaryInstance) app.whenReady().then(async()=>{
   window.webContents.on('will-attach-webview',event=>event.preventDefault());
   handle('get',async()=>{await store.queue;return {library:structuredClone(store.data),meta:meta()};});
   handle('change',action=>store.change(data=>core.mutate(data,action)));
+  handle('instructions',async(action,preferences)=>{
+    if(!['save','copy'].includes(action))throw new Error('Choose Save Markdown or Copy instructions.');
+    const markdown=instructions.generate(preferences);
+    if(action==='copy'){clipboard.writeText(markdown);return true;}
+    const result=await dialog.showSaveDialog(window,{defaultPath:'Quiznet-instructions.md',filters:[{name:'Markdown instructions',extensions:['md']}],title:'Save quiz instructions'});
+    if(result.canceled)return false;
+    await fs.writeFile(result.filePath,markdown,'utf8');return true;
+  });
   handle('selectImage',async()=>{
     const result=await dialog.showOpenDialog(window,{title:'Add an image',properties:['openFile'],filters:[{name:'Images',extensions:['png','jpg','jpeg','gif','webp']}]});
     if (result.canceled) return null;

@@ -20,7 +20,7 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   await expect(page.locator('.unit-section')).toHaveCount(2);
   await page.screenshot({path:path.join(outputs,'Quiznet-course.png')});
   await expect(page.locator('.quiz-row [data-action="editQuiz"]')).toHaveCount(0);
-  await page.locator('.quiz-row').first().locator('[data-action="start"]').click();
+  await page.locator('.quiz-row').first().locator('[data-action="start"]').click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await page.locator('[data-action="answer"][data-index="1"]').click();
   await expect(page.locator('.answer-option.chosen')).toHaveCount(1);
   // Opening the app again restores this window and preserves the current answer.
@@ -65,7 +65,7 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   await page.getByLabel('Course name').fill('Physics');await page.getByRole('button',{name:'Create',exact:true}).click();
   await page.getByRole('button',{name:'New unit',exact:true}).click();
   await page.getByLabel('Unit name').fill('Unit 1: Waves');await page.getByRole('button',{name:'Create',exact:true}).click();
-  await page.getByRole('button',{name:'New quiz',exact:true}).click();
+  await page.getByRole('button',{name:'New quiz',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Wave basics');
   await page.locator('[data-editor="prompt"]').fill('What travels in a vacuum?');
   await page.getByRole('button',{name:'Add option',exact:true}).click();
@@ -117,7 +117,7 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   await page.waitForFunction(()=>innerWidth===760&&innerHeight===560);
   expect(await page.evaluate(()=>document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth)).toBe(true);
   await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();
-  await page.locator('.quiz-row').first().locator('[data-action="start"]').click();
+  await page.locator('.quiz-row').first().locator('[data-action="start"]').click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await page.locator('#question-jump').selectOption('4');
   await expect(page.getByRole('button',{name:'Finish',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Previous',exact:true}).click();

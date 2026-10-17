@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('quiznet',Object.freeze({
   importPreview:()=>invoke('importPreview'), importConfirm:(token,target)=>invoke('importConfirm',token,target),
   exportQuiz:id=>invoke('exportQuiz',id), backup:()=>invoke('backup'),
   selectImage:()=>invoke('selectImage'),
+  instructions:(action,preferences)=>invoke('instructions',action,preferences),
   restorePreview:()=>invoke('restorePreview'),restoreConfirm:token=>invoke('restoreConfirm',token),
   openData:()=>invoke('openData'),window:action=>invoke('window',action)
 }));

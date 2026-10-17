@@ -20,7 +20,7 @@ test('editor images and HTML survive export, import, restart, review and backup'
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const picture=path.join(directory,'cell.png');await fs.writeFile(picture,Buffer.from(example.questions[0].image.split(',')[1],'base64'));
   await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();
-  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();
+  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Cell image');
   await page.getByRole('combobox',{name:'Question format',exact:true}).selectOption('html');
   await page.locator('[data-editor="prompt"]').fill(example.questions[0].prompt);
@@ -50,7 +50,7 @@ test('editor images and HTML survive export, import, restart, review and backup'
   const moved=path.join(directory,'moved.json');await fs.rename(exported,moved);await fs.unlink(picture);
   await pick(moved);await openMenu('Import…');await page.locator('#import-target').selectOption('');await page.getByRole('button',{name:'Import',exact:true}).click();
   await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();
-  await page.getByRole('button',{name:'Start Cell image',exact:true}).click();
+  await page.getByRole('button',{name:'Start Cell image',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await expect(page.locator('.question-prompt strong')).toHaveText('organelle marked A');await loadedImage(page.locator('.question-prompt img'));
   await expect(page.locator('.answer-option').first().locator('strong')).toHaveText('Nucleus');
   await page.locator('[data-action="answer"][data-index="0"]').click();
@@ -101,7 +101,7 @@ test('rejects invalid image files and supports HTML imports without widening net
   await expect(page.evaluate(()=>window.quiznet.selectImage())).rejects.toThrow(/2 MB/);
   const exampleFile=path.resolve(__dirname,'../examples/images-html.json');await pick(exampleFile);await openMenu('Import…');
   await page.getByRole('button',{name:'Import',exact:true}).click();
-  await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();await page.getByRole('button',{name:'Start Images & HTML',exact:true}).click();
+  await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();await page.getByRole('button',{name:'Start Images & HTML',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await loadedImage(page.locator('.question-prompt img'));await page.getByRole('button',{name:'Next',exact:true}).click();
   await expect(page.locator('.question-prompt table td')).toHaveCount(2);await expect(page.locator('.answer-option sub')).toHaveCount(3);
   expect(await page.evaluate(async()=>{try{await fetch('https://example.com');return false;}catch{return true;}})).toBe(true);

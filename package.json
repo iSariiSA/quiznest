@@ -1,9 +1,9 @@
 {
   "name": "quiznet",
-  "version": "1.6.0",
+  "version": "1.10.0",
   "quiznetRelease": {
     "stage": "alpha",
-    "number": 3
+    "number": 7
   },
   "description": "Offline multiple-choice quizzes for Windows.",
   "main": "src/main.cjs",

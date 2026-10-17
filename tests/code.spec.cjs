@@ -12,7 +12,7 @@ const markdown='**What is the output?**\n\n```javascript\nconst values = [1, 2, 
 test('author code and Markdown, preview, export, restart, review and restore offline',async()=>{
   const errors=[];const track=()=>page.on('pageerror',error=>errors.push(error.message));track();
   await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();
-  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();
+  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Code questions');
   let section=page.locator('.editor-question').first();
   await section.getByLabel('Question format',{exact:true}).selectOption('html');
@@ -43,7 +43,7 @@ test('author code and Markdown, preview, export, restart, review and restore off
   // Reimport a portable file using the real parser and native-dialog path.
   await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},exported);
   await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Import…',exact:true}).click();await page.getByRole('button',{name:'Import',exact:true}).click();
-  await page.getByRole('button',{name:'Start Code questions (2)',exact:true}).click();
+  await page.getByRole('button',{name:'Start Code questions (2)',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await expect(page.locator('.question-prompt strong')).toHaveText('What values are printed?');
   expect(await page.locator('.question-prompt .code-block code').textContent()).toBe(python);
   await page.screenshot({path:path.join(outputs,'Quiznet-python-question.png')});

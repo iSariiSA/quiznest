@@ -10,7 +10,7 @@ test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true
 test('mixed question editor, answer toggles, restart, exact scoring, export and backup',async()=>{
   const errors=[];const trackErrors=()=>page.on('pageerror',e=>errors.push(e.message));trackErrors();
   await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();
-  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();
+  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Mixed practice');
   let section=page.locator('.editor-question').first();
   await section.getByLabel('Question type').selectOption('multiple-answer');
@@ -53,7 +53,7 @@ test('mixed question editor, answer toggles, restart, exact scoring, export and 
   await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},exported);
   await page.getByRole('button',{name:'Options for Mixed practice'}).click();await page.getByRole('menuitem',{name:'Export…',exact:true}).click();await expect(page.locator('#toast')).toContainText('Exported');
   const pack=JSON.parse(await fs.readFile(exported,'utf8'));expect(pack.questions[0].correctAnswers).toEqual([0,8]);expect(pack.questions[1].options).toEqual(['صحيح','خطأ']);
-  await page.getByRole('button',{name:'Start Mixed practice',exact:true}).click();
+  await page.getByRole('button',{name:'Start Mixed practice',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await expect(page.locator('.answer-option')).toHaveCount(9);
   await page.keyboard.press('1');await expect(page.locator('.answer-option.chosen')).toHaveCount(1);
   await page.keyboard.press('2');await expect(page.locator('.answer-option.chosen')).toHaveCount(2);
