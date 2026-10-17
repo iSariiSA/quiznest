@@ -4,7 +4,7 @@ A local Windows app for organizing **Courses → Units → Quizzes** and testing
 
 Quiznet runs offline and stores your material on your computer. This repository contains the source code, development guides, and Windows build workflow.
 
-The current release is **Quiznet Alpha 7**. Releases progress through **Alpha → Beta → Official Release**, with stage changes only when the owner approves them. **Plugins** and **Explore** (discovering tests shared by others) are the two major Alpha goals; both are planned. Beta will focus on wider testing, feedback, and fixes before the first Official Release. See the [release plan](docs/RELEASES.md) and [roadmap](docs/ROADMAP.md).
+The current release is **Quiznet Alpha 8**. Releases progress through **Alpha → Beta → Official Release**, with stage changes only when the owner approves them. **Plugins** and **Explore** (discovering tests shared by others) are the two major Alpha goals; both are planned. Beta will focus on wider testing, feedback, and fixes before the first Official Release. See the [release plan](docs/RELEASES.md) and [roadmap](docs/ROADMAP.md).
 
 The Focus identity uses a geometric Q, forest green, and sage on charcoal. See the [brand guide](docs/BRAND.md) for editable artwork, colors, and the icon export command.
 
@@ -12,7 +12,7 @@ The Focus identity uses a geometric Q, forest green, and sage on charcoal. See t
 
 ## Use it
 
-[Download Quiznet Alpha 7 for Windows](https://github.com/iSariiSA/quiznest/releases/download/v1.10.0/Quiznet-Setup.exe), or open [Releases](https://github.com/iSariiSA/quiznest/releases) and choose `Quiznet-Setup.exe` under **Assets**. Use the installer rather than the automatically generated source-code archives. Alpha builds are previews for testing and feedback.
+[Download Quiznet Alpha 8 for Windows](https://github.com/iSariiSA/quiznest/releases/download/v1.10.1/Quiznet-Setup.exe), or open [Releases](https://github.com/iSariiSA/quiznest/releases) and choose `Quiznet-Setup.exe` under **Assets**. Use the installer rather than the automatically generated source-code archives. Alpha builds are previews for testing and feedback.
 
 Run `Quiznet-Setup.exe` once, then open **Quiznet** from your Desktop or Start menu. It installs for your Windows account without administrator access. No account, browser, server, Node.js, or internet connection is required to use the app. The build supports Windows 10/11 on x64 computers. This personal-use build is unsigned.
 
@@ -20,7 +20,7 @@ For updates, run the new `Quiznet-Setup.exe`. It replaces the existing installat
 
 Start with the included Biology, Chemistry, and Mathematics sample courses, or create your own. You can edit or delete the samples.
 
-Known Alpha limitation: a very quick **Next** or **Finish** click while an answer is still saving can be ignored. If this happens, wait for the answer highlight and click again; the saved answer is retained.
+Quiz controls briefly pause while an answer is saved, then become available again. A failed save leaves the answer editable so you can retry.
 
 - Create, rename, and delete courses and units.
 - Create and edit mixed quizzes: single answer, multiple answers, and true/false, with optional explanations.

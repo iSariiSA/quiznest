@@ -1,6 +1,6 @@
 # Quiznet releases
 
-Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 7**; the first release under this naming scheme was Alpha 1. Remain in Alpha until the owner explicitly approves changing the stage.
+Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 8**; the first release under this naming scheme was Alpha 1. Remain in Alpha until the owner explicitly approves changing the stage.
 
 ## Names and stages
 
@@ -17,7 +17,7 @@ There is no automatic stage promotion, scheduled launch date, or change of stage
 - **Plugins — planned:** let Quiznet grow through optional capabilities for studying. Agree on the first useful extension and its interface before selecting the implementation.
 - **Explore — planned:** let people discover tests shared by others and add chosen tests to their own library. Agree on discovery, sharing, and distribution before selecting hosting or account requirements.
 
-These are development goals, not features available in Alpha 7; Explore currently has a placeholder screen only. See [ROADMAP.md](ROADMAP.md) for intended outcomes and readiness checks. Core studying and saved material must continue to work offline. Sharing must be explicit; do not automatically publish or upload private libraries.
+These are development goals, not features available in Alpha 8; Explore currently has a placeholder screen only. See [ROADMAP.md](ROADMAP.md) for intended outcomes and readiness checks. Core studying and saved material must continue to work offline. Sharing must be explicit; do not automatically publish or upload private libraries.
 
 ## Release metadata
 
@@ -26,7 +26,7 @@ These are development goals, not features available in Alpha 7; Explore currentl
 ```json
 "quiznetRelease": {
   "stage": "alpha",
-  "number": 7
+  "number": 8
 }
 ```
 
@@ -34,7 +34,7 @@ These are development goals, not features available in Alpha 7; Explore currentl
 
 For the next Alpha release, increment `quiznetRelease.number` while keeping `stage` equal to `alpha`. Only after explicit owner approval, set `stage` to `beta` or `official` and start that stage at number 1. The internal `version` must continue increasing for Windows installer ordering and diagnostics. Never set the technical version to the word Alpha or lower its numeric value just to match a public name.
 
-Alpha 7 uses internal installer build `1.10.0`. Alpha 6 used `1.9.0`. Alpha 5 used `1.8.0`. Alpha 4 used `1.7.0`. Alpha 3 used `1.6.0`. Alpha 2 used `1.5.0`. Alpha 1 used `1.4.3`, correcting the earlier `1.4.2` build to keep release planning out of Settings. Earlier numeric build records are retained for compatibility and traceability; they were not published GitHub releases. Do not rewrite Git history, old technical references, or the library schema to rename releases.
+Alpha 8 uses internal installer build `1.10.1`. Alpha 7 used `1.10.0`. Alpha 6 used `1.9.0`. Alpha 5 used `1.8.0`. Alpha 4 used `1.7.0`. Alpha 3 used `1.6.0`. Alpha 2 used `1.5.0`. Alpha 1 used `1.4.3`, correcting the earlier `1.4.2` build to keep release planning out of Settings. Earlier numeric build records are retained for compatibility and traceability; they were not published GitHub releases. Do not rewrite Git history, old technical references, or the library schema to rename releases.
 
 ## Preparing release notes
 

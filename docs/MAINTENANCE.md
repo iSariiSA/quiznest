@@ -2,7 +2,7 @@
 
 The owner controls releases and repository visibility. Change visibility only with explicit owner authorization, and keep the repository name and URL unchanged unless a change is requested.
 
-Public releases are named Alpha, Beta, and Official Release. The current release is **Quiznet Alpha 7**, using internal installer build `1.10.0`. Keep public release names, the stage plan, and development milestones in the GitHub repository and release notes only; Settings shows the technical app version for diagnostics. Remain in Alpha until the owner explicitly approves Beta. Plugins and Explore are the two major Alpha goals; Beta is for wider testing, feedback, and fixes, followed by an owner-approved Official Release. See [RELEASES.md](RELEASES.md) for the stage policy and [ROADMAP.md](ROADMAP.md) for feature status.
+Public releases are named Alpha, Beta, and Official Release. The current release is **Quiznet Alpha 8**, using internal installer build `1.10.1`. Keep public release names, the stage plan, and development milestones in the GitHub repository and release notes only; Settings shows the technical app version for diagnostics. Remain in Alpha until the owner explicitly approves Beta. Plugins and Explore are the two major Alpha goals; Beta is for wider testing, feedback, and fixes, followed by an owner-approved Official Release. See [RELEASES.md](RELEASES.md) for the stage policy and [ROADMAP.md](ROADMAP.md) for feature status.
 
 ## Code and data
 
@@ -26,6 +26,8 @@ Public releases are named Alpha, Beta, and Official Release. The current release
 | `src/sample.cjs` | Disposable demo material for a new library |
 
 The installer version in `package.json` is separate from the stored library's `version`. The current library schema is version 1. Bumping an app version does not require changing that schema.
+
+Internal version 1.10.1 marks quiz controls busy while a renderer mutation is being saved. Only controls that were enabled are restored after completion or failure; existing instant-feedback locks stay intact. The slow-save and failed-save Electron regressions use disposable synthetic libraries. Storage schema, scoring, and installer identity are unchanged.
 
 Internal version 1.10 refines the renderer only: New quiz opens a three-route chooser (manual, finished-file import, agent instructions), with course/unit context retained. Question states use corner triangles on neutral squares; an info dialog replaces the permanent legend, and the flag control stays in the navigation toolbar even when squares/progress are hidden. The live quiz displays only the type label. In instant mode, Next checks and locks multiple selections through the existing validated checkAnswer action, leaves feedback visible on that question, and Continue/Finish then proceeds. Empty selections stay editable; jumping to another question does not silently commit them. Single answers still reveal feedback on selection; review mode has no live feedback. Existing session flags, checked answers, presets, data schema, and timing semantics are unchanged.
 

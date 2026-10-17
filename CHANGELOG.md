@@ -1,5 +1,17 @@
 # Changelog
 
+## Quiznet Alpha 8
+
+Stage: **Alpha**. Internal installer build: `1.10.1`.
+
+- Show pending saves in quiz controls so quick Next/Finish actions wait for an answer to finish saving.
+- Restore usable controls after a failed write without changing the saved answer or the library schema.
+- Provide the public source repository and a direct Windows installer download through GitHub Releases.
+
+Validation: source checks, 28 core tests, 17 Electron workflow tests including slow-save and failed-save regressions, dependency/secret checks, installer build, in-place reinstall, and unchanged library hashes.
+
+Known limitations: the Windows installer is unsigned. Plugins and Explore discovery remain planned. Next goals are those Alpha features and reliability improvements from feedback.
+
 ## Quiznet Alpha 7
 
 Stage: **Alpha**. Internal installer build: `1.10.0`.

@@ -18,6 +18,8 @@ body { margin: 0; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; color: inherit; background: none; border: 0; }
 button:disabled { cursor: default; opacity: .35; }
+#main[aria-busy="true"] button:disabled { cursor: progress; }
+#main[aria-busy="true"] .answer-option:disabled { opacity: .55; }
 button, input, textarea, select, summary { outline-offset: 3px; }
 :focus-visible { outline: 2px solid var(--accent); }
 h1, h2, h3, p { margin: 0; }

@@ -23,7 +23,12 @@ const date=s=>new Date(s).toLocaleDateString(undefined,{month:'short',day:'numer
 const act=(name,attrs='')=>`data-action="${name}" ${attrs}`;
 const button=(label,action,cls='secondary',attrs='')=>`<button type="button" class="btn ${cls}" ${act(action,attrs)}>${label}</button>`;
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').classList.remove('visible'),4500);}
-async function change(action){data=await api.change(action);return data;}
+async function change(action){
+  const main=$('#main'),controls=view.page==='quiz'?[...document.querySelectorAll('button[data-action], #question-jump')].filter(control=>!control.disabled):[];
+  if(controls.length){main.setAttribute('aria-busy','true');for(const control of controls)control.disabled=true;}
+  try{data=await api.change(action);return data;}
+  finally{if(controls.length){for(const control of controls)if(control.isConnected)control.disabled=false;main.removeAttribute('aria-busy');}}
+}
 async function navigate(page,courseId=null,unitId=null){if(view.page==='quiz'&&page!=='quiz'&&data.activeSession)await change({type:'pause'});view={page,courseId,unitId};closeModal();render();$('#main').scrollTop=0;}
 function render(){
   closeMenu();
