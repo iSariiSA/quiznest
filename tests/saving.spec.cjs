@@ -11,6 +11,7 @@ test.beforeEach(async()=>{
   const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
   app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();
   await page.locator('.course-row button').click();await page.locator('[data-action="start"]').click();await page.getByRole('button',{name:'Start quiz',exact:true}).click();
+  await expect(page.locator('.question-prompt')).toContainText('One plus one?');
 });
 test.afterEach(async()=>{
   await app?.close();
