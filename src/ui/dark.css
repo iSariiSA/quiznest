@@ -94,6 +94,12 @@ h1, h2, h3 { font-weight: 600; }
 .empty-message { color: var(--muted); padding: 18px 0; }
 .quiz-header { max-width: 800px; margin: 0 auto 20px; display: flex; align-items: center; gap: 22px; }
 .quiz-header h1 { font-size: 14px; font-weight: 400; flex: 1; color: var(--muted); overflow-wrap: anywhere; }
+.quiz-timer { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; flex: none; white-space: nowrap; }
+.question-time { color: var(--muted); font-size: 11px; margin: 9px 0 0 24px; font-variant-numeric: tabular-nums; }
+.attempt-comparison { color: var(--muted); font-size: 12px; line-height: 1.7; margin-top: 8px; }
+.explore-placeholder { text-align: center; padding: 72px 20px; }
+.explore-placeholder h1 { font-size: 20px; margin-bottom: 12px; font-weight: 500; }
+.explore-placeholder p { color: var(--muted); font-size: 14px; }
 .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); padding: 6px 0; font-size: 13px; flex: none; }
 .back-link:hover { color: var(--text); }
 .back-link .icon { width: 15px; height: 15px; }

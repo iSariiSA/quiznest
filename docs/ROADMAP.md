@@ -11,7 +11,7 @@ The two major goals before Beta are:
 | Feature | Status | Intended outcome | Ready for Beta when |
 | --- | --- | --- | --- |
 | Plugins | Planned | Optional capabilities can extend how people study. | The agreed initial plugin workflow works, can be tested and maintained, and preserves the base application's offline study workflow and data. |
-| Explore | Planned | People can discover tests shared by others and add chosen tests to their own library. | The agreed discovery and sharing workflow works end to end, selected tests remain usable offline, imports are validated, and private material is shared only deliberately. |
+| Explore | Placeholder screen available; discovery/sharing planned | People can discover tests shared by others and add chosen tests to their own library. | The agreed discovery and sharing workflow works end to end, selected tests remain usable offline, imports are validated, and private material is shared only deliberately. |
 
 Choose the first plugin capability and Explore discovery/sharing model before implementing their architecture or adding services. Do not assume a marketplace, account system, public repository, hosting provider, or network access to private libraries.
 

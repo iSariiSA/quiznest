@@ -49,6 +49,11 @@ if(primaryInstance) app.whenReady().then(async()=>{
   store=new Store(path.join(app.getPath('userData'),'data'));
   try { await store.load(sampleLibrary); }
   catch(e) { await dialog.showMessageBox({type:'error',title:'Quiznet — library needs attention',message:e.message}); app.quit(); return; }
+  // The saved cursor belongs to the previous process. Never count time while the app was closed.
+  if(store.data.activeSession?.timing)store.data.activeSession.timing.runningSince=null;
+  setInterval(()=>{
+    if(!readyToQuit&&!quitSaving&&store.data.activeSession?.timing?.runningSince!=null)store.change(data=>core.mutate(data,{type:'tick'})).catch(()=>{});
+  },15000).unref();
   session.defaultSession.setPermissionRequestHandler((_,__,callback)=>callback(false));
   session.defaultSession.setPermissionCheckHandler(()=>false);
   session.defaultSession.webRequest.onBeforeRequest({urls:['http://*/*','https://*/*','ws://*/*','wss://*/*','ftp://*/*']},(_,callback)=>callback({cancel:true}));
@@ -87,7 +92,9 @@ if(primaryInstance) app.whenReady().then(async()=>{
     // Embedded images and historical attempts can make backups larger than quiz imports.
     const selected=await readSelected([{name:'Quiznet backup',extensions:['json']}],Infinity); if(!selected)return null;
     let raw;try{raw=JSON.parse(selected.source);}catch{throw new Error('This file is not valid JSON.');}
-    const library=core.validateLibrary(raw), token=addPending({type:'restore',library});
+    const library=core.validateLibrary(raw);
+    if(library.activeSession?.timing)library.activeSession.timing.runningSince=null;
+    const token=addPending({type:'restore',library});
     return {token,filename:path.basename(selected.file),courses:library.courses.length,quizzes:library.courses.flatMap(c=>c.units.flatMap(u=>u.quizzes)).length};
   });
   handle('restoreConfirm',async token=>{
@@ -103,7 +110,11 @@ if(primaryInstance) app.whenReady().then(async()=>{
   await window.loadFile(path.join(__dirname,'ui/index.html'));
 }).catch(async e=>{await dialog.showMessageBox({type:'error',title:'Quiznet',message:e.message});app.quit();});
 app.on('window-all-closed',()=>app.quit());
-let readyToQuit=false;
+let readyToQuit=false,quitSaving=false;
 app.on('before-quit',event=>{
-  if(store && !readyToQuit) { event.preventDefault(); store.queue.finally(()=>{readyToQuit=true;app.quit();}); }
+  if(store && !readyToQuit) {
+    event.preventDefault();if(quitSaving)return;quitSaving=true;
+    const saved=store.queue.then(()=>store.data?.activeSession?.timing?.runningSince!=null?store.change(data=>core.mutate(data,{type:'pause'})):undefined);
+    saved.then(()=>{readyToQuit=true;app.quit();}).catch(async error=>{quitSaving=false;await dialog.showMessageBox({type:'error',title:'Quiznet',message:`Your latest quiz time could not be saved. Please try closing again. ${error.message}`});});
+  }
 });

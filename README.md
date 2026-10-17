@@ -4,7 +4,7 @@ A local Windows app for organizing **Courses → Units → Quizzes** and testing
 
 Quiznet runs offline and stores your material on your computer. The repository is currently private; its contributor and maintenance guides prepare it for future development and eventual public release.
 
-The current release is **Quiznet Alpha 2**. Releases progress through **Alpha → Beta → Official Release**, with stage changes only when the owner approves them. **Plugins** and **Explore** (discovering tests shared by others) are the two major Alpha goals; both are planned. Beta will focus on wider testing, feedback, and fixes before the first Official Release. See the [release plan](docs/RELEASES.md) and [roadmap](docs/ROADMAP.md).
+The current release is **Quiznet Alpha 3**. Releases progress through **Alpha → Beta → Official Release**, with stage changes only when the owner approves them. **Plugins** and **Explore** (discovering tests shared by others) are the two major Alpha goals; both are planned. Beta will focus on wider testing, feedback, and fixes before the first Official Release. See the [release plan](docs/RELEASES.md) and [roadmap](docs/ROADMAP.md).
 
 The Focus identity uses a geometric Q, forest green, and sage on charcoal. See the [brand guide](docs/BRAND.md) for editable artwork, colors, and the icon export command.
 
@@ -30,7 +30,19 @@ Start with the included Biology, Chemistry, and Mathematics sample courses, or c
 - Take quizzes with optional question shuffling, question navigation, and keyboard shortcuts.
 - Leave a quiz and resume it later, including after closing the app.
 - See your score, correct answers, explanations, and practice history.
+- Use a small quiz stopwatch, see question times in review, and compare results with your previous attempt.
+- Open Explore to its current “Coming soon” placeholder.
 - Export individual quizzes, back up the whole library, and restore a backup.
+
+## Quiz timing
+
+The quiz header has a small stopwatch that counts up with no time limit or effect on your score. It measures time while the quiz screen is open, including time spent reconsidering answers. Leaving the quiz for another screen or closing the app pauses it; Resume continues from the saved total. Minimized windows and temporary dialogs still count while the quiz remains open.
+
+Each question records the time you spend viewing it, including revisits. These timers stay hidden during the quiz and appear as **Time spent** in the finished review. Results and history show total time. Results compare your score and time with the previous attempt at the same questions; timing comparisons require complete active-study timing on both attempts. Editing a quiz starts a new set of questions for comparisons.
+
+Older results retain their recorded durations and scores but have no invented question times. When an older unfinished quiz is resumed, timing starts from that point and the completed result labels it **Tracked time**. Answers and progress remain intact. Timing is saved on answers, navigation, and normal closing, with a checkpoint every 15 seconds while studying. A crash may lose only the time since the latest save.
+
+Explore currently contains only **Coming soon**. It does not connect to a server or upload your study material.
 
 ## Local storage
 

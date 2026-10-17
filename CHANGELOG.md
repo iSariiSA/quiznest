@@ -1,5 +1,20 @@
 # Changelog
 
+## Quiznet Alpha 3
+
+Stage: **Alpha**. Internal installer build: `1.6.0`.
+
+- Show a small count-up timer in the quiz header, with no limit, countdown, or time-based grading.
+- Pause study timing when leaving the quiz or closing the app, and resume accumulated time later.
+- Record time spent on each question across visits and show it only in the finished review.
+- Show total time in results/history and compare scores and active study time with the previous attempt at the same questions.
+- Add an Explore navigation item and a simple “Coming soon” screen; shared-test discovery is still planned.
+- Preserve older history and unfinished attempts; label timing begun on older attempts as partial rather than inventing earlier question times.
+
+Validation: syntax, core and Electron workflows, dependency/secret checks, visual review, installer build, in-place reinstall, and unchanged library hashes.
+
+Known limitations: older attempts have no per-question times. Abrupt termination can lose time since the last answer, navigation, or 15-second checkpoint; normal app closing flushes timing. Plugins and Explore discovery remain Alpha goals.
+
 ## Quiznet Alpha 2
 
 Stage: **Alpha**. Internal installer build: `1.5.0`.

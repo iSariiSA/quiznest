@@ -10,6 +10,49 @@ const q={prompt:'A question?',options:['One','Two'],correctAnswer:0,explanation:
 const media=require('../examples/images-html.json').questions[0];
 const policy=require('../src/ui/content-policy.js');
 const codePolicy=require('../src/ui/code-policy.js');
+const timing=require('../src/ui/timing.js');
+
+test('study timers accumulate revisits, exclude pauses, stop at finish, and align with shuffled questions',()=>{
+  const data=sampleLibrary(),quiz=data.courses[0].units[0].quizzes[0];
+  const run=(action,now)=>core.mutate(data,action,now);
+  run({type:'start',quizId:quiz.id,shuffle:true},1000);const order=[...data.activeSession.questionIds];
+  run({type:'position',position:1},6000);run({type:'answer',questionId:order[1],answer:0},8000);
+  run({type:'position',position:0},9000);run({type:'pause'},11000);
+  assert.equal(data.activeSession.timing.elapsedMs,10000);assert.equal(data.activeSession.timing.questionMs[order[0]],7000);assert.equal(data.activeSession.timing.questionMs[order[1]],3000);
+  run({type:'tick'},90000);assert.equal(data.activeSession.timing.elapsedMs,10000);
+  run({type:'resume'},100000);run({type:'resume'},101000);run({type:'tick'},102000);
+  assert.equal(data.activeSession.timing.elapsedMs,12000);
+  run({type:'tick'},101000);assert.equal(data.activeSession.timing.elapsedMs,12000);
+  for(const item of quiz.questions)run({type:'answer',questionId:item.id,answer:item.correctAnswer},101000);
+  run({type:'finish'},102000);
+  const attempt=data.attempts.at(-1);assert.equal(attempt.elapsedSeconds,13);assert.equal(attempt.timingMode,'active');assert.equal(attempt.score,5);
+  assert.deepEqual(attempt.questions.map(q=>q.id),order);assert.deepEqual(attempt.questionTimesMs,[10000,3000,0,0,0]);
+  assert.deepEqual(core.validateLibrary(data),data);assert.equal(data.activeSession,null);
+  assert.equal(timing.duration(75000),'01:15');assert.equal(timing.duration(3661000),'1:01:01');assert.equal(timing.duration(100*3600000),'100:00:00');
+});
+
+test('legacy history and unfinished attempts retain answers; partial timings never invent past question times',()=>{
+  const data=sampleLibrary(),quiz=data.courses[0].units[0].quizzes[0];
+  core.mutate(data,{type:'start',quizId:quiz.id},1000);delete data.activeSession.timing;
+  for(const item of quiz.questions)core.mutate(data,{type:'answer',questionId:item.id,answer:item.correctAnswer},2000);
+  assert.deepEqual(core.validateLibrary(data),data);
+  const legacy=structuredClone(data);core.mutate(legacy,{type:'finish'},9000);assert.equal(legacy.attempts[0].elapsedSeconds,8);assert.equal(legacy.attempts[0].questionTimesMs,undefined);
+  assert.deepEqual(core.validateLibrary(legacy),legacy);
+  core.mutate(data,{type:'resume'},100000);assert.equal(data.activeSession.timing.partial,true);
+  core.mutate(data,{type:'finish'},103000);assert.equal(data.attempts[0].elapsedSeconds,3);assert.equal(data.attempts[0].timingMode,'active-partial');assert.deepEqual(data.attempts[0].questionTimesMs,[3000,null,null,null,null]);
+  assert.deepEqual(core.validateLibrary(data),data);
+});
+
+test('timing backup validation rejects invalid durations, totals, cursors, and unknown question IDs',()=>{
+  const data=sampleLibrary(),quiz=data.courses[0].units[0].quizzes[0];core.mutate(data,{type:'start',quizId:quiz.id},1000);core.mutate(data,{type:'pause'},5000);
+  for(const edit of [t=>t.elapsedMs=-1,t=>t.runningSince=NaN,t=>t.partial='no',t=>t.questionMs.extra=0,t=>t.elapsedMs++,t=>t.questionMs[quiz.questions[0].id]=Infinity]){
+    const bad=structuredClone(data);edit(bad.activeSession.timing);assert.throws(()=>core.validateLibrary(bad),/timing/);
+  }
+  for(const item of quiz.questions)core.mutate(data,{type:'answer',questionId:item.id,answer:item.correctAnswer},5000);core.mutate(data,{type:'finish'},6000);
+  for(const edit of [a=>a.questionTimesMs[0]=-1,a=>a.questionTimesMs.pop(),a=>a.elapsedSeconds++,a=>a.questionTimesMs[0]=null,a=>a.timingMode='unknown']){
+    const bad=structuredClone(data);edit(bad.attempts[0]);assert.throws(()=>core.validateLibrary(bad),/timing/);
+  }
+});
 
 test('code and Markdown validation preserves code whitespace and existing plain questions',()=>{
   const code='\nfor number in range(3):\n    print(number)\n';

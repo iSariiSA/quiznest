@@ -2,7 +2,7 @@
 
 The owner controls releases and repository visibility. Keep the current repository private until explicitly instructed otherwise.
 
-Public releases are named Alpha, Beta, and Official Release. The current release is **Quiznet Alpha 2**, using internal installer build `1.5.0`. Keep public release names, the stage plan, and development milestones in the GitHub repository and release notes only; Settings shows the technical app version for diagnostics. Remain in Alpha until the owner explicitly approves Beta. Plugins and Explore are the two major Alpha goals; Beta is for wider testing, feedback, and fixes, followed by an owner-approved Official Release. See [RELEASES.md](RELEASES.md) for the stage policy and [ROADMAP.md](ROADMAP.md) for feature status.
+Public releases are named Alpha, Beta, and Official Release. The current release is **Quiznet Alpha 3**, using internal installer build `1.6.0`. Keep public release names, the stage plan, and development milestones in the GitHub repository and release notes only; Settings shows the technical app version for diagnostics. Remain in Alpha until the owner explicitly approves Beta. Plugins and Explore are the two major Alpha goals; Beta is for wider testing, feedback, and fixes, followed by an owner-approved Official Release. See [RELEASES.md](RELEASES.md) for the stage policy and [ROADMAP.md](ROADMAP.md) for feature status.
 
 ## Code and data
 
@@ -15,6 +15,7 @@ Public releases are named Alpha, Beta, and Official Release. The current release
 | `src/preload.cjs` | Narrow renderer API |
 | `src/ui/renderer.js` | Navigation, quiz runner, editor, and formatted question presentation |
 | `src/ui/question-types.js` | Shared type catalog, choice limits/labels, answer validation, selection, and scoring |
+| `src/ui/timing.js` | Active study-time accounting, validation, and duration formatting |
 | `src/ui/content.js` | Inert HTML parsing and reconstruction using safe formatting tags |
 | `src/ui/code-policy.js` | Shared language catalog, aliases, and code/Markdown limits |
 | `scripts/sync-content-vendor.cjs` | Reproducible offline browser libraries and license verification |
@@ -23,6 +24,12 @@ Public releases are named Alpha, Beta, and Official Release. The current release
 | `src/sample.cjs` | Disposable demo material for a new library |
 
 The installer version in `package.json` is separate from the stored library's `version`. The current library schema is version 1. Bumping an app version does not require changing that schema.
+
+Internal version 1.6 adds optional session `timing: { elapsedMs, questionMs, runningSince, partial }` and attempt `timingMode` (`active` or `active-partial`) plus `questionTimesMs` in snapshot order. Millisecond values are nonnegative safe integers; totals are validated against per-question sums and the existing rounded `elapsedSeconds`. Returning to a question adds to its total. Single-answer and multiple-answer grading is unchanged.
+
+The main process owns the timing clock and serialized writes. Answers, position changes, pause, finish, 15-second checkpoints, and graceful app shutdown settle elapsed time. Navigation out of the quiz pauses it. Timers use the device clock with a nonnegative delta guard; keep the system clock stable for accurate durations. On startup, clear the old running cursor in memory without rewriting the library. Restored backups also start paused. Only accumulated time survives a restart, so downtime is excluded; a crash may lose time since the latest checkpoint. Normal closing waits for timing and pending writes before quitting.
+
+Existing history retains its original elapsed duration. Old unfinished sessions acquire partial timing only when resumed, retaining their answers and original start date. Unknown earlier question durations stay null and are omitted in review. Time comparisons require two full active-timing attempts with the same question IDs; older/partial attempts can still be compared by score. No migration or startup rewrite is required. Older readers discard these optional analytics, so preserve a backup before rollback.
 
 Internal version 1.5 adds `format: "markdown"`, optional `code` text, and `codeLanguage`. Code retains its exact stored whitespace; renderer code blocks preserve indentation and use LTR layout and scrolling. These fields travel through question validation, portable imports/exports, snapshots, backup/restore, and saved attempts. Old libraries need no migration or startup rewrite. Do not downgrade a Markdown/code library to an older reader; preserve a backup before rollback.
 

@@ -2,6 +2,7 @@ const { randomUUID } = require('node:crypto');
 const { MAX_HTML_LENGTH, imageData } = require('./ui/content-policy.js');
 const questionModel = require('./ui/question-types.js');
 const codePolicy = require('./ui/code-policy.js');
+const timing = require('./ui/timing.js');
 const id = () => randomUUID();
 const COLORS = ['sage', 'peach', 'lavender', 'blue', 'sand'];
 function text(value, label, max = 200) {
@@ -143,7 +144,7 @@ function validateLibrary(raw) {
     if (!a || typeof a.quizId !== 'string' || !Array.isArray(a.questions) || !Array.isArray(a.answers) || !Number.isFinite(a.elapsedSeconds) || a.elapsedSeconds < 0 || !Number.isFinite(Date.parse(a.completedAt))) throw new Error('Backup contains an invalid attempt.');
     const questions = a.questions.map(question);
     if (!questions.length || a.answers.length !== questions.length || a.answers.some((v,i) => !questionModel.validAnswer(questions[i],v))) throw new Error('Backup contains invalid answers.');
-    return { id: checkedID(a.id), quizId: a.quizId, title: text(a.title, 'Attempt title'), completedAt: a.completedAt, elapsedSeconds: a.elapsedSeconds, questions, answers: structuredClone(a.answers), total: questions.length, score: questions.filter((q,i)=>questionModel.isCorrect(q,a.answers[i])).length };
+    return { id: checkedID(a.id), quizId: a.quizId, title: text(a.title, 'Attempt title'), completedAt: a.completedAt, elapsedSeconds: a.elapsedSeconds, questions, answers: structuredClone(a.answers), total: questions.length, score: questions.filter((q,i)=>questionModel.isCorrect(q,a.answers[i])).length, ...timing.validateAttempt(a,questions.length) };
   });
   if (raw.activeSession) {
     const s = raw.activeSession, q = findQuiz(library,s.quizId)?.quiz;
@@ -155,6 +156,7 @@ function validateLibrary(raw) {
       answers[key] = structuredClone(value);
     }
     library.activeSession = { quizId:s.quizId, questionIds:s.questionIds, answers, position:s.position, startedAt:s.startedAt };
+    if(s.timing!==undefined)library.activeSession.timing=timing.validate(s.timing,s.questionIds);
   }
   return library;
 }
@@ -178,7 +180,7 @@ function importPacks(data, packs, target) {
     unit.quizzes.push({ id:id(), title, questions:p.questions.map((q,i)=>({...question(q,i),id:id()})), createdAt:new Date().toISOString() });
   }
 }
-function mutate(data, action) {
+function mutate(data, action, now=Date.now()) {
   if (!action || typeof action.type !== 'string') throw new Error('Invalid action.');
   const course = data.courses.find(c => c.id === action.courseId);
   const unit = course?.units.find(u => u.id === action.unitId);
@@ -224,26 +226,35 @@ function mutate(data, action) {
       if (data.activeSession) throw new Error('Resume or discard your unfinished quiz first.');
       const questionIds=found.quiz.questions.map(q=>q.id);
       if (action.shuffle) for (let i=questionIds.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [questionIds[i],questionIds[j]]=[questionIds[j],questionIds[i]]; }
-      data.activeSession={quizId:found.quiz.id,questionIds,answers:{},position:0,startedAt:new Date().toISOString()}; break;
+      data.activeSession={quizId:found.quiz.id,questionIds,answers:{},position:0,startedAt:new Date(now).toISOString()};timing.begin(data.activeSession,now);break;
     }
     case 'answer': {
       const s=data.activeSession; if (!s) throw new Error('No quiz in progress.');
       const q=findQuiz(data,s.quizId).quiz.questions.find(q=>q.id===action.questionId);
       if (!q || !questionModel.validAnswer(q,action.answer,true)) throw new Error('Invalid answer.');
+      timing.settle(s,now);
       s.answers[q.id]=structuredClone(action.answer); break;
     }
     case 'position': {
       const s=data.activeSession;
       if (!s || !Number.isInteger(action.position) || action.position<0 || action.position>=s.questionIds.length) throw new Error('Invalid question position.');
-      s.position=action.position; break;
+      timing.settle(s,now);s.position=action.position;if(s.timing)s.timing.questionMs[s.questionIds[s.position]]??=0;break;
     }
+    case 'resume': {
+      const s=data.activeSession;if(!s)throw new Error('No quiz in progress.');
+      if(!s.timing)timing.begin(s,now,true);else if(s.timing.runningSince===null)s.timing.runningSince=now;
+      break;
+    }
+    case 'pause':timing.settle(data.activeSession,now);if(data.activeSession?.timing)data.activeSession.timing.runningSince=null;break;
+    case 'tick':timing.settle(data.activeSession,now);break;
     case 'discard': data.activeSession=null; break;
     case 'finish': {
       const s=data.activeSession; if (!s) throw new Error('No quiz in progress.');
       const q=findQuiz(data,s.quizId).quiz;
       if (s.questionIds.some(key=>!questionModel.validAnswer(q.questions.find(item=>item.id===key),s.answers[key]))) throw new Error('Answer every question before finishing.');
+      timing.settle(s,now);
       const questions=s.questionIds.map(key=>q.questions.find(q=>q.id===key)), answers=s.questionIds.map(key=>s.answers[key]);
-      data.attempts.push({id:id(),quizId:q.id,title:q.title,questions:structuredClone(questions),answers:structuredClone(answers),score:questions.filter((q,i)=>questionModel.isCorrect(q,answers[i])).length,total:questions.length,completedAt:new Date().toISOString(),elapsedSeconds:Math.max(0,Math.round((Date.now()-Date.parse(s.startedAt))/1000))});
+      data.attempts.push({id:id(),quizId:q.id,title:q.title,questions:structuredClone(questions),answers:structuredClone(answers),score:questions.filter((q,i)=>questionModel.isCorrect(q,answers[i])).length,total:questions.length,completedAt:new Date(now).toISOString(),elapsedSeconds:s.timing?Math.round(s.timing.elapsedMs/1000):Math.max(0,Math.round((now-Date.parse(s.startedAt))/1000)),...timing.attemptFields(s)});
       data.activeSession=null; break;
     }
     default: throw new Error('Unknown action.');
