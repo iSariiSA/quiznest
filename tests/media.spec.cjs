@@ -24,6 +24,7 @@ test('editor images and HTML survive export, import, restart, review and backup'
   await page.getByLabel('Quiz title').fill('Cell image');
   await page.getByRole('checkbox',{name:'HTML',exact:true}).check();
   await page.locator('[data-editor="prompt"]').fill(example.questions[0].prompt);
+  while(await page.locator('[data-editor="option"]').count()<example.questions[0].options.length) await page.getByRole('button',{name:'Add option',exact:true}).click();
   for (const [i,option] of example.questions[0].options.entries()) await page.locator(`[data-editor="option"][data-option="${i}"]`).fill(option);
   await page.locator('[data-editor="explanation"]').fill(example.questions[0].explanation);
   await pick(picture);await page.getByRole('button',{name:'Add image',exact:true}).click();

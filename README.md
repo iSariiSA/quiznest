@@ -1,8 +1,12 @@
 # Quiznet
 
-A local Windows app for organizing **Courses → Units → Quizzes** and practicing multiple-choice questions. The interface uses a dark theme, compact lists, and menus for secondary actions.
+A local Windows app for organizing **Courses → Units → Quizzes** and testing yourself with single-answer, multiple-answer, and true/false questions. The interface uses a dark theme, compact lists, and menus for secondary actions.
 
 Quiznet runs offline and stores your material on your computer. The repository is currently private; its contributor and maintenance guides prepare it for future development and eventual public release.
+
+The current release is **Quiznet Alpha 1**. Releases progress through **Alpha → Beta → Official Release**, with stage changes only when the owner approves them. **Plugins** and **Explore** (discovering tests shared by others) are the two major Alpha goals; both are planned. Beta will focus on wider testing, feedback, and fixes before the first Official Release. See the [release plan](docs/RELEASES.md) and [roadmap](docs/ROADMAP.md).
+
+The Focus identity uses a geometric Q, forest green, and sage on charcoal. See the [brand guide](docs/BRAND.md) for editable artwork, colors, and the icon export command.
 
 ![Quiznet library](assets/screenshots/library.png)
 
@@ -17,7 +21,8 @@ For updates, run the new `Quiznet-Setup.exe`. It replaces the existing installat
 Start with the included Biology, Chemistry, and Mathematics sample courses, or create your own. You can edit or delete the samples.
 
 - Create, rename, and delete courses and units.
-- Create and edit quizzes, including explanations and 2–8 answer options.
+- Create and edit mixed quizzes: single answer, multiple answers, and true/false, with optional explanations.
+- Add or remove choices as needed (2–100 for choice questions); edit true/false labels in your language.
 - Add local images and use HTML formatting in questions, options, and explanations.
 - Use the top-right **…** menu to import JSON/CSV, open Settings, or view Help.
 - Preview imports and choose a destination course/unit.
@@ -56,9 +61,13 @@ To move to another computer, install Quiznet there and use **Save backup** and *
 }
 ```
 
-`correctAnswer` is a **zero-based number**: 0 is the first answer, 1 the second, and so on. A letter (`A`–`H`) or exact option text is also accepted. Each question has exactly one correct answer; explanations are optional.
+`correctAnswer` is a **zero-based number**: 0 is the first answer, 1 the second, and so on. An option letter (`A`, …, `Z`, `AA`, …) or exact option text is also accepted. Explanations are optional. Omitted `type` means `single-choice`, preserving existing quizzes.
 
-Aliases: `question` for `prompt`, `choices` for `options`, and `answer` or `correctIndex` for `correctAnswer`. Arrays of `{ "text": "…", "isCorrect": true/false }` options are accepted when exactly one is marked correct. A bare questions array is accepted. To import several quizzes, use `{ "quizzes": [<quiz>, <quiz>] }`.
+Set `"type": "multiple-answer"` and use `"correctAnswers": [0, 2]` for a question with several correct choices. The array must contain at least one distinct valid option; letters or exact option texts also work. During practice, click again to deselect a choice. Scoring requires the complete correct set without extra choices; there is no partial credit. At least one selection is required to finish.
+
+Set `"type": "true-false"` with two `options` and one `correctAnswer` for true/false questions. The two labels are editable content, so you can use other languages. All types support images and HTML. Mix types in any quiz; see [mixed-questions.json](examples/mixed-questions.json).
+
+Aliases: `question` for `prompt`, `choices` for `options`, and `answer` or `correctIndex` for `correctAnswer` (`answer` may be an array for multiple-answer questions). Arrays of `{ "text": "…", "isCorrect": true/false }` options are accepted with one marked correct for single answers, or one or more for multiple answers. A bare questions array is accepted. To import several quizzes, use `{ "quizzes": [<quiz>, <quiz>] }`.
 
 Missing course/unit names default to `Imported course` and `Unit 1`. The preview lets you override the destination. Matching course/unit names reuse the existing items; duplicate quiz titles receive a numeric suffix so existing quizzes are preserved.
 
@@ -89,7 +98,9 @@ course,unit,title,question,option_a,option_b,answer,explanation
 Biology,Unit 1: Cells,Quiz 1,Where is most DNA stored?,Nucleus,Ribosome,A,Inside the nucleus.
 ```
 
-Use consecutive `option_a` through `option_h` columns for 2–8 answers. CSV answers are letters or exact option text. Course, unit, title, and explanation are optional columns. Quotes support commas, escaped double quotes, and multiline text. Rows are grouped by course/unit/title.
+Use consecutive `option_a`, `option_b`, …, `option_z`, `option_aa`, … columns for 2–100 choices. Trailing empty option cells are ignored so rows can have different choice counts. CSV answers are letters or exact option text. Course, unit, title, and explanation are optional columns. Quotes support commas, escaped double quotes, and multiline text. Rows are grouped by course/unit/title.
+
+The optional `type` column accepts `single-choice`, `multiple-answer`, and `true-false`. For multiple answers, the `answer` cell is a JSON array, quoted as CSV requires, such as `"[0,2]"` or `"[""A"",""C""]"`. True/false rows need two nonempty option cells and one answer. Missing type uses single answer.
 
 Optional `format`, `image`, and `image_alt` columns support the same HTML mode and embedded images. Quote data URLs because they contain a comma, and escape double quotes in HTML as CSV requires.
 
@@ -100,7 +111,8 @@ Quiz import files are limited to 20 MB, 1,000 quizzes, and 10,000 questions per 
 | Shortcut | Action |
 | --- | --- |
 | Ctrl + K | Search courses, quizzes, units, and question text |
-| 1–8 | Select an answer while taking a quiz |
+| 1–9 | Select or toggle the corresponding answer while taking a quiz |
+| Tab, Shift + Tab, Space / Enter | Reach and select any choice, including beyond the first nine |
 | Left / right arrows | Move between questions |
 | Escape | Close a dialog |
 
@@ -133,6 +145,7 @@ For development, use a disposable library as described in [CONTRIBUTING.md](CONT
 - [Contributing](CONTRIBUTING.md): setup, isolated study data, checks, and pull requests.
 - [Maintenance](docs/MAINTENANCE.md): architecture, data compatibility, updates, releases, and publication checks.
 - [Roadmap](docs/ROADMAP.md): suggested priorities for reliability and study workflows.
+- [Release plan](docs/RELEASES.md): Alpha, Beta, Official Release, naming, and owner-controlled stage changes.
 - [Changelog](CHANGELOG.md): application changes and development improvements.
 
 MIT licensed.

@@ -4,6 +4,8 @@ Quiznet is a small offline Windows app for **Courses → Units → Quizzes**. Ch
 
 The repository is currently private. These guidelines also apply when the owner chooses to make it public.
 
+The current release stage is Alpha. Use public names such as `Quiznet Alpha 1` in repository release notes; the technical app version is available in Settings for bug reports. Keep release stages, the plan, and development milestones in the repository rather than the application's Settings. Keep `quiznetRelease.stage` unchanged unless the owner explicitly approves a new stage. Plugins and Explore are the major Alpha goals; completing them does not automatically start Beta. See [RELEASES.md](docs/RELEASES.md).
+
 ## Start with a focused change
 
 For a bug, describe how to reproduce it, what you expected, your Windows version, and the Quiznet version shown in Settings. Use sample questions and remove personal information from screenshots or attachments.

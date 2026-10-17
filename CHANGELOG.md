@@ -1,6 +1,42 @@
 # Changelog
 
-## 1.3.0
+## Quiznet Alpha 1
+
+Stage: **Alpha**. Current internal installer build: `1.4.3`.
+
+- Start repository release naming with Alpha; keep the stage plan and development milestones in the repository and release notes only.
+- Remove release planning from Settings; retain the technical version for diagnostics.
+- Keep stage and release number in package metadata, independent of internal Windows version numbers.
+- Remain in Alpha until the owner approves Beta. Plugins and Explore are the two major goals before that decision.
+- Plan Beta for wider testing, feedback, and fixes; the first Official Release follows testing and owner approval.
+- Retain existing study tools, the Focus identity, and the stable installer, installation, shortcut, and local data.
+
+Validation: syntax, core and Electron workflows, dependency and secret checks, Windows installer build, in-place reinstall, and unchanged library hashes. Release records are kept locally with the installer.
+
+Known limitations: Plugins and Explore are planned and are not available in this release. The interface is English; the personal-use installer is unsigned. Next goals: agree on and build the first Plugins and Explore workflows while continuing Alpha fixes.
+
+## Earlier internal builds
+
+These technical build records predate public Alpha naming and remain for compatibility tracking.
+
+### Internal build 1.4.1
+
+- Introduce the Focus Q identity, with matching header, title-bar, Windows, and installer icons.
+- Refine charcoal surfaces, muted text, and sage accents while retaining the compact layout.
+- Include editable vector artwork, a brand guide, and reproducible Windows icon exports.
+- Preserve question types, local study material, practice history, and unfinished attempts.
+
+### Internal build 1.4.0
+
+- Mix single-answer, multiple-answer, and true/false questions in any quiz.
+- Choose each question's type in the editor, mark several correct choices, and edit binary labels in any language.
+- Add and remove choice options up to a shared 100-option limit, with labels and CSV columns extending beyond Z.
+- Save multiple selections across restart and score the full answer set, with every selected and correct choice shown in review.
+- Share type definitions, answer validation, and scoring between the desktop UI and storage code, keeping persistent IDs separate from labels.
+- Preserve existing quizzes, historical attempts, and unfinished progress without rewriting the library on startup.
+- Extend JSON/CSV imports, exports, and backups for all supported types; include a mixed-quiz example.
+
+### Internal build 1.3.0
 
 - Attach local PNG, JPEG, GIF, and WebP images to questions, with optional descriptions.
 - Support HTML formatting in prompts, options, and explanations, with an editor preview.
@@ -15,20 +51,20 @@
 - Pin CI actions and configure monthly dependency-update proposals.
 - Use the maintainer's public GitHub identity in development history.
 
-## 1.2.0
+### Internal build 1.2.0
 
 - Install through one `Quiznet-Setup.exe` and update the existing application in place.
 - Keep the same Desktop and Start menu shortcuts and local library.
 - Restore the existing window when Quiznet is opened again.
 - Keep installer builds from publishing releases automatically.
 
-## 1.1.0
+### Internal build 1.1.0
 
 - Use a dark interface with compact course lists and quiz rows.
 - Move secondary actions into menus and open quizzes directly.
 - Keep question navigation, saved progress, results, and backups available with less visible text.
 
-## 1.0.0
+### Internal build 1.0.0
 
 - Organize courses, units, and multiple-choice quizzes locally.
 - Import JSON and CSV, create and edit quizzes, and export questions.

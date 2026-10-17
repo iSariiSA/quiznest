@@ -2,6 +2,8 @@
 
 The owner controls releases and repository visibility. Keep the current repository private until explicitly instructed otherwise.
 
+Public releases are named Alpha, Beta, and Official Release. The current release is **Quiznet Alpha 1**, using internal installer build `1.4.3`. Keep public release names, the stage plan, and development milestones in the GitHub repository and release notes only; Settings shows the technical app version for diagnostics. Remain in Alpha until the owner explicitly approves Beta. Plugins and Explore are the two major Alpha goals; Beta is for wider testing, feedback, and fixes, followed by an owner-approved Official Release. See [RELEASES.md](RELEASES.md) for the stage policy and [ROADMAP.md](ROADMAP.md) for feature status.
+
 ## Code and data
 
 | File | Responsibility |
@@ -9,14 +11,20 @@ The owner controls releases and repository visibility. Keep the current reposito
 | `src/core.cjs` | Import parsing, validation, hierarchy, scoring, and library schema |
 | `src/store.cjs` | Serialized transactions, atomic saves, rolling backup, and recovery |
 | `src/main.cjs` | Windows application, single-instance lock, file dialogs, and validated IPC |
+| `scripts/release.cjs` | Repository release names and validated package metadata; build tooling only |
 | `src/preload.cjs` | Narrow renderer API |
 | `src/ui/renderer.js` | Navigation, quiz runner, editor, and formatted question presentation |
+| `src/ui/question-types.js` | Shared type catalog, choice limits/labels, answer validation, selection, and scoring |
 | `src/ui/content.js` | Inert HTML parsing and reconstruction using safe formatting tags |
 | `src/ui/content-policy.js` | Shared raster image validation and size limits |
 | `src/ui/dark.css` | Compact dark interface |
 | `src/sample.cjs` | Disposable demo material for a new library |
 
 The installer version in `package.json` is separate from the stored library's `version`. The current library schema is version 1. Bumping an app version does not require changing that schema.
+
+Version 1.4 adds optional question `type`: `single-choice` (the default when omitted), `multiple-answer`, and `true-false`. Single answers retain scalar `correctAnswer` and scalar attempt/session answers. Multiple answers use `correctAnswers` and array attempt/session answers; sets are order-independent and scored with exact equality. Empty selection arrays are valid unfinished progress but cannot finish an attempt. Binary questions store two editable option labels and a scalar answer, without depending on English text. Choice questions share a configurable 2–100 limit; labels and CSV columns extend past Z. The shared type catalog separates persistent IDs from display labels and behavior, so adding choice-based types or translating their labels does not change storage IDs. Other response families will still need their own input and validation behavior. The full application interface is currently English.
+
+Existing version-1 libraries, history, and unfinished single-answer quizzes load without a migration or startup rewrite. Tests verify the original file is unchanged by loading. New fields survive exports, backups, history, and restart. Versions before 1.4 cannot safely read multiple-answer libraries; keep a backup before rollback and do not downgrade new-type data.
 
 Version 1.3 adds optional question fields: `format: "html"`, an embedded raster data URL in `image`, and `imageAlt`. Omitted fields retain the original plain-text behavior. Quiz exports and historical snapshots carry these fields. No migration or installation-time rewrite is required. Version 1.2 and earlier discard these extensions on validation, so do not recommend downgrading an image/HTML library; preserve a backup before any rollback.
 
@@ -36,7 +44,7 @@ Keep GitHub token permissions at read access for builds and disable persisted ch
 
 ## Build and verify an update
 
-1. Update the internal app version with `npm version <version> --no-git-tag-version` and update `CHANGELOG.md`. Keep the app ID, product name, data path, installer name, and shortcut name unchanged.
+1. Increment the public release number in `package.json` under `quiznetRelease`; keep the current stage unless the owner explicitly approved changing it. Increase the internal installer version with `npm version <version> --no-git-tag-version`. Run `npm run release:info` and update `CHANGELOG.md` using the public name and stage, changes, checks, limitations, and next goals. Keep the app ID, product name, data path, installer name, and shortcut name unchanged.
 2. Run syntax, core, Electron, dependency, and secret checks from `CONTRIBUTING.md`.
 3. Build on Windows:
 
@@ -63,7 +71,7 @@ The build creates an offline installer and does not publish automatically. `--pu
 
 The Windows workflow uploads `Quiznet-Windows`, containing `Quiznet-Setup.exe`. Artifact downloads require GitHub sign-in and read access, and artifacts can expire. [GitHub artifact documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts).
 
-After the owner approves a release, tag the tested commit with `v<app version>` and create a GitHub Release with that installer, its SHA256 checksum, and notes from the changelog. Verify the downloaded release asset against the checksum. Maintain one installer filename; releases do not create separate installed programs.
+After the owner approves publication, tag the tested commit with `v<app version>` and create a GitHub Release titled with the public name from `npm run release:info`, such as `Quiznet Alpha 1`. Mark Alpha and Beta as prereleases; mark Official Release as stable. Include the installer, its SHA256 checksum, and notes from the changelog. Verify the downloaded release asset against the checksum. Maintain one installer filename; releases do not create separate installed programs. Publishing or completing features never changes the stage automatically.
 
 For local delivery, update the existing installation and stable output filename. Archive older portable deliverables privately. Keep user backups and audit artifacts outside tracked source. The app uses local installers for updates; there is no network updater inside it.
 

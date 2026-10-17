@@ -68,6 +68,8 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   await page.getByRole('button',{name:'New quiz',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Wave basics');
   await page.locator('[data-editor="prompt"]').fill('What travels in a vacuum?');
+  await page.getByRole('button',{name:'Add option',exact:true}).click();
+  await page.getByRole('button',{name:'Add option',exact:true}).click();
   for(const [i,text] of ['Light','Sound','Water','Air'].entries())await page.locator(`[data-editor="option"][data-option="${i}"]`).fill(text);
   await page.locator('[data-editor="explanation"]').fill('Electromagnetic waves can travel in a vacuum.');
   await page.getByRole('button',{name:'Save quiz',exact:true}).click();await expect(page.locator('.quiz-info')).toContainText('Wave basics');
@@ -97,6 +99,9 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   const backup=path.join(directory,'exported-backup.json');
   await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
   await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();
+  await expect(page.locator('.version-label')).toHaveText(`Quiznet ${require('../package.json').version}`);
+  await expect(page.getByText('Release plan',{exact:true})).toHaveCount(0);
+  await expect(page.locator('#main')).not.toContainText('Alpha');
   await page.getByRole('button',{name:'Save backup',exact:true}).click();
   await expect(page.locator('#toast')).toContainText('Backup saved');
   const saved=JSON.parse(await fs.readFile(backup,'utf8'));expect(saved.courses).toHaveLength(4);expect(saved.attempts).toHaveLength(1);

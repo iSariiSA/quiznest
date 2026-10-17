@@ -1,5 +1,6 @@
 const { randomUUID } = require('node:crypto');
 const { MAX_HTML_LENGTH, imageData } = require('./ui/content-policy.js');
+const questionModel = require('./ui/question-types.js');
 const id = () => randomUUID();
 const COLORS = ['sage', 'peach', 'lavender', 'blue', 'sand'];
 function text(value, label, max = 200) {
@@ -10,28 +11,35 @@ function text(value, label, max = 200) {
 function question(raw, index = 0) {
   const label = `Question ${index + 1}`;
   if (!raw || typeof raw !== 'object') throw new Error(`${label} must be an object.`);
+  const type = questionModel.typeOf(raw);
   const format = raw.format ?? 'text';
   if (!['text','html'].includes(format)) throw new Error(`${label}: format must be text or html.`);
   const prompt = text(raw.prompt ?? raw.question, `${label}: prompt`, format==='html'?MAX_HTML_LENGTH:10000);
   const choices = raw.options ?? raw.choices;
-  if (!Array.isArray(choices) || choices.length < 2 || choices.length > 8)
-    throw new Error(`${label} needs 2–8 options.`);
+  if (!Array.isArray(choices) || choices.length < type.minOptions || choices.length > type.maxOptions)
+    throw new Error(`${label}: ${type.label} needs ${type.minOptions}–${type.maxOptions} options.`);
   const options = choices.map((v, i) => text(typeof v === 'object' && v ? v.text : v, `${label}: option ${i + 1}`, format==='html'?MAX_HTML_LENGTH:5000));
   if (new Set(options).size !== options.length) throw new Error(`${label} has duplicate options.`);
-  let answer = raw.correctAnswer ?? raw.answer ?? raw.correctIndex;
+  const multiple = type.selection === 'multiple';
+  if (multiple ? raw.correctAnswer !== undefined || raw.correctIndex !== undefined : raw.correctAnswers !== undefined)
+    throw new Error(`${label}: use ${multiple ? 'correctAnswers' : 'correctAnswer'} for this question type.`);
+  let answer = multiple ? raw.correctAnswers ?? raw.answer : raw.correctAnswer ?? raw.answer ?? raw.correctIndex;
   if (answer === undefined && choices.every(v => v && typeof v === 'object')) {
     const marked = choices.map((v, i) => v.isCorrect === true ? i : -1).filter(i => i >= 0);
-    if (marked.length === 1) answer = marked[0];
+    answer = multiple ? marked : marked.length === 1 ? marked[0] : undefined;
   }
-  if (typeof answer === 'string') {
-    const exact = options.indexOf(answer.trim());
-    answer = exact >= 0 ? exact : /^[A-H]$/i.test(answer.trim()) ? answer.trim().toUpperCase().charCodeAt(0) - 65 : NaN;
-  }
-  if (!Number.isInteger(answer) || answer < 0 || answer >= options.length)
-    throw new Error(`${label}: answer must be a zero-based option index, a letter (A–H), or exact option text.`);
+  const resolve = value => {
+    if (typeof value !== 'string') return value;
+    const exact = options.indexOf(value.trim());
+    return exact >= 0 ? exact : options.findIndex((_, i) => questionModel.optionLabel(i) === value.trim().toUpperCase());
+  };
+  answer = multiple && Array.isArray(answer) ? answer.map(resolve) : resolve(answer);
+  if (!questionModel.validAnswer({ type:type.id, options }, answer))
+    throw new Error(`${label}: ${multiple ? 'correctAnswers must be a nonempty array of distinct' : 'answer must be a'} zero-based option ${multiple ? 'indices, letters, or exact option texts' : 'index, letter, or exact option text'}.`);
   const explanation = raw.explanation ?? '';
   if (typeof explanation !== 'string' || explanation.length > (format==='html'?MAX_HTML_LENGTH:10000)) throw new Error(`${label}: invalid explanation.`);
-  const result = { id: typeof raw.id === 'string' ? raw.id : id(), prompt, options, correctAnswer: answer, explanation };
+  const result = { id: typeof raw.id === 'string' ? raw.id : id(), prompt, options, ...(multiple ? { correctAnswers:answer.sort((a,b)=>a-b) } : { correctAnswer:answer }), explanation };
+  if (raw.type !== undefined || multiple) result.type=type.id;
   if (format==='html') result.format='html';
   if (raw.image) {
     result.image=imageData(raw.image);
@@ -75,11 +83,18 @@ function parseImport(source, extension = 'json', filename = 'Imported quiz') {
       const course = r.course?.trim() || 'Imported course', unit = r.unit?.trim() || 'Unit 1', title = r.title?.trim() || filename;
       const key = JSON.stringify([course, unit, title]);
       if (!groups.has(key)) groups.set(key, { course, unit, title, questions: [] });
-      const cells = 'abcdefgh'.split('').map(l => r[`option_${l}`]);
+      const optionColumns=Object.keys(r).filter(key=>/^option_[a-z]+$/.test(key)).sort((a,b)=>a.length-b.length || a.localeCompare(b));
+      if (optionColumns.some((key,i)=>key!==`option_${questionModel.optionLabel(i).toLowerCase()}`)) throw new Error('CSV options must be consecutive, starting with option_a.');
+      const cells = optionColumns.map(key=>r[key]);
       const last = cells.findLastIndex(v => v?.trim());
       const options = cells.slice(0,last+1);
       if(options.some(v => !v?.trim())) throw new Error('CSV options must be consecutive, starting with option_a.');
-      groups.get(key).questions.push({ prompt: r.question, options, answer: r.answer, explanation: r.explanation || '', format:r.format?.trim()||'text', image:r.image||undefined, imageAlt:r.image_alt||'' });
+      const type=r.type?.trim()||'single-choice';
+      let answer=r.answer;
+      if (questionModel.typeOf({type}).selection==='multiple') {
+        try { answer=JSON.parse(answer); } catch { throw new Error('CSV multiple-answer answers must be a JSON array, such as [0,2] or ["A","C"].'); }
+      }
+      groups.get(key).questions.push({ type, prompt: r.question, options, answer, explanation: r.explanation || '', format:r.format?.trim()||'text', image:r.image||undefined, imageAlt:r.image_alt||'' });
     }
     packs = [...groups.values()];
   } else {
@@ -120,8 +135,8 @@ function validateLibrary(raw) {
   library.attempts = raw.attempts.map(a => {
     if (!a || typeof a.quizId !== 'string' || !Array.isArray(a.questions) || !Array.isArray(a.answers) || !Number.isFinite(a.elapsedSeconds) || a.elapsedSeconds < 0 || !Number.isFinite(Date.parse(a.completedAt))) throw new Error('Backup contains an invalid attempt.');
     const questions = a.questions.map(question);
-    if (!questions.length || a.answers.length !== questions.length || a.answers.some((v,i) => !Number.isInteger(v) || v < 0 || v >= questions[i].options.length)) throw new Error('Backup contains invalid answers.');
-    return { id: checkedID(a.id), quizId: a.quizId, title: text(a.title, 'Attempt title'), completedAt: a.completedAt, elapsedSeconds: a.elapsedSeconds, questions, answers: a.answers, total: questions.length, score: questions.filter((q,i)=>q.correctAnswer===a.answers[i]).length };
+    if (!questions.length || a.answers.length !== questions.length || a.answers.some((v,i) => !questionModel.validAnswer(questions[i],v))) throw new Error('Backup contains invalid answers.');
+    return { id: checkedID(a.id), quizId: a.quizId, title: text(a.title, 'Attempt title'), completedAt: a.completedAt, elapsedSeconds: a.elapsedSeconds, questions, answers: structuredClone(a.answers), total: questions.length, score: questions.filter((q,i)=>questionModel.isCorrect(q,a.answers[i])).length };
   });
   if (raw.activeSession) {
     const s = raw.activeSession, q = findQuiz(library,s.quizId)?.quiz;
@@ -129,8 +144,8 @@ function validateLibrary(raw) {
     const answers = {};
     for (const [key,value] of Object.entries(s.answers)) {
       const item = q.questions.find(item=>item.id===key);
-      if (!item || !Number.isInteger(value) || value < 0 || value >= item.options.length) throw new Error('Backup has an invalid saved answer.');
-      answers[key] = value;
+      if (!item || !questionModel.validAnswer(item,value,true)) throw new Error('Backup has an invalid saved answer.');
+      answers[key] = structuredClone(value);
     }
     library.activeSession = { quizId:s.quizId, questionIds:s.questionIds, answers, position:s.position, startedAt:s.startedAt };
   }
@@ -207,8 +222,8 @@ function mutate(data, action) {
     case 'answer': {
       const s=data.activeSession; if (!s) throw new Error('No quiz in progress.');
       const q=findQuiz(data,s.quizId).quiz.questions.find(q=>q.id===action.questionId);
-      if (!q || !Number.isInteger(action.answer) || action.answer<0 || action.answer>=q.options.length) throw new Error('Invalid answer.');
-      s.answers[q.id]=action.answer; break;
+      if (!q || !questionModel.validAnswer(q,action.answer,true)) throw new Error('Invalid answer.');
+      s.answers[q.id]=structuredClone(action.answer); break;
     }
     case 'position': {
       const s=data.activeSession;
@@ -219,13 +234,13 @@ function mutate(data, action) {
     case 'finish': {
       const s=data.activeSession; if (!s) throw new Error('No quiz in progress.');
       const q=findQuiz(data,s.quizId).quiz;
-      if (s.questionIds.some(key=>!Number.isInteger(s.answers[key]))) throw new Error('Answer every question before finishing.');
+      if (s.questionIds.some(key=>!questionModel.validAnswer(q.questions.find(item=>item.id===key),s.answers[key]))) throw new Error('Answer every question before finishing.');
       const questions=s.questionIds.map(key=>q.questions.find(q=>q.id===key)), answers=s.questionIds.map(key=>s.answers[key]);
-      data.attempts.push({id:id(),quizId:q.id,title:q.title,questions:structuredClone(questions),answers,score:questions.filter((q,i)=>q.correctAnswer===answers[i]).length,total:questions.length,completedAt:new Date().toISOString(),elapsedSeconds:Math.max(0,Math.round((Date.now()-Date.parse(s.startedAt))/1000))});
+      data.attempts.push({id:id(),quizId:q.id,title:q.title,questions:structuredClone(questions),answers:structuredClone(answers),score:questions.filter((q,i)=>questionModel.isCorrect(q,answers[i])).length,total:questions.length,completedAt:new Date().toISOString(),elapsedSeconds:Math.max(0,Math.round((Date.now()-Date.parse(s.startedAt))/1000))});
       data.activeSession=null; break;
     }
     default: throw new Error('Unknown action.');
   }
   return data;
 }
-module.exports = { id, COLORS, question, parseCSV, parseImport, emptyLibrary, validateLibrary, findQuiz, importPacks, mutate };
+module.exports = { id, COLORS, question, parseCSV, parseImport, emptyLibrary, validateLibrary, findQuiz, importPacks, mutate, ...questionModel };
