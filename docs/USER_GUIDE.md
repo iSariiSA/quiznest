@@ -4,11 +4,21 @@
 
 Detailed instructions for preparing quizzes, choosing feedback, reviewing mistakes, and keeping your library safe. For installation and a first quiz, start with the [README](../README.md#get-started).
 
+## Choose where a quiz belongs
+
+Open **New quiz** inside a unit, or choose **… → New quiz…** from anywhere in the library. Choose **Write manually**, **Import file**, or **Prepare with an agent**. The **Save in** section shows the course and unit before you save, import, or generate instructions. It starts with your current location and lets you choose another existing course/unit or enter names for a **New course…** and **New unit…**.
+
+New courses and units are created together with the quiz when you confirm **Save quiz** or **Import**. Canceling or preparing instructions leaves your library unchanged. If a course or unit name already exists in that location, Quiznet reuses it, ignoring capitalization. In the import preview, **From file** uses the file's names; choosing a course but leaving its unit as **From file** keeps the file's unit names inside that course. A multi-quiz file can also be imported into one chosen unit.
+
+To reorganize a quiz, open its **… → Move…** menu, choose a destination, and confirm **Move quiz**. You can also create a course or unit there. Its questions, history, flags, and unfinished attempt stay with it, and you can resume normally. Moving does not delete the source course or unit.
+
+![Moving a sample quiz from Mathematics / Basics to Physics / Motion](../assets/screenshots/move-quiz.png)
+
 ## Prepare a quiz with an agent
 
-Choose **Prepare a quiz** in the library toolbar, **… → Prepare a quiz…**, or **Prepare with an agent** inside **New quiz**. New quiz opens with three choices: **Write manually**, **Import file**, and **Prepare with an agent**. Starting preparation from a unit keeps that course/unit selected in the returned-file import preview. Start with question types, count, and topics. **Choose my mix** lets you specify counts per type, such as 10 multiple-choice and 5 true/false questions, or exclude types. Exact counts must agree with an exact total; an automatic total can follow the mix.
+Choose **Prepare a quiz** in the library toolbar, **… → Prepare a quiz…**, or **Prepare with an agent** inside **New quiz**. In **Save in**, choose an existing course/unit or name a new one. Those exact names are included in the instructions and remain selected when you use **Import quiz…**. You can change the destination again in the import preview. **Let the agent decide** lets it infer names from your material. Start with question types, count, and topics. **Choose my mix** lets you specify counts per type, such as 10 multiple-choice and 5 true/false questions, or exclude types. Exact counts must agree with an exact total; an automatic total can follow the mix.
 
-**Advanced** contains difficulty, ideas per question, thinking skills, source coverage, learner level, any quiz/code language, images, code questions, option count, explanations, source references, excluded topics, and course/unit/quiz names. Each preference defaults to **Let the agent decide**. Choose **Ask me** to require a question before generation, or set a specific value. Difficulty and connected reasoning are separate choices.
+**Advanced** contains difficulty, ideas per question, thinking skills, source coverage, learner level, any quiz/code language, images, code questions, option count, explanations, source references, excluded topics, and the quiz name. Each preference defaults to **Let the agent decide**. Choose **Ask me** to require a question before generation, or set a specific value. Difficulty and connected reasoning are separate choices.
 
 Use **Save Markdown** for `Quiznet-instructions.md`, or **Copy instructions**. **Preview** shows the exact instructions. Give those instructions and your chapter or notes to your preferred agent. The instructions require the agent to resolve Ask choices together, wait for answers, use the supplied sources, and produce one complete `quiznet-quiz.json` file. Import it with **Import quiz…** or the app menu. Source references can be included in the generated explanations.
 
