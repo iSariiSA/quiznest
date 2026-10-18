@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — Quiznet Alpha 9
+
+Stage: **Alpha**. Internal installer build: `1.11.0`. Publication pending owner approval.
+
+- Choose an existing or new course and unit when writing or importing a quiz, with a destination summary before saving.
+- Move quizzes between courses and units, including new locations, while preserving quiz IDs, practice history, and unfinished attempts.
+- Include the chosen destination in agent instructions and carry it into the returned-file import preview. Creating or canceling a draft does not create empty courses or units.
+- Add **New quiz…** to the app menu so a quiz can be created without first opening a unit. Reuse matching destination names without duplicating courses or units.
+
+Validation: source checks, 31 core tests, 20 Electron workflow tests, dependency/secret checks, Windows installer build, and two in-place reinstalls with unchanged library/backup hashes. Library schema remains version 1.
+
+Known limitations: the Windows installer is unsigned. Destination drafts stay in memory until the app closes. Plugins and Explore remain planned; further Alpha work follows the roadmap and user feedback.
+
 ## Quiznet Alpha 8
 
 Stage: **Alpha**. Internal installer build: `1.10.1`.

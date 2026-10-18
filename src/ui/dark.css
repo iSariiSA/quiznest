@@ -208,6 +208,14 @@ kbd { font: 11px 'Segoe UI', sans-serif; border: 1px solid #47515e; padding: 2px
 .import-preview strong { display: block; font-size: 13px; font-weight: 500; }
 .import-preview span { display: block; font-size: 12px; color: var(--muted); line-height: 1.8; margin-top: 4px; }
 .editor-questions { margin: 20px 0; display: grid; gap: 18px; }
+.quiz-destination { min-width: 0; border: 1px solid var(--line); border-radius: 5px; padding: 12px 16px; margin: 0 0 20px; }
+.quiz-destination legend { padding: 0 6px; font-size: 13px; color: var(--muted); }
+.destination-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.destination-grid > div { min-width: 0; }
+.quiz-destination label { display: block; font-size: 13px; margin-bottom: 10px; }
+.quiz-destination input, .quiz-destination select { width: 100%; min-width: 0; margin-top: 7px; }
+.quiz-destination .destination-summary { font-size: 12px; color: var(--muted); line-height: 1.6; margin: 4px 0 0; overflow-wrap: anywhere; }
+@media(max-width:600px) { .destination-grid { grid-template-columns: minmax(0,1fr); gap: 0; } }
 .editor-question { border: 1px solid #39434f; border-radius: 5px; background: #1c2128; padding: 17px; }
 .editor-question-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .editor-question-heading strong { font-size: 11px; font-weight: 400; color: var(--muted); }

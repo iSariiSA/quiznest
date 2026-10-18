@@ -4,7 +4,7 @@ const questionModel=window.QuiznetQuestions;
 const timing=window.QuiznetTiming;
 const practice=window.QuiznetPractice;
 const brief=window.QuiznetInstructions;
-let instructionDraft=brief.defaults(),startDraft=null;
+let instructionDraft=brief.defaults(),instructionDestination=null,startDraft=null;
 const optionLabel=questionModel.optionLabel;
 const $=selector=>document.querySelector(selector);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -15,6 +15,27 @@ let data,meta,view={page:'library',courseId:null,unitId:null},busy=false,modal=n
 const flatten=()=>data.courses.flatMap(course=>course.units.flatMap(unit=>unit.quizzes.map(quiz=>({course,unit,quiz}))));
 const find=id=>flatten().find(item=>item.quiz.id===id);
 const courseBy=id=>data.courses.find(c=>c.id===id);
+function destinationDraft(courseId,unitId,automatic=false){return {course:courseId|| (automatic?'':'new'),unit:unitId||(automatic?'':'new'),courseTitle:'',unitTitle:''};}
+function destinationTarget(d){return !d.course?undefined:{...(d.course==='new'?{courseTitle:d.courseTitle.trim()}:{courseId:d.course}),...(d.unit==='new'?{unitTitle:d.unitTitle.trim()}:d.unit?{unitId:d.unit}:{})};}
+function destinationNames(d){const c=courseBy(d.course);return {course:d.course==='new'?d.courseTitle.trim():c?.title,unit:d.unit==='new'?d.unitTitle.trim():c?.units.find(u=>u.id===d.unit)?.title};}
+function destinationFields(d,kind,automatic=false){
+  if(d.course!=='new'&&d.course&&!courseBy(d.course)){d.course=automatic?'':'new';d.unit=automatic?'':'new';}
+  if(d.unit&&d.unit!=='new'&&!courseBy(d.course)?.units.some(u=>u.id===d.unit))d.unit=automatic?'':'new';
+  const c=courseBy(d.course),auto=kind==='instructions'?'Let the agent decide':'From file';
+  return `<fieldset class="quiz-destination" data-destination="${kind}" data-automatic="${automatic}"><legend>${kind==='move'?'Move to':'Save in'}</legend><div class="destination-grid"><div><label>Course<select aria-label="Course" data-place="course" ${kind==='import'?'id="import-target" name="target"':''}>${automatic?`<option value="" ${!d.course?'selected':''}>${auto}</option>`:''}<option value="new" ${d.course==='new'?'selected':''}>New course…</option>${data.courses.map(c=>`<option value="${esc(c.id)}" ${d.course===c.id?'selected':''}>${esc(c.title)}</option>`).join('')}</select></label>${d.course==='new'?`<label>New course name<input data-place="courseTitle" value="${esc(d.courseTitle)}" maxlength="200" required placeholder="Course name"></label>`:''}</div>${d.course?`<div><label>Unit<select name="unit" aria-label="Unit" data-place="unit">${automatic?`<option value="" ${!d.unit?'selected':''}>${auto}</option>`:''}<option value="new" ${d.unit==='new'?'selected':''}>New unit…</option>${(c?.units||[]).map(u=>`<option value="${esc(u.id)}" ${d.unit===u.id?'selected':''}>${esc(u.title)}</option>`).join('')}</select></label>${d.unit==='new'?`<label>New unit name<input data-place="unitTitle" value="${esc(d.unitTitle)}" maxlength="200" required placeholder="Unit name"></label>`:''}</div>`:''}</div><p class="destination-summary" aria-live="polite">${destinationSummary(d,kind)}</p></fieldset>`;
+}
+function destinationSummary(d,kind){const names=destinationNames(d);return d.course?`${esc(names.course||'New course')} → ${esc(names.unit||(d.unit==='new'?'New unit':kind==='instructions'?'Agent chooses unit':'Units from file'))}`:kind==='instructions'?'The agent will choose course and unit names from your material.':'Use the course and unit names in the file.';}
+function updateDestination(el){
+  const group=el.closest('[data-destination]');if(!group)return false;
+  const kind=group.dataset.destination,d=kind==='instructions'?instructionDestination:modal?.destination;if(!d)return false;
+  d[el.dataset.place]=el.value;
+  if(el.dataset.place==='course')d.unit=group.dataset.automatic==='true'?'':'new';
+  if(el.tagName==='SELECT'){const key=el.dataset.place;group.outerHTML=destinationFields(d,kind,group.dataset.automatic==='true');$(`[data-destination="${kind}"] [data-place="${key}"]`)?.focus();}
+  else group.querySelector('.destination-summary').innerHTML=destinationSummary(d,kind);
+  return true;
+}
+async function navigateTarget(target){const c=target?.courseId?courseBy(target.courseId):data.courses.find(c=>c.title.toLowerCase()===target?.courseTitle?.toLowerCase());const u=c?.units.find(u=>target?.unitId?u.id===target.unitId:u.title.toLowerCase()===target?.unitTitle?.toLowerCase());await navigate('library',c?.id,u?.id);}
+async function prepareInstructions(courseId,unitId){if(courseId)instructionDestination=destinationDraft(courseId,unitId,true);instructionDestination??=destinationDraft(null,null,true);await navigate('instructions',courseId,unitId);}
 const sessionQuiz=()=>practice.sessionQuiz(data,data.activeSession);
 const stats=c=>({units:c.units.length,quizzes:c.units.reduce((n,u)=>n+u.quizzes.length,0),questions:c.units.reduce((n,u)=>n+u.quizzes.reduce((s,q)=>s+q.questions.length,0),0)});
 const plural=(n,s)=>`${n} ${s}${n===1?'':'s'}`;
@@ -53,7 +74,7 @@ function instructionField(f){
 }
 function instructionsView(){
   const types=instructionDraft.types;
-  return `<section class="instructions-page"><h1>Prepare a quiz</h1><p class="instructions-intro">Choose what matters to you. Give the instructions and your study material to an agent, then import the quiz file it returns.</p><form id="instructions-form"><div class="instruction-section"><div class="instruction-field"><label for="brief-types">Question types</label><select id="brief-types" data-brief-mode="types">${[['auto','Let the agent decide'],['ask','Ask me'],['value','Choose my mix']].map(([id,label])=>`<option value="${id}" ${types.mode===id?'selected':''}>${label}</option>`).join('')}</select></div><div class="instruction-mix" ${types.mode==='value'?'':'hidden'}>${questionModel.types.map(t=>{const p=types.value.find(v=>v.type===t.id);return `<div class="instruction-type"><label for="brief-type-${t.id}">${esc(brief.typeLabel(t))}</label><select id="brief-type-${t.id}" data-brief-type="${t.id}">${[['auto','Include · agent decides count'],['value','Exact count'],['ask','Ask me for the count'],['omit','Exclude']].map(([id,label])=>`<option value="${id}" ${p.mode===id?'selected':''}>${label}</option>`).join('')}</select><input type="number" min="1" max="${brief.MAX_QUESTIONS}" step="1" data-brief-count="${t.id}" aria-label="${esc(brief.typeLabel(t))} count" value="${esc(p.value)}" ${p.mode==='value'?(types.mode==='value'?'required':'disabled'):'hidden disabled'}></div>`;}).join('')}</div>${brief.fields.filter(f=>f.basic).map(instructionField).join('')}</div><details class="instruction-advanced"><summary>Advanced <span>Difficulty, language, images, feedback, and names</span></summary><p class="muted">Every setting is optional. Choose “Ask me” to have the agent ask before writing questions.</p><div class="instruction-grid">${brief.fields.filter(f=>!f.basic).map(instructionField).join('')}</div></details><p class="instruction-error" role="alert"></p><div class="instruction-actions">${button(`${icon('download')} Save Markdown`,'saveInstructions','primary')}${button('Copy instructions','copyInstructions')}${button('Preview','previewInstructions','text')}</div></form><p class="muted instruction-next">Attach the saved .md file and your chapter or notes to your preferred agent. After it creates quiznet-quiz.json, ${button('Import quiz…','import','text')}<br>Quiznet does not send your material anywhere. Your choices stay in this draft while the app is open.</p></section>`;
+  return `<section class="instructions-page"><h1>Prepare a quiz</h1><p class="instructions-intro">Choose what matters to you. Give the instructions and your study material to an agent, then import the quiz file it returns.</p><form id="instructions-form">${destinationFields(instructionDestination,'instructions',true)}<div class="instruction-section"><div class="instruction-field"><label for="brief-types">Question types</label><select id="brief-types" data-brief-mode="types">${[['auto','Let the agent decide'],['ask','Ask me'],['value','Choose my mix']].map(([id,label])=>`<option value="${id}" ${types.mode===id?'selected':''}>${label}</option>`).join('')}</select></div><div class="instruction-mix" ${types.mode==='value'?'':'hidden'}>${questionModel.types.map(t=>{const p=types.value.find(v=>v.type===t.id);return `<div class="instruction-type"><label for="brief-type-${t.id}">${esc(brief.typeLabel(t))}</label><select id="brief-type-${t.id}" data-brief-type="${t.id}">${[['auto','Include · agent decides count'],['value','Exact count'],['ask','Ask me for the count'],['omit','Exclude']].map(([id,label])=>`<option value="${id}" ${p.mode===id?'selected':''}>${label}</option>`).join('')}</select><input type="number" min="1" max="${brief.MAX_QUESTIONS}" step="1" data-brief-count="${t.id}" aria-label="${esc(brief.typeLabel(t))} count" value="${esc(p.value)}" ${p.mode==='value'?(types.mode==='value'?'required':'disabled'):'hidden disabled'}></div>`;}).join('')}</div>${brief.fields.filter(f=>f.basic).map(instructionField).join('')}</div><details class="instruction-advanced"><summary>Advanced <span>Difficulty, language, images, feedback, and names</span></summary><p class="muted">Every setting is optional. Choose “Ask me” to have the agent ask before writing questions.</p><div class="instruction-grid">${brief.fields.filter(f=>!f.basic&&!['course','unit'].includes(f.id)).map(instructionField).join('')}</div></details><p class="instruction-error" role="alert"></p><div class="instruction-actions">${button(`${icon('download')} Save Markdown`,'saveInstructions','primary')}${button('Copy instructions','copyInstructions')}${button('Preview','previewInstructions','text')}</div></form><p class="muted instruction-next">Attach the saved .md file and your chapter or notes to your preferred agent. After it creates quiznet-quiz.json, ${button('Import quiz…','import','text')}<br>Quiznet does not send your material anywhere. Your choices stay in this draft while the app is open.</p></section>`;
 }
 function updateInstructionControl(el){
   if(el.dataset.briefMode){
@@ -71,9 +92,11 @@ function updateInstructionControl(el){
 async function exportInstructions(action){
   const form=$('#instructions-form');if(!form.reportValidity())return;
   try{
-    const markdown=brief.generate(instructionDraft);
+    const preferences=structuredClone(instructionDraft),names=destinationNames(instructionDestination);
+    for(const key of ['course','unit'])preferences[key]=names[key]?{mode:'value',value:names[key]}:{mode:'auto',value:''};
+    const markdown=brief.generate(preferences);
     if(action==='previewInstructions'){showModal('Quiz instructions',`<label>Markdown instructions<textarea class="instruction-preview" aria-label="Markdown instructions" readonly>${esc(markdown)}</textarea></label>`,button('Close','closeModal','primary'),null,true);return;}
-    if(await api.instructions(action==='saveInstructions'?'save':'copy',instructionDraft))toast(action==='saveInstructions'?'Instructions saved. Attach them with your study material.':'Instructions copied.');
+    if(await api.instructions(action==='saveInstructions'?'save':'copy',preferences))toast(action==='saveInstructions'?'Instructions saved. Attach them with your study material.':'Instructions copied.');
   }catch(error){$('.instruction-error').textContent=error.message;$('.instruction-error').scrollIntoView({block:'nearest'});}
 }
 function attemptComparison(a){
@@ -129,14 +152,14 @@ function showMenu(trigger,items){
   el.querySelector('button')?.focus();
 }
 function appMenu(trigger){
-  const items=[['Prepare a quiz…','instructions'],['Import…','import'],['Search…','search'],['Settings','settings'],['Help','help']];
+  const items=[['New quiz…','newQuiz'],['Prepare a quiz…','instructions'],['Import…','import'],['Search…','search'],['Settings','settings'],['Help','help']];
   if(data.activeSession)items.push(['Resume quiz','resume'],['Discard attempt…','discard','',true]);
   showMenu(trigger,items);
 }
 function itemMenu(trigger,type){
   const courseId=trigger.dataset.course,unitId=trigger.dataset.unit,quizId=trigger.dataset.id;
   const attrs=`data-course="${courseId}"${unitId?` data-unit="${unitId}"`:''}${quizId?` data-id="${quizId}"`:''}`;
-  const items=type==='quiz'?[['Edit…','editQuiz',attrs],['Shuffle & start','shuffleStart',attrs],['Export…','exportQuiz',attrs]]:type==='unit'?[['New quiz…','newQuiz',attrs],['Rename…','rename',attrs]]:[['Rename…','rename',attrs]];
+  const items=type==='quiz'?[['Edit…','editQuiz',attrs],['Move…','moveQuiz',attrs],['Shuffle & start','shuffleStart',attrs],['Export…','exportQuiz',attrs]]:type==='unit'?[['New quiz…','newQuiz',attrs],['Rename…','rename',attrs]]:[['Rename…','rename',attrs]];
   items.push(['Delete…','delete',attrs,true]);showMenu(trigger,items);
 }
 function showModal(title,body,footer,onSubmit,wide=false){
@@ -157,9 +180,9 @@ function newCourse(){showModal('New course',`<label>Course name<input name="titl
 function newUnit(courseId){if(!courseId){newCourse();return;}showModal('New unit',`<label>Unit name<input name="title" placeholder="Unit 1: Cells" maxlength="200" required></label>`,modalButtons('Create'),async f=>{await change({type:'createUnit',courseId,title:f.get('title')});const u=courseBy(courseId).units.at(-1);await navigate('library',courseId,u.id);});}
 function newQuiz(courseId,unitId){
   const attrs=`data-course="${esc(courseId)}" data-unit="${esc(unitId)}"`;
-  showModal('New quiz',`<div class="quiz-create-choices">${[["Write manually",'newManual','edit'],['Import file','newImport','upload'],['Prepare with an agent','prepareAgent','spark']].map(([label,action,mark])=>button(`${icon(mark)}<span>${label}</span>${icon('chevron')}`,action,'secondary quiz-create-choice',attrs)).join('')}</div>`,button('Cancel','closeModal'),null);
+  showModal('New quiz',`<p class="modal-intro">Choose how to create it, then confirm its course and unit.</p><div class="quiz-create-choices">${[["Write manually",'newManual','edit'],['Import file','newImport','upload'],['Prepare with an agent','prepareAgent','spark']].map(([label,action,mark])=>button(`${icon(mark)}<span>${label}</span>${icon('chevron')}`,action,'secondary quiz-create-choice',attrs)).join('')}</div>`,button('Cancel','closeModal'),null);
 }
-function editQuiz(quizId,courseId,unitId){const found=quizId?find(quizId):null;editor={quizId,courseId:found?.course.id||courseId,unitId:found?.unit.id||unitId,title:found?.quiz.title||'',questions:found?structuredClone(found.quiz.questions):[blankQuestion()]};renderEditor();}
+function editQuiz(quizId,courseId,unitId){const found=quizId?find(quizId):null;editor={quizId,courseId:found?.course.id||courseId,unitId:found?.unit.id||unitId,destination:destinationDraft(found?.course.id||courseId,found?.unit.id||unitId),title:found?.quiz.title||'',questions:found?structuredClone(found.quiz.questions):[blankQuestion()]};renderEditor();}
 function blankQuestion(){return questionModel.blankQuestion();}
 function editorQuestion(q,i,total) {
   const html=q.format==='html',formatted=['html','markdown'].includes(q.format),limit=html?window.QuiznetContentPolicy.MAX_HTML_LENGTH:q.format==='markdown'?window.QuiznetCodePolicy.MAX_MARKDOWN_LENGTH:10000;
@@ -180,7 +203,8 @@ function previewQuestion(q) { return `<div class="preview-prompt">${promptBody(q
 function renderEditor(){
   const e=editor;
   const scroll=$('.modal-body')?.scrollTop||0,open=[...document.querySelectorAll('.editor-preview[open]')].map(el=>el.dataset.preview);
-  showModal(e.quizId?'Edit quiz':'New quiz',`<label>Quiz title<input data-editor="title" value="${esc(e.title)}" placeholder="Quiz 1" required maxlength="200"></label><div class="editor-questions">${e.questions.map((q,i)=>editorQuestion(q,i,e.questions.length)).join('')}</div>${button(`${icon('plus')} Add question`,'addQuestion','secondary')}`,modalButtons('Save quiz'),async()=>{const {quizId,courseId,unitId,title,questions}=editor;await change({type:'saveQuiz',quizId,courseId,unitId,title,questions});await navigate('library',e.courseId,e.unitId);toast('Saved.');},true);
+  showModal(e.quizId?'Edit quiz':'New quiz',`${e.quizId?`<p class="modal-intro">${esc(courseBy(e.courseId)?.title)} → ${esc(courseBy(e.courseId)?.units.find(u=>u.id===e.unitId)?.title)}</p>`:destinationFields(e.destination,'editor')}<label>Quiz title<input data-editor="title" value="${esc(e.title)}" placeholder="Quiz 1" required maxlength="200"></label><div class="editor-questions">${e.questions.map((q,i)=>editorQuestion(q,i,e.questions.length)).join('')}</div>${button(`${icon('plus')} Add question`,'addQuestion','secondary')}`,modalButtons('Save quiz'),async()=>{const {quizId,courseId,unitId,title,questions,destination}=editor;const target=destinationTarget(destination);await change({type:'saveQuiz',quizId,courseId,unitId,title,questions,...(!quizId?{target}:{})});await navigateTarget(quizId?{courseId,unitId}:target);toast('Saved.');},true);
+  modal.destination=e.destination;
   for (const index of open) $(`.editor-preview[data-preview="${index}"]`)?.setAttribute('open','');
   for(const [index,q] of e.questions.entries())if(q.code!==undefined)$(`[data-editor="code"][data-index="${index}"]`).value=q.code;
   setTimeout(()=>{$('.modal-body')?.scrollTo(0,scroll);},0);
@@ -218,12 +242,18 @@ function manage(action,b){
   if(action==='rename')showModal('Rename',`<label>Name<input name="title" value="${esc(item.title)}" required maxlength="200"></label>`,modalButtons('Save'),async f=>{await change({type:'rename',courseId,unitId,quizId,title:f.get('title')});closeModal();render();});
   else showModal(`Delete this ${q?'quiz':u?'unit':'course'}?`,`<p><strong>${esc(item.title)}</strong> will be removed along with ${q?'its practice history':u?'its quizzes and practice history':'its units, quizzes, and practice history'}.</p>`,`${button('Cancel','closeModal','secondary')}${submit('Delete','danger')}`,async()=>{await change({type:'delete',courseId,unitId,quizId});if(!courseBy(view.courseId))await navigate('library');else if(view.unitId&&!courseBy(view.courseId)?.units.some(u=>u.id===view.unitId))await navigate('library',view.courseId);else{closeModal();render();}toast('Deleted.');});
 }
-async function importQuestions(){
-  const preview=await api.importPreview();if(!preview)return;
-  showModal('Import',`<p class="modal-intro">${esc(preview.filename)} · ${plural(preview.packs.reduce((n,p)=>n+p.count,0),'question')}</p><div class="import-preview">${preview.packs.map(p=>`<div><strong>${esc(p.title)}</strong><span>${esc(p.course)} → ${esc(p.unit)} · ${p.count} questions</span></div>`).join('')}</div><label>Course<select name="target" id="import-target"><option value="">From file</option>${data.courses.map(c=>`<option value="${c.id}" ${view.courseId===c.id?'selected':''}>${esc(c.title)}</option>`).join('')}</select></label><div id="import-unit-slot"></div>`,modalButtons('Import'),async f=>{const courseId=f.get('target'),unitId=f.get('unit');data=await api.importConfirm(preview.token,courseId?{courseId,unitId:unitId||undefined}:undefined);await navigate('library',courseId||null,unitId||null);toast('Imported.');});
-  updateImportUnit();
+function moveQuiz(quizId){
+  const found=find(quizId);if(!found)return;
+  const destination=destinationDraft(found.course.id,found.unit.id);
+  showModal('Move quiz',`<p class="modal-intro"><strong>${esc(found.quiz.title)}</strong><br>From ${esc(found.course.title)} → ${esc(found.unit.title)}</p>${destinationFields(destination,'move')}<p class="muted">History and unfinished progress stay with this quiz.</p>`,modalButtons('Move quiz'),async()=>{const target=destinationTarget(destination);await change({type:'moveQuiz',quizId,target});await navigateTarget(target);toast('Quiz moved.');});
+  modal.destination=destination;
 }
-function updateImportUnit(){const courseId=$('#import-target')?.value,c=courseBy(courseId);$('#import-unit-slot').innerHTML=c?`<label>Unit<select name="unit"><option value="">From file</option>${c.units.map(u=>`<option value="${u.id}" ${view.unitId===u.id?'selected':''}>${esc(u.title)}</option>`).join('')}</select></label>`:'';}
+async function importQuestions(){
+  const destination=view.page==='instructions'?structuredClone(instructionDestination):destinationDraft(view.courseId,view.unitId,true);
+  const preview=await api.importPreview();if(!preview)return;
+  showModal('Import',`<p class="modal-intro">${esc(preview.filename)} · ${plural(preview.packs.reduce((n,p)=>n+p.count,0),'question')}</p><div class="import-preview">${preview.packs.map(p=>`<div><strong>${esc(p.title)}</strong><span>${esc(p.course)} → ${esc(p.unit)} · ${p.count} questions</span></div>`).join('')}</div>${destinationFields(destination,'import',true)}`,modalButtons('Import'),async()=>{const target=destinationTarget(destination);data=await api.importConfirm(preview.token,target);await navigateTarget(target);toast('Imported.');});
+  modal.destination=destination;
+}
 function help(){showModal('Help',`<p>Organize <strong>Courses → Units → Quizzes</strong>. Create questions in the editor or import a JSON or CSV file.</p><p>Choose <strong>Prepare a quiz</strong> to save or copy Markdown instructions for another agent. Attach your study material with the instructions, answer any preferences marked <strong>Ask me</strong>, then import the complete JSON quiz it returns. Optional choices are under <strong>Advanced</strong>.</p><p>Choose a <strong>Question type</strong> for each question: single answer, multiple answers, or true/false. Mix types in one quiz. Use <strong>Add option</strong> for more choices; true/false has two editable labels. Multiple-answer questions require all correct choices and no others.</p><p>Use <strong>Add image</strong> for local PNG, JPEG, GIF, or WebP images (up to 2 MB). Choose <strong>HTML</strong> or <strong>Markdown</strong> in the Format selector for formatting, and open <strong>Preview</strong> to check it. Images are included in exports and backups.</p><p>Choose <strong>Add code</strong>, select its language, and paste your snippet. Code is displayed with syntax highlighting and preserved indentation; it is never run. In Markdown, use fenced code blocks: three backticks, a language name such as python, your code on the following lines, and three closing backticks. Markdown also works in choices and explanations.</p><h3>JSON · one quiz</h3><pre>{
   "course": "Biology",
   "unit": "Unit 1: Cells",
@@ -239,6 +269,7 @@ Biology,Cells,Quiz 1,Where is most DNA?,Nucleus,Ribosome,A,Inside the nucleus.</
 function search(){showModal('Search',`<div class="search-input-wrap">${icon('search')}<input id="search-input" placeholder="Search…" autocomplete="off" aria-label="Search your library"></div><div id="search-results"></div>`,button('Close','closeModal','secondary'),null,true);renderSearch('');}
 function renderSearch(query){query=query.trim().toLowerCase();const courses=data.courses.filter(c=>c.title.toLowerCase().includes(query)),quizzes=flatten().filter(({course,unit,quiz})=>`${course.title} ${unit.title} ${quiz.title} ${quiz.questions.map(q=>content.plain(q.prompt,q.format)).join(' ')}`.toLowerCase().includes(query));$('#search-results').innerHTML=`${courses.map(c=>`<button class="search-result" ${act('course',`data-id="${c.id}"`)}>${icon('folder')}<div><strong>${esc(c.title)}</strong><span>Course · ${plural(stats(c).quizzes,'quiz')}</span></div>${icon('arrow')}</button>`).join('')}${quizzes.slice(0,50).map(({course,unit,quiz})=>`<button class="search-result" ${act('start',`data-id="${quiz.id}"`)}>${icon('book')}<div><strong>${esc(quiz.title)}</strong><span>${esc(course.title)} → ${esc(unit.title)}</span></div>${icon('arrow')}</button>`).join('')}${!courses.length&&!quizzes.length?'<p class="muted search-empty">No matches.</p>':''}${quizzes.length>50?'<p class="muted">Showing the first 50 quizzes. Refine your search to see more.</p>':''}`;}
 document.addEventListener('input',e=>{
+  if(e.target.matches('input[data-place]')){updateDestination(e.target);return;}
   if(e.target.matches('[data-brief-value],[data-brief-count]'))updateInstructionControl(e.target);
   if(e.target.id==='search-input')renderSearch(e.target.value);
   const el=e.target;if(!el.dataset.editor||!editor)return;
@@ -271,7 +302,7 @@ document.addEventListener('change',async e=>{
   }
   if(e.target.dataset.editor==='correctAnswers'&&editor){const q=editor.questions[Number(e.target.dataset.index)];q.correctAnswers=questionModel.toggleAnswer(q,q.correctAnswers,Number(e.target.dataset.option));return;}
   if(e.target.dataset.editor==='format'&&editor){const i=Number(e.target.dataset.index);editor.questions[i].format=e.target.value;renderEditor();setTimeout(()=>$(`[data-editor="format"][data-index="${i}"]`)?.focus({preventScroll:true}),0);}
-  if(e.target.id==='import-target')updateImportUnit();
+  if(e.target.matches('select[data-place]')){updateDestination(e.target);return;}
   if(e.target.id==='question-jump'&&!busy){busy=true;try{await change({type:'position',position:Number(e.target.value)});render();}catch(error){toast(error.message);}finally{busy=false;}}
 });
 document.addEventListener('click',async e=>{
@@ -285,12 +316,13 @@ document.addEventListener('click',async e=>{
   try{
     switch(a){
       case 'home':await navigate('library');break;case 'course':await navigate('library',b.dataset.id);break;case 'unit':await navigate('library',b.dataset.course,b.dataset.id);break;
-      case 'instructions':await navigate('instructions');break;case 'history':await navigate('history');break;case 'explore':await navigate('explore');break;case 'settings':await navigate('settings');break;case 'help':help();break;case 'search':search();break;
+      case 'instructions':await prepareInstructions(view.page==='library'?view.courseId:null,view.page==='library'?view.unitId:null);break;case 'history':await navigate('history');break;case 'explore':await navigate('explore');break;case 'settings':await navigate('settings');break;case 'help':help();break;case 'search':search();break;
       case 'closeModal':closeModal();break;case 'newCourse':newCourse();break;case 'newUnit':newUnit(b.dataset.course||view.courseId);break;
-      case 'newQuiz':newQuiz(b.dataset.course,b.dataset.unit);break;
+      case 'newQuiz':newQuiz(b.dataset.course||view.courseId,b.dataset.unit||view.unitId);break;
       case 'newManual':editQuiz(null,b.dataset.course,b.dataset.unit);break;
       case 'newImport':await navigate('library',b.dataset.course,b.dataset.unit);await importQuestions();break;
-      case 'prepareAgent':await navigate('instructions',b.dataset.course,b.dataset.unit);break;case 'editQuiz':editQuiz(b.dataset.id);break;
+      case 'prepareAgent':await prepareInstructions(b.dataset.course,b.dataset.unit);break;case 'editQuiz':editQuiz(b.dataset.id);break;
+      case 'moveQuiz':moveQuiz(b.dataset.id);break;
       case 'rename':case 'delete':manage(a,b);break;
       case 'appMenu':appMenu(b);break;case 'courseMenu':itemMenu(b,'course');break;case 'unitMenu':itemMenu(b,'unit');break;case 'quizMenu':itemMenu(b,'quiz');break;
       case 'startMissed':await startQuiz(null,false,b.dataset.id);break;case 'start':await startQuiz(b.dataset.id);break;case 'shuffleStart':await startQuiz(b.dataset.id,true);break;case 'resume':await change({type:'resume'});await navigate('quiz');break;

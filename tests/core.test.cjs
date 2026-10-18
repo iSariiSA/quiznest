@@ -14,6 +14,61 @@ const timing=require('../src/ui/timing.js');
 const instructions=require('../src/ui/instructions.js');
 const practice=require('../src/ui/practice.js');
 
+test('moving quizzes preserves IDs, history, flags and unfinished answers across units, courses and restart',async()=>{
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-move-'));
+  try{
+    const store=new Store(directory);await store.load(sampleLibrary);
+    const save=action=>store.change(data=>core.mutate(data,action,1000));
+    const original=store.data.courses[0],quiz=original.units[0].quizzes[0],quizId=quiz.id;
+    await save({type:'start',quizId});
+    for(const item of quiz.questions)await save({type:'answer',questionId:item.id,answer:item.correctAnswer===0?1:0});
+    await save({type:'finish'});const history=structuredClone(store.data.attempts);
+    await save({type:'startMissed',attemptId:history[0].id,practice:{...practice.defaults}});
+    const questionId=store.data.activeSession.questionIds[0];await save({type:'answer',questionId,answer:0});await save({type:'flag',questionId});
+    const session=structuredClone(store.data.activeSession),snapshot=structuredClone(core.findQuiz(store.data,quizId).quiz);
+    for(const target of [{courseId:original.id,unitTitle:'Extra unit'},{courseTitle:'Other course',unitTitle:'Other unit'},{courseId:original.id,unitId:original.units[0].id},{courseTitle:'Other course',unitTitle:'Other unit'}]){
+      await save({type:'moveQuiz',quizId,target});
+      assert.deepEqual(core.findQuiz(store.data,quizId).quiz,snapshot);assert.deepEqual(store.data.attempts,history);assert.deepEqual(store.data.activeSession,session);
+      assert.equal(store.data.courses.flatMap(c=>c.units.flatMap(u=>u.quizzes)).filter(q=>q.id===quizId).length,1);
+    }
+    const found=core.findQuiz(store.data,quizId),before=JSON.stringify(store.data);
+    await save({type:'moveQuiz',quizId,target:{courseId:found.course.id,unitId:found.unit.id}});assert.equal(JSON.stringify(store.data),before);
+    const loaded=new Store(directory);await loaded.load();assert.deepEqual(loaded.data,store.data);assert.equal(core.findQuiz(loaded.data,quizId).unit.title,'Other unit');
+    for(const key of store.data.activeSession.questionIds)await save({type:'answer',questionId:key,answer:0});
+    await save({type:'finish'});assert.deepEqual(store.data.attempts[0],history[0]);assert.equal(store.data.attempts[1].missedOnly,true);
+  }finally{assert.ok(path.resolve(directory).startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(directory).startsWith('quiznet-move-'));await fs.rm(directory,{recursive:true,force:true});}
+});
+
+test('save and multi-quiz import create or reuse destinations without duplicate courses or units',()=>{
+  const data=core.emptyLibrary();core.mutate(data,{type:'saveQuiz',target:{courseTitle:'Biology',unitTitle:'Cells'},title:'Manual',questions:[q]});
+  const course=data.courses[0],unit=course.units[0];
+  const packs=core.parseImport(JSON.stringify({quizzes:[{course:'File course',unit:'File unit',title:'Imported',questions:[q]},{course:'Other file course',unit:'Other file unit',title:'Imported',questions:[q]}]}));
+  core.importPacks(data,packs,{courseTitle:'BIOLOGY',unitTitle:'CELLS'});assert.equal(data.courses.length,1);assert.equal(course.units.length,1);assert.deepEqual(unit.quizzes.map(q=>q.title),['Manual','Imported','Imported (2)']);
+  core.importPacks(data,packs,{courseId:course.id,unitTitle:'New unit'});assert.equal(course.units.length,2);assert.equal(course.units[1].quizzes.length,2);
+  core.importPacks(data,packs,{courseTitle:'New course',unitTitle:'New unit'});assert.equal(data.courses.length,2);assert.equal(data.courses[1].units.length,1);assert.equal(data.courses[1].units[0].quizzes.length,2);
+  core.importPacks(data,packs,{courseId:course.id});assert.deepEqual(course.units.slice(2).map(u=>u.title),['File unit','Other file unit']);
+  assert.deepEqual(core.validateLibrary(data),data);
+});
+
+test('invalid and failed destinations leave source quizzes and library files untouched',async()=>{
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-destination-'));
+  try{
+    const store=new Store(directory);await store.load(sampleLibrary);await store.change(data=>core.mutate(data,{type:'createCourse',title:'Elsewhere'}));
+    const course=store.data.courses[0],unit=course.units[0],quizId=unit.quizzes[0].id,other=store.data.courses.at(-1);
+    const packs=core.parseImport(JSON.stringify({title:'Import',questions:[q]}));
+    const targets=[null,[],{courseId:'missing',unitTitle:'New'},{courseTitle:'New',unitId:unit.id},{courseId:other.id,unitId:unit.id},{courseId:course.id,courseTitle:'Both',unitId:unit.id},{courseTitle:'New',unitTitle:' '},{unitTitle:'Orphan'},{courseTitle:'x'.repeat(201),unitTitle:'Unit'},{courseId:course.id,unitId:unit.id,unexpected:true}];
+    const before=structuredClone(store.data),file=await fs.readFile(store.file),backup=await fs.readFile(store.file+'.bak');
+    for(const target of targets){
+      for(const operation of [data=>core.mutate(data,{type:'moveQuiz',quizId,target}),data=>core.mutate(data,{type:'saveQuiz',target,title:'Manual',questions:[q]}),data=>core.importPacks(data,packs,target)])await assert.rejects(store.change(operation));
+      assert.deepEqual(store.data,before);assert.deepEqual(await fs.readFile(store.file),file);assert.deepEqual(await fs.readFile(store.file+'.bak'),backup);
+    }
+    const originalWrite=store.write;store.write=async()=>{throw new Error('Disk unavailable');};
+    await assert.rejects(store.change(data=>core.mutate(data,{type:'moveQuiz',quizId,target:{courseTitle:'New',unitTitle:'New'}})),/Disk unavailable/);store.write=originalWrite;
+    assert.deepEqual(store.data,before);assert.deepEqual(await fs.readFile(store.file),file);
+    const data=structuredClone(before);assert.throws(()=>core.importPacks(data,[packs[0],{...packs[0],questions:[{}]}],{courseTitle:'New',unitTitle:'New'}));assert.deepEqual(data,before);
+  }finally{assert.ok(path.resolve(directory).startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(directory).startsWith('quiznet-destination-'));await fs.rm(directory,{recursive:true,force:true});}
+});
+
 test('missed-question attempts use historical snapshots after quiz edits and retain independent scores and timing',()=>{
   const data=core.emptyLibrary();core.importPacks(data,core.parseImport(JSON.stringify({title:'Source',questions:[q,{...q,prompt:'Other?',code:'print(2)',codeLanguage:'python',format:'markdown'},{type:'multiple-answer',prompt:'Even?',options:['2','3','4'],correctAnswers:[0,2]}]})));
   const {id:quizId,questions}=data.courses[0].units[0].quizzes[0];core.mutate(data,{type:'start',quizId},1000);

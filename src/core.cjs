@@ -178,17 +178,39 @@ function findQuiz(data, quizId) {
   }
   return null;
 }
+function planDestination(data, target, fallback) {
+  if (target !== undefined && (!target || typeof target !== 'object' || Array.isArray(target))) throw new Error('Choose a valid destination.');
+  const t=target||{},keys=['courseId','courseTitle','unitId','unitTitle'];
+  if(Object.keys(t).some(key=>!keys.includes(key)) || keys.some(key=>t[key]!==undefined&&(typeof t[key]!=='string'||!t[key].trim())) || (t.courseId&&t.courseTitle) || (t.unitId&&t.unitTitle) || (t.unitId&&!t.courseId) || (t.unitTitle&&!t.courseId&&!t.courseTitle)) throw new Error('Choose a valid course and unit.');
+  const courseTitle=t.courseTitle?text(t.courseTitle,'Course name'):fallback?.course;
+  const unitTitle=t.unitTitle?text(t.unitTitle,'Unit name'):fallback?.unit;
+  let course=t.courseId?data.courses.find(c=>c.id===t.courseId):data.courses.find(c=>c.title.toLowerCase()===courseTitle?.toLowerCase());
+  if(t.courseId&&!course)throw new Error('Selected course no longer exists.');
+  if(!course){if(!courseTitle)throw new Error('Choose a course.');course={id:id(),title:text(courseTitle,'Course name'),description:'',color:COLORS[data.courses.length%COLORS.length],units:[]};}
+  let unit=t.unitId?course.units.find(u=>u.id===t.unitId):course.units.find(u=>u.title.toLowerCase()===unitTitle?.toLowerCase());
+  if(t.unitId&&!unit)throw new Error('Selected unit does not belong to this course.');
+  if(!unit){if(!unitTitle)throw new Error('Choose a unit.');unit={id:id(),title:text(unitTitle,'Unit name'),quizzes:[]};}
+  return {course,unit};
+}
+function commitDestination(data,{course,unit}) {
+  if(!data.courses.includes(course))data.courses.push(course);
+  if(!course.units.includes(unit))course.units.push(unit);
+}
 function importPacks(data, packs, target) {
+  // Plan every destination before inserting anything, including multi-quiz files.
+  const planned={courses:data.courses.map(c=>({...c,units:c.units.map(u=>({...u,quizzes:u.quizzes}))}))};
+  const imports=[];
   for (const p of packs) {
-    let course = target?.courseId ? data.courses.find(c => c.id === target.courseId) : data.courses.find(c => c.title.toLowerCase() === p.course.toLowerCase());
-    if (target?.courseId && !course) throw new Error('Selected course no longer exists.');
-    if (!course) { course = { id:id(), title:p.course, description:'', color:COLORS[data.courses.length % COLORS.length], units:[] }; data.courses.push(course); }
-    let unit = target?.unitId ? course.units.find(u => u.id === target.unitId) : course.units.find(u => u.title.toLowerCase() === p.unit.toLowerCase());
-    if (target?.unitId && !unit) throw new Error('Selected unit no longer exists.');
-    if (!unit) { unit = { id:id(), title:p.unit, quizzes:[] }; course.units.push(unit); }
+    const place=planDestination(planned,target,p);commitDestination(planned,place);
+    imports.push({p,target:{courseId:place.course.id,unitId:place.unit.id},questions:p.questions.map((q,i)=>({...question(q,i),id:id()}))});
+  }
+  for(const course of planned.courses)if(!data.courses.some(c=>c.id===course.id))data.courses.push({...course,units:[]});
+  for(const course of planned.courses){const actual=data.courses.find(c=>c.id===course.id);for(const unit of course.units)if(!actual.units.some(u=>u.id===unit.id))actual.units.push({...unit,quizzes:[]});}
+  for(const {p,target:place,questions} of imports){
+    const {unit}=planDestination(data,place);
     let title = p.title, suffix = 2;
     while (unit.quizzes.some(q => q.title === title)) title = `${p.title} (${suffix++})`;
-    unit.quizzes.push({ id:id(), title, questions:p.questions.map((q,i)=>({...question(q,i),id:id()})), createdAt:new Date().toISOString() });
+    unit.quizzes.push({ id:id(), title, questions, createdAt:new Date().toISOString() });
   }
 }
 function mutate(data, action, now=Date.now()) {
@@ -214,17 +236,26 @@ function mutate(data, action, now=Date.now()) {
     case 'createCourse': data.courses.push({id:id(),title:text(action.title,'Course title'),description:action.description ? text(action.description,'Description',1000):'',color:COLORS.includes(action.color)?action.color:'sage',units:[]}); break;
     case 'createUnit': if (!course) throw new Error('Course not found.'); course.units.push({id:id(),title:text(action.title,'Unit title'),quizzes:[]}); break;
     case 'saveQuiz': {
-      if (!unit) throw new Error('Unit not found.');
+      if(action.quizId&&(!found||!unit||found.unit.id!==unit.id))throw new Error('Quiz not found.');
+      if(action.quizId&&data.activeSession?.quizId===action.quizId)throw new Error('Finish or discard this quiz attempt before editing it.');
       if (!Array.isArray(action.questions) || !action.questions.length || action.questions.length > 10000) throw new Error('Add at least one question (up to 10,000).');
       const questions = action.questions.map((q,i)=>({...question(q,i),id:id()}));
       const title=text(action.title,'Quiz title');
-      const portable={course:course.title,unit:unit.title,title,questions:questions.map(({id,...q})=>q)};
+      const place=planDestination(data,action.quizId?{courseId:course.id,unitId:unit.id}:action.target||{courseId:action.courseId,unitId:action.unitId});
+      const portable={course:place.course.title,unit:place.unit.title,title,questions:questions.map(({id,...q})=>q)};
       if (Buffer.byteLength(JSON.stringify(portable,null,2))>19*1024*1024) throw new Error('Keep a quiz below 19 MB so it can be exported and imported. Use smaller images or split it into quizzes.');
       if (action.quizId) {
-        if (!found || found.unit.id !== unit.id) throw new Error('Quiz not found.');
-        if (data.activeSession?.quizId === action.quizId) throw new Error('Finish or discard this quiz attempt before editing it.');
         found.quiz.title = title; found.quiz.questions = questions;
-      } else unit.quizzes.push({id:id(),title,questions,createdAt:new Date().toISOString()});
+      } else {commitDestination(data,place);place.unit.quizzes.push({id:id(),title,questions,createdAt:new Date().toISOString()});}
+      break;
+    }
+    case 'moveQuiz': {
+      if(!found)throw new Error('Quiz not found.');
+      const place=planDestination(data,action.target);
+      if(place.unit===found.unit)break;
+      commitDestination(data,place);
+      found.unit.quizzes=found.unit.quizzes.filter(q=>q.id!==found.quiz.id);
+      place.unit.quizzes.push(found.quiz);
       break;
     }
     case 'rename': {

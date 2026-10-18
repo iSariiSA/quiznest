@@ -30,7 +30,7 @@ Studying requires no account or internet connection. Your questions, images, res
 
 | You want to… | Quiznet helps you… |
 | --- | --- |
-| Organize a subject | Group quizzes into courses and units; search your library with **Ctrl + K**. |
+| Organize a subject | Choose a course and unit when adding a quiz, move quizzes between them, and search with **Ctrl + K**. |
 | Make your own questions | Mix single-answer, multiple-answer, and true/false questions, with explanations and up to 100 choices for choice questions. |
 | Study visual or technical material | Include embedded images, HTML or Markdown formatting, and syntax-highlighted code. Code is displayed, never executed. |
 | Choose how to practice | Use **Test yourself** for feedback after finishing or **Practice** for instant feedback. Customize timers, shuffling, navigation, and flags; save your own presets. |
