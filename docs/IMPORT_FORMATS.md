@@ -26,7 +26,7 @@ Import JSON/CSV quiz files here; restore whole-library backups through **… →
 }
 ```
 
-`correctAnswer` is a **zero-based number**: 0 is the first answer, 1 the second, and so on. An option letter (`A`, …, `Z`, `AA`, …) or exact option text is also accepted. Explanations are optional. Omitted `type` means `single-choice`, preserving existing quizzes.
+`correctAnswer` is a **zero-based number**: 0 is the first answer, 1 the second, and so on. An option letter (`A`, …, `Z`, `AA`, …) or exact option text is also accepted. Explanations are optional. Omitted `type` means `single-choice`.
 
 Set `"type": "multiple-answer"` and use `"correctAnswers": [0, 2]` for a question with several correct choices. The array must contain at least one distinct valid option; letters or exact option texts also work. During practice, click again to deselect a choice. Scoring requires the complete correct set without extra choices; there is no partial credit. At least one selection is required to finish.
 
@@ -54,7 +54,7 @@ For JSON imports, set `"format": "html"`. Attach an image with `"image": "data:i
 }
 ```
 
-Images are embedded in the local library, exports, backups, and historical attempts. The original image file is no longer needed after saving. Keep images small for faster saves and smaller backups. Version 1.3 reads existing version-1 libraries without a migration; earlier apps do not preserve these new optional fields, so use 1.3 or newer for image/HTML libraries.
+Images are embedded in the local library, exports, backups, and historical attempts. The original image file is no longer needed after saving. Keep images small for faster saves and smaller backups.
 
 ### CSV
 
@@ -81,6 +81,4 @@ The language catalog includes Python, JavaScript, TypeScript, Java, C, C++, C#, 
 
 For JSON imports, add `"code": "print(1 + 2)"` and `"codeLanguage": "python"`, or set `"format": "markdown"` and include fenced blocks. CSV has optional `code` and `code_language` columns; quote multiline snippets. See [code-markdown.json](../examples/code-markdown.json) for a complete mixed example. Code and Markdown survive exports, backups, saved attempts, and results.
 
-Code attachments are limited to 50,000 characters and Markdown fields to 100,000. Blocks above 12,000 characters display as plain code to keep the interface responsive. Version 1.5 reads earlier libraries without rewriting them on startup; older apps do not preserve code fields or understand Markdown, so keep a backup before rollback.
-
-
+Code attachments are limited to 50,000 characters and Markdown fields to 100,000. Blocks above 12,000 characters display as plain code to keep the interface responsive.

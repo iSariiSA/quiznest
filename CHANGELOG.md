@@ -98,7 +98,7 @@ Known limitations: code is for reading, not execution; unknown languages and ver
 
 ## Quiznet Alpha 1
 
-Stage: **Alpha**. Current internal installer build: `1.4.3`.
+Stage: **Alpha**. Internal installer build: `1.4.3`.
 
 - Start repository release naming with Alpha; keep the stage plan and development milestones in the repository and release notes only.
 - Remove release planning from Settings; retain the technical version for diagnostics.
@@ -107,9 +107,9 @@ Stage: **Alpha**. Current internal installer build: `1.4.3`.
 - Plan Beta for wider testing, feedback, and fixes; the first Official Release follows testing and owner approval.
 - Retain existing study tools, the Focus identity, and the stable installer, installation, shortcut, and local data.
 
-Validation: syntax, core and Electron workflows, dependency and secret checks, Windows installer build, in-place reinstall, and unchanged library hashes. Release records are kept locally with the installer.
+Validation: syntax, core and Electron workflows, dependency and secret checks, Windows installer build, in-place reinstall, and unchanged library hashes.
 
-Known limitations: Plugins and Explore are planned and are not available in this release. The interface is English; the personal-use installer is unsigned. Next goals: agree on and build the first Plugins and Explore workflows while continuing Alpha fixes.
+Known limitations: Plugins and Explore are planned and are not available in this release. The interface is English; the installer is unsigned. Next goals: agree on and build the first Plugins and Explore workflows while continuing Alpha fixes.
 
 ## Earlier internal builds
 
@@ -145,7 +145,6 @@ These technical build records predate public Alpha naming and remain for compati
 - Protect local data, exports, environment files, and history backups with ignore rules.
 - Add source-syntax, secret-history, and dependency checks to the Windows build.
 - Pin CI actions and configure monthly dependency-update proposals.
-- Use the maintainer's public GitHub identity in development history.
 
 ### Internal build 1.2.0
 

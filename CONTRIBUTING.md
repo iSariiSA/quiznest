@@ -4,7 +4,7 @@ Quiznet is a small offline Windows app for **Courses → Units → Quizzes**. Ch
 
 Use synthetic examples in issues and pull requests. Keep personal study material, credentials, and local audit records out of submissions.
 
-The current release stage is Alpha. Use public names such as `Quiznet Alpha 1` in repository release notes; the technical app version is available in Settings for bug reports. Keep release stages, the plan, and development milestones in the repository rather than the application's Settings. Keep `quiznetRelease.stage` unchanged unless the owner explicitly approves a new stage. Plugins and Explore are the major Alpha goals; completing them does not automatically start Beta. See [RELEASES.md](docs/RELEASES.md).
+Quiznet is currently in Alpha. See the [roadmap](docs/ROADMAP.md) for planned features and [release policy](docs/RELEASES.md) for naming and stage changes.
 
 ## Start with a focused change
 
@@ -78,4 +78,4 @@ GitHub Actions checks history for secrets, audits dependencies, runs the tests, 
 
 For a security concern, use **Security → Report a vulnerability** when private reporting is available. Otherwise, ask the maintainer for a private reporting channel in an issue without including sensitive details, personal data, or an exploit. [GitHub reporting guidance](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately).
 
-Maintainers follow [MAINTENANCE.md](docs/MAINTENANCE.md) for data compatibility, installer verification, releases, and the final publication check. Contributions are covered by the repository's [MIT license](LICENSE).
+Maintainers follow [MAINTENANCE.md](docs/MAINTENANCE.md) for data compatibility, installer verification, releases, and distribution checks. Contributions are covered by the repository's [MIT license](LICENSE).

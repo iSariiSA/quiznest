@@ -101,7 +101,7 @@ Download and run the new **Quiznet-Setup.exe**. It updates the existing installa
 
 ### What happens if I close the app during a quiz?
 
-Your saved answers and position remain available through **Resume**. Leaving the quiz or closing the app pauses study timing. A crash may lose time since the most recent save; timing checkpoints run every 15 seconds.
+Your saved answers and position remain available through **Resume**. Leaving the quiz or closing the app pauses study timing. Study timing is saved regularly; an unexpected shutdown may lose the time since the most recent save.
 
 ### Can I change an answer after seeing instant feedback?
 
@@ -121,7 +121,7 @@ The current packaged app supports **Windows 10/11 on x64 computers**. Other plat
 
 ### Are Plugins and Explore available?
 
-Plugins are planned. Explore currently shows a **Coming soon** placeholder; discovery and sharing are planned. Quiznet remains in **Alpha**. See the [roadmap](docs/ROADMAP.md) and [Alpha → Beta → Official Release plan](docs/RELEASES.md).
+Plugins are planned. Explore currently shows a **Coming soon** placeholder; discovery and sharing are planned. Quiznet remains in **Alpha**. See the [roadmap](docs/ROADMAP.md) for planned features.
 
 ## Guides and support
 
@@ -132,21 +132,7 @@ Plugins are planned. Explore currently shows a **Coming soon** placeholder; disc
 
 ## Develop and contribute
 
-The app uses Electron with plain HTML, CSS, and JavaScript. Formatting libraries, fonts, and icons are available locally; the finished app needs no server or remote assets. Development requires **Windows 10/11 x64, Git, Node.js 22.12+, and npm**.
-
-```powershell
-git clone https://github.com/iSariiSA/quiznest.git
-cd quiznest
-npm ci
-
-# Use disposable data while developing.
-$env:QUIZNET_TEST_DATA = Join-Path $env:TEMP ('quiznet-dev-' + [guid]::NewGuid())
-npm start
-```
-
-Run `npm run check`, `npm test`, `npm run test:app`, and `npm audit --audit-level=high` before submitting code changes. `npm run build` produces `dist/Quiznet-Setup.exe`.
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, and pull requests, and [MAINTENANCE.md](docs/MAINTENANCE.md) for architecture, storage compatibility, and release verification. Editable artwork and export instructions are in the [brand guide](docs/BRAND.md).
+For development setup, testing, and pull requests, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
