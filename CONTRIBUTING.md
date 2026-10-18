@@ -70,6 +70,8 @@ Keep the change small enough to review. Explain the problem, resulting behavior,
 
 Do not include generated installers, runtime dependencies, private data, or unrelated formatting changes. Update the README and unreleased changelog entry when behavior changes. Treat other contributors respectfully and respond to review with concrete changes or an explanation.
 
+Keep the README focused on what Quiznet does, installation, first use, and common questions. Put detailed study instructions in [USER_GUIDE.md](docs/USER_GUIDE.md) and file-format details in [IMPORT_FORMATS.md](docs/IMPORT_FORMATS.md). When publishing an approved release, match the README's public release name to `package.json` and point its download and release-note links at that release's uploaded installer. Alpha releases are prereleases, so do not assume GitHub's `releases/latest` URL points to the current Alpha. Check relative links and keep examples synthetic.
+
 GitHub Actions checks history for secrets, audits dependencies, runs the tests, and builds the Windows installer. Dependency-update pull requests still need review and validation; they are not merged automatically.
 
 ## Sensitive reports and releases
