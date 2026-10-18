@@ -4,7 +4,7 @@ The goal is to let you test yourself in the way you choose, with a compact inter
 
 ## Alpha — current
 
-Continue refining the local study application. Existing capabilities include courses, units, mixed question types, images and HTML, saved progress, results, and backup/restore.
+Continue refining the local study application. Existing capabilities include courses, units, mixed question types, images, Markdown and code, saved progress, practice presets, missed-question practice, results, and backup/restore.
 
 The two major goals before Beta are:
 
@@ -13,7 +13,7 @@ The two major goals before Beta are:
 | Plugins | Planned | Optional capabilities can extend how people study. | The agreed initial plugin workflow works, can be tested and maintained, and preserves the base application's offline study workflow and data. |
 | Explore | Placeholder screen available; discovery/sharing planned | People can discover tests shared by others and add chosen tests to their own library. | The agreed discovery and sharing workflow works end to end, selected tests remain usable offline, imports are validated, and private material is shared only deliberately. |
 
-Choose the first plugin capability and Explore discovery/sharing model before implementing their architecture or adding services. Do not assume a marketplace, account system, public repository, hosting provider, or network access to private libraries.
+Choose the first plugin capability and Explore discovery/sharing model before implementing their architecture or adding services. Any future online features must preserve offline studying and require explicit sharing of study material.
 
 Once both features are implemented and verified, the owner decides whether to enter Beta. Their completion alone does not change the release stage.
 
@@ -38,7 +38,7 @@ After Beta testing, resolve release-blocking problems and complete the Windows r
 ## Make study tasks smoother
 
 - Improve bulk question editing and import previews based on actual use.
-- Add useful study options, such as practicing missed questions, with few visible controls.
+- Refine existing practice presets, flags, and missed-question workflows based on feedback.
 - Refine search and history so a growing course collection remains easy to navigate.
 - Consider additional local import formats after agreeing on representative files and validation rules.
 

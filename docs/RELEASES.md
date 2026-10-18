@@ -1,6 +1,6 @@
 # Quiznet releases
 
-Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 8**; the first release under this naming scheme was Alpha 1. Remain in Alpha until the owner explicitly approves changing the stage.
+Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 8**. Remain in Alpha until the owner explicitly approves changing the stage.
 
 ## Names and stages
 
@@ -34,12 +34,12 @@ These are development goals, not features available in Alpha 8; Explore currentl
 
 For the next Alpha release, increment `quiznetRelease.number` while keeping `stage` equal to `alpha`. Only after explicit owner approval, set `stage` to `beta` or `official` and start that stage at number 1. The internal `version` must continue increasing for Windows installer ordering and diagnostics. Never set the technical version to the word Alpha or lower its numeric value just to match a public name.
 
-Alpha 8 uses internal installer build `1.10.1`. Alpha 7 used `1.10.0`. Alpha 6 used `1.9.0`. Alpha 5 used `1.8.0`. Alpha 4 used `1.7.0`. Alpha 3 used `1.6.0`. Alpha 2 used `1.5.0`. Alpha 1 used `1.4.3`, correcting the earlier `1.4.2` build to keep release planning out of Settings. Earlier numeric build records are retained for compatibility and traceability; they were not published GitHub releases. Do not rewrite Git history, old technical references, or the library schema to rename releases.
+Alpha 8 uses internal installer build `1.10.1`. Previous release and build records are in [CHANGELOG.md](../CHANGELOG.md).
 
 ## Preparing release notes
 
 Each release entry must state its public name and stage, what changed, validation performed, known limitations, and the next goals. Technical build IDs can appear as secondary maintenance information.
 
-When the owner authorizes a GitHub release, use the derived public name for its title. Alpha and Beta are prereleases; Official Release is a stable release. Keep the existing technical `v<app version>` tag convention for identifying the exact tested commit, and retain the stable `Quiznet-Setup.exe` asset name. Do not publish automatically or change the private repository's name, URL, or visibility.
+When the owner authorizes a GitHub release, use the derived public name for its title. Alpha and Beta are prereleases; Official Release is a stable release. Keep the existing technical `v<app version>` tag convention for identifying the exact tested commit, and retain the stable `Quiznet-Setup.exe` asset name. Publication requires owner approval. Keep the repository's name, URL, and visibility unchanged unless the owner requests a change.
 
 Follow [MAINTENANCE.md](MAINTENANCE.md) for the full test, backup, reinstall, and checksum checks. All stages update the same installed Quiznet application and preserve the same local library and shortcut.
