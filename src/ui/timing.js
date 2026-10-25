@@ -14,7 +14,8 @@
   function validate(t,ids){
     if(!t||!validMs(t.elapsedMs)||!(t.runningSince===null||validMs(t.runningSince))||typeof t.partial!=='boolean'||!t.questionMs||Array.isArray(t.questionMs)||typeof t.questionMs!=='object')throw new Error('Backup has invalid quiz timing.');
     const entries=Object.entries(t.questionMs);
-    if(entries.some(([id,value])=>!ids.includes(id)||!validMs(value))||(!t.partial&&entries.length!==ids.length)||entries.reduce((sum,[,value])=>sum+value,0)!==t.elapsedMs)throw new Error('Backup has invalid question timing.');
+    const questionIds=new Set(ids);
+    if(entries.some(([id,value])=>!questionIds.has(id)||!validMs(value))||(!t.partial&&entries.length!==ids.length)||entries.reduce((sum,[,value])=>sum+value,0)!==t.elapsedMs)throw new Error('Backup has invalid question timing.');
     return {elapsedMs:t.elapsedMs,questionMs:{...t.questionMs},runningSince:t.runningSince,partial:t.partial};
   }
   function attemptFields(session){

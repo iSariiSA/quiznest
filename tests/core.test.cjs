@@ -160,9 +160,11 @@ test('quiz instructions have explicit automatic/ask policies and examples accept
 test('question mix honors counts and exclusions, rejects impossible totals and supports ask counts',()=>{
   const draft=instructions.defaults();draft.types.mode='value';draft.types.value=[{type:'single-choice',mode:'value',value:10},{type:'multiple-answer',mode:'omit',value:''},{type:'true-false',mode:'value',value:5}];
   let markdown=instructions.generate(draft);assert.match(markdown,/Exactly 10 questions/);assert.match(markdown,/Exactly 5 questions/);assert.match(markdown,/Multiple answers \(multiple-answer\): Exclude/);
+  assert.match(markdown,/- Number of questions: 15/);assert.deepEqual(instructions.mixCounts(draft),{fixed:15,open:0,minimum:15});
   draft.count={mode:'value',value:10};assert.throws(()=>instructions.generate(draft),/must match the total/);
   draft.count.value=15;assert.doesNotThrow(()=>instructions.generate(draft));
   draft.types.value[2]={type:'true-false',mode:'ask',value:999};draft.count.value=11;assert.match(instructions.generate(draft),/true-false\): Ask the user for its count/);
+  assert.deepEqual(instructions.mixCounts(draft),{fixed:10,open:1,minimum:11});
   draft.count.value=10;assert.throws(()=>instructions.generate(draft),/must match/);
   draft.count.mode='ask';assert.match(instructions.generate(draft),/Number of questions: Ask the user/);
   draft.types.value.forEach(t=>t.mode='omit');assert.throws(()=>instructions.generate(draft),/at least one/);
@@ -425,5 +427,42 @@ test('corruption recovery preserves the damaged source and never silently resets
     assert.equal((await fs.readdir(dir)).filter(f=>f.startsWith('library-damaged-')).length,1);
     await fs.writeFile(store.file,'broken');await fs.writeFile(store.file+'.bak','broken');
     await assert.rejects(new Store(dir).load(sampleLibrary),/preserved/);assert.equal(await fs.readFile(store.file,'utf8'),'broken');
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
+});
+
+test('duplicate imports keep maximum-length titles valid and all quizzes survive restart',async()=>{
+  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-import-title-'));
+  try{
+    const store=new Store(dir);await store.load();
+    const title='Q'.repeat(200),packs=core.parseImport(JSON.stringify({title,questions:[q]}));
+    for(let i=0;i<12;i++)await store.change(data=>core.importPacks(data,packs));
+    const quizzes=store.data.courses[0].units[0].quizzes;
+    assert.equal(new Set(quizzes.map(q=>q.title)).size,12);
+    assert.ok(quizzes.every(q=>q.title.length<=200));
+    assert.equal(quizzes[1].title,'Q'.repeat(196)+' (2)');
+    assert.equal(quizzes[11].title,'Q'.repeat(195)+' (12)');
+    assert.deepEqual(core.validateLibrary(store.data),store.data);
+    const restarted=new Store(dir);await restarted.load();assert.deepEqual(restarted.data,store.data);assert.equal(restarted.notice,'');
+  }finally{await fs.rm(dir,{recursive:true,force:true});}
+});
+
+test('a missing primary library recovers its backup and never seeds over an invalid backup',async()=>{
+  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-missing-library-'));
+  try{
+    const store=new Store(dir);await store.load();
+    await store.change(data=>core.importPacks(data,core.parseImport(JSON.stringify({title:'Recovery quiz',questions:[q]}))));
+    const quiz=store.data.courses[0].units[0].quizzes[0];
+    await store.change(data=>{core.mutate(data,{type:'start',quizId:quiz.id});core.mutate(data,{type:'answer',questionId:quiz.questions[0].id,answer:0});core.mutate(data,{type:'finish'});core.mutate(data,{type:'start',quizId:quiz.id});core.mutate(data,{type:'answer',questionId:quiz.questions[0].id,answer:1});});
+    const expected=structuredClone(store.data);
+    await store.change(()=>{});const backup=await fs.readFile(store.file+'.bak','utf8');
+    await fs.unlink(store.file);
+    let seeded=false;const recovery=new Store(dir);await recovery.load(()=>{seeded=true;return sampleLibrary();});
+    assert.equal(seeded,false);assert.deepEqual(recovery.data,expected);assert.match(recovery.notice,/recovered/);
+    assert.equal(await fs.readFile(store.file+'.bak','utf8'),backup);
+    assert.deepEqual(JSON.parse(await fs.readFile(store.file,'utf8')),expected);
+    await fs.unlink(store.file);await fs.writeFile(store.file+'.bak','damaged backup');
+    await assert.rejects(new Store(dir).load(sampleLibrary),/preserved/);
+    assert.equal(await fs.readFile(store.file+'.bak','utf8'),'damaged backup');
+    await assert.rejects(fs.stat(store.file),{code:'ENOENT'});
   }finally{await fs.rm(dir,{recursive:true,force:true});}
 });

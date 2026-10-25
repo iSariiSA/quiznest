@@ -82,3 +82,23 @@ The language catalog includes Python, JavaScript, TypeScript, Java, C, C++, C#, 
 For JSON imports, add `"code": "print(1 + 2)"` and `"codeLanguage": "python"`, or set `"format": "markdown"` and include fenced blocks. CSV has optional `code` and `code_language` columns; quote multiline snippets. See [code-markdown.json](../examples/code-markdown.json) for a complete mixed example. Code and Markdown survive exports, backups, saved attempts, and results.
 
 Code attachments are limited to 50,000 characters and Markdown fields to 100,000. Blocks above 12,000 characters display as plain code to keep the interface responsive.
+
+### Math and prepared diagrams
+
+Use `"format": "markdown"` for LaTeX notation in prompts, choices, and explanations. Inline formulas use `$...$` or `\(...\)`. Display formulas use `$$...$$` or `\[...\]`, with the opening and closing delimiters on separate lines for multiline content. A fenced `math` block also displays an equation. Code blocks, inline code, and Text/HTML mode keep their existing literal behavior. Escape a literal currency dollar as `\$` when needed.
+
+```json
+{
+  "format": "markdown",
+  "prompt": "Evaluate the integral.\n\n$$\n\\int_0^1 x^2\\,dx\n$$",
+  "options": ["$\\frac{1}{3}$", "$\\frac{1}{2}$"],
+  "correctAnswer": 0,
+  "explanation": "$$\\left[\\frac{x^3}{3}\\right]_0^1=\\frac{1}{3}$$"
+}
+```
+
+Double each LaTeX backslash in JSON strings. Matrices can use `\begin{bmatrix}...\end{bmatrix}` with `&` between columns and `\\` between rows (four backslashes in JSON). Invalid or unsupported notation shows **Check formula** with its original source. Display limits are 4,000 characters per formula, 64 formulas and 16,000 formula characters per field; content beyond the display budget remains readable. The bundled KaTeX renderer and fonts require no internet connection. It displays formulas without evaluating them.
+
+An agent may prepare a labelled triangle, coordinate plot, or other diagram externally, then embed its real PNG/JPEG/GIF/WebP bytes in the existing `image` and `imageAlt` fields. Diagrams may also appear in Markdown prompts, choices, and explanations using `![description](data:image/png;base64,...)` with a complete valid data URL. The same 2 MiB per-image validation and overall field/file limits apply. Keep worked-solution images in `explanation` so import preview reveals them only with **Show correct answer**. Quiznet does not execute drawing code, fetch remote assets, or accept SVG images.
+
+See [math-diagrams.json](../examples/math-diagrams.json) for a complete geometry, matrix, and calculus quiz with embedded question and solution diagrams.

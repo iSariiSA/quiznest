@@ -8,7 +8,7 @@
 <p align="center">An offline Windows app for turning study material into quizzes, practicing at your own pace, and learning from your mistakes.</p>
 
 <p align="center">
-  <a href="https://github.com/iSariiSA/quiznest/releases/download/v1.10.1/Quiznet-Setup.exe"><strong>Download for Windows</strong></a> ·
+  <a href="https://github.com/iSariiSA/quiznest/releases/download/v1.17.0/Quiznet-Setup.exe"><strong>Download for Windows</strong></a> ·
   <a href="#get-started">Get started</a> ·
   <a href="#common-questions">Common questions</a> ·
   <a href="docs/USER_GUIDE.md">Study guide</a>
@@ -16,7 +16,7 @@
 
 **Windows 10/11 · x64 · Works offline · MIT licensed**
 
-Current release: **Quiznet Alpha 8** — a preview for testing and feedback. The installer is unsigned. See [release notes and the installer checksum](https://github.com/iSariiSA/quiznest/releases/tag/v1.10.1).
+Current release: **Quiznet Alpha 16** — a preview for testing and feedback. The installer is unsigned. See [release notes and the installer checksum](https://github.com/iSariiSA/quiznest/releases/tag/v1.17.0).
 
 ![Quiznet's compact dark library, with sample Biology, Chemistry, and Mathematics courses](assets/screenshots/library.png)
 
@@ -24,7 +24,7 @@ Current release: **Quiznet Alpha 8** — a preview for testing and feedback. The
 
 Quiznet gives your study material a home: **Courses → Units → Quizzes**. Write questions, import a quiz file, or prepare instructions for an AI assistant to help create one. Then test yourself, review explanations, and return to the questions you missed.
 
-Studying requires no account or internet connection. Your questions, images, results, and unfinished attempts stay in a local library on your computer.
+Studying requires no account or internet connection. Optional update checks in Settings read public GitHub release information; automatic checking is off until enabled. Your questions, images, results, and unfinished attempts stay in a local library on your computer.
 
 ## What can I do with it?
 
@@ -32,17 +32,19 @@ Studying requires no account or internet connection. Your questions, images, res
 | --- | --- |
 | Organize a subject | Choose a course and unit when adding a quiz, move quizzes between them, and search with **Ctrl + K**. |
 | Make your own questions | Mix single-answer, multiple-answer, and true/false questions, with explanations and up to 100 choices for choice questions. |
-| Study visual or technical material | Include embedded images, HTML or Markdown formatting, and syntax-highlighted code. Code is displayed, never executed. |
+| Study visual or technical material | Include embedded diagrams, LaTeX math in Markdown, HTML formatting, and syntax-highlighted code. Code is displayed, never executed. |
 | Choose how to practice | Use **Test yourself** for feedback after finishing or **Practice** for instant feedback. Customize timers, shuffling, navigation, and flags; save your own presets. |
-| Pick up where you left off | Leave a quiz and resume your saved progress, even after closing the app. |
-| Learn from mistakes | Review answers and explanations, practice only missed questions, and compare compatible attempts by score and study time. |
-| Keep a copy or share a quiz | Export individual quizzes or save and restore a full library backup. Images and code travel with the files. |
+| Pick up where you left off | Resume saved attempts and recover incomplete editor drafts after an interruption. |
+| Learn from mistakes | Review explanations, practice missed questions, and export one Markdown study report for a tutor agent, including your answers and question timings. |
+| Keep a copy or share a quiz | Export quizzes, save a full backup, browse local backup history, and check stored library integrity. |
+
+This release includes a collapsible navigation rail, course search, wide question/answer layouts, full-window editing and import review, and an incorrect-answer filter in results. The instruction builder shows a live brief summary. History/results can export a complete or focused Markdown study report for another agent. Editor recovery, bounded backup history, a read-only library check, and optional GitHub release checking remain available. Math notation and prepared diagrams work offline in questions, choices, and explanations.
 
 ## Get started
 
 ### 1. Install Quiznet
 
-1. [Download **Quiznet-Setup.exe**](https://github.com/iSariiSA/quiznest/releases/download/v1.10.1/Quiznet-Setup.exe) from the current release.
+1. [Download **Quiznet-Setup.exe**](https://github.com/iSariiSA/quiznest/releases/download/v1.17.0/Quiznet-Setup.exe) from the current release.
 2. Run the installer. It installs for your Windows account without administrator access.
 3. Open **Quiznet** from your Desktop or Start menu.
 
@@ -68,11 +70,11 @@ Inside a unit, **New quiz** offers three starting points:
 | **Import file** | You already have a completed JSON or CSV quiz file. |
 | **Prepare with an agent** | You want instructions to give an external AI assistant along with your notes. |
 
-For imports, try [a small Biology quiz](examples/biology.json), [mixed question types](examples/mixed-questions.json), or [the CSV example](examples/questions.csv). The [import reference](docs/IMPORT_FORMATS.md) explains the format, images, Markdown, code, and limits.
+For imports, try [a small Biology quiz](examples/biology.json), [mixed question types](examples/mixed-questions.json), [math and diagrams](examples/math-diagrams.json), or [the CSV example](examples/questions.csv). The [import reference](docs/IMPORT_FORMATS.md) explains the format, images, Markdown, code, and limits.
 
 ## Turn notes into a quiz with an AI assistant
 
-1. Open **Prepare a quiz** and choose the question types, count, and topics. Optional settings include difficulty, language, explanations, and source coverage.
+1. Open **Prepare a quiz** and choose the question types, count, and topics. Exact type counts update the total automatically; mixes with undecided counts show the minimum. Optional settings include difficulty, language, explanations, and source coverage.
 2. Use **Save Markdown** or **Copy instructions**.
 3. Give those instructions and your study material to your preferred AI assistant. Review the questions and answers it produces.
 4. Import the returned `quiznet-quiz.json` file into Quiznet and confirm its destination in the preview.
@@ -80,6 +82,10 @@ For imports, try [a small Biology quiz](examples/biology.json), [mixed question 
 **Quiznet does not call an AI service or upload your notes.** You choose what to share with an external assistant. Generated questions still need your review. See the [full preparation guide](docs/USER_GUIDE.md#prepare-a-quiz-with-an-agent).
 
 ## Common questions
+
+### How large can a quiz be?
+
+Quiznet supports up to **10,000 questions per quiz** and up to **100 choices per choice question**. Imports accept up to **20 MB**; individual images up to **2 MB**. Large editors and results use question groups to keep controls responsive. Whole-library backups have separate limits. See the [tested limits and stability behavior](docs/LIMITS.md).
 
 ### Does it work without internet or an account?
 

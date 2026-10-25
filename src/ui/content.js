@@ -6,7 +6,9 @@
   const dropped=new Set('script style iframe object embed svg math template noscript head title base link meta form input textarea select button audio video source canvas'.split(' '));
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const codePolicy=root.QuiznetCodePolicy;
+  const math=root.QuiznetMath;
   const markdown=root.markdownit({html:false,linkify:false,typographer:false,maxNesting:30});
+  math.install(markdown);
   function codeBlock(source,requested='plaintext') {
     let language;try{language=codePolicy.language(requested);}catch{language='plaintext';}
     const label=codePolicy.languages.find(item=>item.id===language)?.label||language;
@@ -16,7 +18,7 @@
     }
     return `<div class="code-block" dir="ltr"><div class="code-language">${escape(label)}</div><pre tabindex="0" aria-label="${escape(label)} code"><code class="hljs language-${escape(language)}">${highlighted}</code></pre></div>`;
   }
-  function sanitize(source) {
+  function sanitize(source,expressions=[]) {
     const template=document.createElement('template');
     template.innerHTML=String(source??'').slice(0,policy.MAX_HTML_LENGTH);
     const output=document.createElement('div');
@@ -27,6 +29,11 @@
       if (node.nodeType!==Node.ELEMENT_NODE || node.namespaceURI!=='http://www.w3.org/1999/xhtml') return;
       const tag=node.localName;
       if (dropped.has(tag)) return;
+      const marker=node.getAttribute('data-quiznet-math');
+      if(tag==='span'&&/^(0|[1-9]\d*)$/.test(marker??'')&&expressions[Number(marker)]){
+        const expression=expressions[Number(marker)],fragment=document.createElement('template');
+        fragment.innerHTML=math.render(expression.source,expression.display);parent.append(fragment.content);return;
+      }
       let target=parent;
       if (allowed.has(tag)) {
         target=document.createElement(tag);
@@ -53,12 +60,13 @@
   }
   function render(source,format) {
     if(format==='html')return sanitize(source);
-    if(format==='markdown')return sanitize(markdown.render(String(source??'').slice(0,codePolicy.MAX_MARKDOWN_LENGTH)));
+    if(format==='markdown'){const env={};return sanitize(markdown.render(String(source??'').slice(0,codePolicy.MAX_MARKDOWN_LENGTH),env),env.quiznetMath);}
     return escape(source);
   }
   function plain(source,format) {
     if (!['html','markdown'].includes(format)) return String(source??'');
     const template=document.createElement('template');template.innerHTML=render(source,format);
+    for(const expression of template.content.querySelectorAll('.math-expression'))expression.replaceWith(document.createTextNode(expression.dataset.mathSource));
     return template.content.textContent;
   }
   function image(question) {
