@@ -1,0 +1,214 @@
+/* Shared desktop workspace. Content remains usable at the 760 × 560 minimum. */
+.titlebar { padding-left: 0; }
+.titlebar-label { margin-right: auto; }
+#navigation-toggle { display: grid; place-items: center; width: 40px; height: 30px; margin-right: 7px; -webkit-app-region: no-drag; }
+#navigation-toggle:hover { background: var(--hover); }
+.app-shell { flex-direction: row; }
+#sidebar { width: 184px; height: auto; padding: 26px 12px 14px; gap: 28px; flex-direction: column; align-items: stretch; border-right: 1px solid var(--line); border-bottom: 0; background: #1d2228; overflow: auto; }
+.brand { padding: 0 10px; min-height: 34px; }
+.app-nav { flex-direction: column; align-items: stretch; height: auto; gap: 6px; }
+.nav-item { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 11px 12px; text-align: left; font-size: 13px; }
+.nav-item .icon { width: 19px; height: 19px; }
+.nav-item span { display: grid; gap: 4px; }
+.nav-item small { font-size: 10px; color: var(--muted); font-weight: 400; }
+.nav-item.active { background: #2a342d; box-shadow: inset 3px 0 var(--accent); }
+.nav-item.active .icon { color: var(--accent); }
+.sidebar-bottom { margin-top: auto; }
+.sidebar-bottom .nav-item { width: 100%; }
+.navigation-hidden #sidebar { display: none; }
+.navigation-compact #sidebar { width: 58px; padding: 22px 7px 12px; }
+.navigation-compact #sidebar .brand { padding: 0; justify-content: center; }
+.navigation-compact #sidebar .brand span, .navigation-compact .nav-item span { display: none; }
+.navigation-compact .nav-item { padding: 12px; justify-content: center; }
+#main { min-width: 0; container-type: inline-size; }
+.topbar { max-width: none; min-height: 72px; padding: 20px 32px 8px; gap: 14px; flex-wrap: wrap; }
+.breadcrumbs { font-size: 12px; font-weight: 400; }
+.breadcrumbs button, .breadcrumbs span { max-width: 280px; }
+.top-actions { flex-wrap: wrap; margin-left: auto; }
+.app-menu { margin-left: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.course-search input { width: 170px; min-height: 34px; padding: 7px 11px; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; }
+.course-search input::placeholder { color: var(--muted); }
+.course-row[hidden], #course-search-empty[hidden] { display: none; }
+.main-content { max-width: none; padding: 16px 32px 32px; }
+.page-heading { margin: 0 0 26px; }
+.page-heading h1 { font-size: 30px; font-weight: 600; letter-spacing: -.7px; overflow-wrap: anywhere; }
+.page-heading p { margin-top: 9px; color: var(--muted); font-size: 13px; }
+.btn { min-height: 34px; border-radius: 6px; }
+.library-table { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+.library-table th { padding: 15px 20px; }
+.library-table td { padding: 0 20px; border-bottom-color: var(--line); }
+.library-table tbody tr:last-child td { border-bottom: 0; }
+.library-table th:not(:first-child), .library-table td:not(:first-child) { width: 120px; text-align: left; }
+.library-table .row-link { min-height: 65px; }
+.color-dot { width: 9px; height: 9px; }
+.unit-section { border: 1px solid var(--line); border-radius: 6px; background: var(--surface); overflow: hidden; margin-bottom: 24px; }
+.unit-heading { padding: 15px 20px; border-bottom: 1px solid var(--line); }
+.unit-link, .unit-heading h2 { font-size: 16px; }
+.quiz-list { border: 0; border-radius: 0; }
+.quiz-row { padding: 18px 20px; }
+.quiz-info h3 { font-size: 15px; }
+.quiz-info > span { margin-top: 5px; }
+.empty-unit { padding: 20px; }
+.resume-banner { margin-bottom: 22px; }
+/* Focused studying: horizontal utility controls and a question/answer split. */
+body[data-page="quiz"] .topbar { min-height: 42px; padding-top: 8px; }
+body[data-page="quiz"] .breadcrumbs { visibility: hidden; }
+body[data-page="quiz"] .main-content { padding-top: 4px; }
+.quiz-header { max-width: none; gap: 18px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); margin-bottom: 16px; flex-wrap: wrap; }
+.quiz-header h1 { font-size: 14px; color: var(--text); min-width: 150px; }
+.quiz-header .back-link { border-right: 1px solid var(--line); padding-right: 18px; }
+.quiz-navigation { max-width: none; margin: 0 0 22px; }
+.quiz-progress-label { flex-wrap: wrap; gap: 8px; }
+.quiz-progress { margin-top: 10px; }
+.question-squares { gap: 7px; }
+.question-panel { max-width: none; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.12fr); gap: 0 32px; padding: 12px 0 0; border: 0; background: none; }
+.quiz-question-column, .quiz-answer-column { min-width: 0; }
+.quiz-question-column { border-right: 1px solid var(--line); padding: 8px 32px 24px 0; }
+.question-prompt { font-size: clamp(21px,2.3vw,32px); font-weight: 500; line-height: 1.5; margin-bottom: 20px; }
+.question-prompt .code-block code { font-size: 13px; }
+.question-meta { flex-wrap: wrap; }
+.question-meta .question-instruction { margin: 0; }
+.answer-options { gap: 12px; }
+.answer-option { min-height: 68px; padding: 17px 18px; }
+.answer-option .option-letter { border: 1px solid var(--line); border-radius: 50%; display: grid; place-items: center; width: 29px; height: 29px; }
+.answer-option.chosen .option-letter { background: var(--accent); color: #1d281b; border-color: var(--accent); }
+.answer-content { font-size: 15px; }
+.question-controls { grid-column: 1 / -1; border-top: 1px solid var(--line); padding: 20px 0 0; margin-top: 30px; gap: 12px; }
+.question-controls .btn { min-width: 108px; }
+/* Results stay readable and preserve original question numbers when filtered. */
+.eyebrow { color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 1.5px; margin-bottom: 12px; }
+.result-summary { gap: 24px; flex-wrap: wrap; padding-bottom: 26px; }
+.result-summary h1 { font-size: 23px; }
+.result-summary > div:first-child { min-width: min(100%,260px); }
+.score-value { font-size: 40px; letter-spacing: -1px; }
+.review-filters { display: flex; gap: 9px; margin: 0 0 22px; }
+.review-filters .selected { border-color: var(--accent); background: var(--selected); }
+.review-card { padding: 24px; }
+.review-question { font-size: 17px; }
+.review-answers { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.review-answers > div { padding: 14px 16px; background: #1c2127; border: 1px solid var(--line); border-radius: 5px; }
+.review-answers .wrong-answer { border-color: #69474c; }
+.review-answers .right-answer { border-color: #4c6044; }
+.history-list { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.history-row { padding: 20px; }
+.history-row:last-child { border-bottom: 0; }
+/* Instructions pair the existing preference catalog with a live brief. */
+.instructions-page { max-width: none; }
+.instructions-page h1 { font-size: 30px; font-weight: 600; letter-spacing: -.6px; }
+.instructions-intro { max-width: 750px; }
+.instructions-layout { display: grid; grid-template-columns: minmax(0,1.65fr) minmax(230px,1fr); gap: 24px; align-items: start; }
+#instructions-form { min-width: 0; }
+.brief-summary { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; position: sticky; top: 20px; }
+.brief-summary h2 { font-size: 18px; margin-bottom: 8px; }
+.brief-summary h3 { font-size: 14px; margin: 22px 0 14px; }
+.brief-summary ul { list-style: none; padding: 0 0 18px; margin: 16px 0; border-bottom: 1px solid var(--line); display: grid; gap: 12px; font-size: 13px; overflow-wrap: anywhere; }
+.brief-summary ol { padding-left: 20px; font-size: 13px; display: grid; gap: 18px; margin-bottom: 26px; }
+.brief-summary strong { font-weight: 500; }
+.brief-summary li span { display: block; color: var(--muted); font-size: 12px; margin-top: 5px; line-height: 1.6; }
+.instructions-page .quiz-destination { background: var(--surface); }
+.instruction-section { padding: 22px; }
+.instruction-grid { grid-template-columns: minmax(0,1fr); }
+.instruction-actions { gap: 8px; }
+/* Settings actions are deliberately neutral; no competing primary buttons. */
+.settings-list { max-width: 1040px; }
+.settings-group { padding: 0 22px; margin-bottom: 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.settings-group > h2 { padding: 18px 0; font-size: 16px; border-bottom: 1px solid var(--line); }
+.settings-row { padding: 18px 0; gap: 20px; }
+.settings-row:last-child { border-bottom: 0; }
+.settings-row h3 { font-size: 14px; font-weight: 500; }
+.settings-row p { margin-top: 5px; }
+.settings-row .btn { flex: none; min-width: 118px; }
+.settings-group.update-settings { padding: 20px 22px; }
+.storage-details { padding: 16px 0; }
+/* Editor and import retain dialog semantics while occupying the full workspace. */
+.workspace-backdrop { padding: 0; background: var(--bg); }
+.workspace-backdrop .modal { width: 100%; height: 100%; max-height: 100%; border: 0; border-radius: 0; background: var(--bg); box-shadow: none; }
+.workspace-backdrop .modal-heading { padding: 18px 28px; background: var(--bg); }
+.workspace-backdrop .modal-heading h2 { font-size: 23px; }
+.workspace-backdrop #modal-form { flex: 1; }
+.workspace-backdrop .modal-body { flex: 1; padding: 24px 28px; }
+.workspace-backdrop .modal-footer { background: var(--bg); padding: 14px 28px; }
+.workspace-backdrop .form-error { padding-top: 10px; }
+.editor-layout { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 22px; align-items: start; margin: 20px 0; }
+.editor-outline { position: sticky; top: 0; max-height: 65vh; overflow: auto; display: grid; gap: 5px; padding-right: 12px; border-right: 1px solid var(--line); }
+.editor-outline strong { font-size: 13px; padding: 9px 10px; }
+.editor-outline .btn { justify-content: flex-start; text-align: left; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; font-size: 12px; padding: 10px; }
+.editor-outline .btn.active { color: var(--accent); background: var(--selected); }
+.editor-questions { margin: 0; min-width: 0; }
+.editor-question { padding: 22px; scroll-margin-top: 12px; }
+.editor-question-heading { padding-bottom: 15px; border-bottom: 1px solid var(--line); }
+.editor-question-heading strong { color: var(--text); font-weight: 500; }
+.editor-columns { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; }
+.editor-writing, .editor-answer-column { min-width: 0; }
+.editor-writing > label:has([data-editor="prompt"]) textarea { min-height: 205px; }
+.editor-answer { grid-template-columns: minmax(0,1fr); gap: 12px; }
+.editor-answer-column h3 { font-size: 13px; font-weight: 500; padding-top: 3px; }
+.editor-preview { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+.editor-image > .question-image { max-height: 240px; }
+.import-workspace .import-inspection { margin-top: 20px; }
+.import-columns { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 32px; }
+.import-prompt-column, .import-answer-column { min-width: 0; }
+.import-prompt-column { border-right: 1px solid var(--line); padding-right: 28px; }
+.import-question-prompt { font-size: 18px; }
+.import-question-card { padding: 24px; }
+.import-question-card .question-image { max-height: 300px; }
+.import-question-choices { margin-top: 0; }
+.import-choice { min-height: 52px; align-items: center; }
+.import-question-card .explanation { margin-left: 0; }
+.import-workspace .quiz-destination { margin: 24px 0 0; }
+.import-question-meta { margin-bottom: 22px; }
+.import-question-issues { background: #292820; }
+/* Keep review controls together so the question is visible on entry. */
+.import-workspace .modal-body { padding-top: 14px; }
+.import-workspace .modal-body > .modal-intro { margin-bottom: 5px; }
+.import-workspace .import-file-summary { margin: 4px 0 6px; }
+.import-workspace .modal-body > .muted { margin-bottom: 8px; font-size: 11px; }
+.import-workspace .import-inspection { margin-top: 8px; padding-top: 12px; }
+.import-workspace .import-inspection > h3 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#import-question-preview { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px 22px; align-items: end; }
+.import-question-controls { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: 12px; }
+.import-question-controls label { margin-bottom: 0; }
+.import-question-navigation { grid-column: 2; grid-row: 1; margin: 0; align-items: end; gap: 8px; }
+.import-question-navigation label { width: 110px; flex: none; }
+.import-question-navigation > span { padding-bottom: 9px; }
+.import-question-navigation .button-row { flex-wrap: nowrap; gap: 6px; }
+.import-question-navigation .btn { padding: 8px; font-size: 12px; }
+.import-question-controls select, .import-question-navigation input { padding: 7px 9px; margin-top: 4px; }
+#import-question-preview > p, #import-question-preview > article { grid-column: 1 / -1; }
+#import-question-preview > p { margin: 0; }
+.import-question-card { margin-top: 5px; padding: 18px 22px; }
+.import-question-meta { margin-bottom: 10px; }
+.import-question-card > .muted { margin-bottom: 12px; font-size: 11px; }
+@container (max-width: 900px) {
+  .instructions-layout { grid-template-columns: minmax(0,1fr); }
+  .brief-summary { position: static; }
+  .brief-summary ul { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+  .brief-summary ol { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
+}
+@container (max-width: 820px) {
+  .question-panel { grid-template-columns: minmax(0,1fr); }
+  .quiz-question-column { border-right: 0; padding: 0 0 20px; }
+  .question-prompt { font-size: 24px; }
+  .topbar { padding-left: 22px; padding-right: 22px; }
+  .main-content { padding-left: 22px; padding-right: 22px; }
+}
+@media (max-width: 1000px) {
+  .editor-layout { grid-template-columns: minmax(0,1fr); }
+  .editor-outline { position: static; display: flex; flex-wrap: wrap; max-height: 100px; border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 10px; }
+  .editor-outline strong { width: 100%; }
+  .editor-outline .btn { max-width: 180px; }
+}
+@media (max-width: 850px) {
+  #sidebar { width: 160px; padding-left: 10px; padding-right: 10px; }
+  .editor-columns, .import-columns { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  .import-prompt-column { border-right: 0; padding-right: 0; }
+  .workspace-backdrop .modal-body { padding: 18px 22px; }
+  .result-summary { gap: 16px; }
+  .review-answers { grid-template-columns: minmax(0,1fr); }
+  .review-top { flex-wrap: wrap; }
+  .settings-row { flex-wrap: wrap; }
+  #import-question-preview { grid-template-columns: minmax(0,1fr); }
+  .import-question-controls, .import-question-navigation { grid-column: 1; grid-row: auto; }
+  .import-question-navigation .button-row { margin-left: auto; }
+}

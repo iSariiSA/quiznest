@@ -1,6 +1,115 @@
 # Changelog
 
-## Unreleased — Quiznet Alpha 9
+## Quiznet Alpha 16
+
+Stage: **Alpha**. Internal installer build: `1.17.0`. Publication authorized by the owner on 25 October 2026. This release also includes the local reliability, math, import-review, and workspace-interface improvements developed since the previous public Alpha 8.
+
+- Add **Export study report** to the current results interface, available immediately after finishing or by opening an attempt from History. Save one Markdown file for an external tutor agent, with all questions by default or a focused selection of mistakes and questions with the most recorded time.
+- Include saved question/choice content, selected and correct answer sets, explanations, code, math, deduplicated embedded diagrams, scoring, feedback mode, and timing coverage. Use historical attempt snapshots and original question numbers across review filters, pagination, and later quiz edits.
+- Highlight the top 20% of questions with positive recorded time, capped at five with deterministic ties. Keep missing/partial timing explicit, and avoid treating time alone as evidence of difficulty. Include tutor instructions to verify the saved key, explain misconceptions, and ask for missing source/diagram context.
+- Keep exports offline and read-only, capped at 20 MiB and 10,000 questions without silent truncation. Quote source safely, validate IPC selections, protect the app data folder, and use flushed atomic file replacement with unique temporary files. Preserve existing reports on failure and keep cancellation/retry available. Keep the current workspace UI, library schema, and application identity.
+
+Validation: source/offline-asset checks passed (53 JavaScript files), all 75 core/storage tests passed, and all 54 Electron workflow tests passed with a 120-second per-test deadline. New checks cover historical snapshots after live edits, multiple answers and HTML/math/code, image deduplication and fenced untrusted content, full 10,000-question exports, explicit size failures, focused priorities, partial/legacy/zero timings, cancelled saves, wrong extensions, protected data paths, failed atomic writes with safe retry, invalid/concurrent IPC requests, compact dialogs, and exports across result pages without changing the current filter or library. Dependency audit reported zero vulnerabilities; the redacted 16-commit history scan found no leaks.
+
+Built the offline `Quiznet-Setup.exe` and matched all 95 packaged source/assets to disk, including 60 local math fonts. Installed twice over the existing per-user installation, preserving its registry identity, installation location, one Desktop shortcut, and SHA256 hashes of the primary library, rolling backup, and any saved editor draft. Verified the installed archive against the tested build, normal version/data path, synthetic report generation from the packaged module, the report IPC bridge, current navigation/dialog behavior, offline math/import preview, read-only library checks, blocked renderer networking, and repeat-launch focus. Installer SHA256: `60513ee06221a39890f9e64ade5183daa3c77883d9e46c0e24119206a006d28e`. Local update and installation checks complete. The verified installer is the Alpha 16 release artifact.
+
+Known limits: diagram data requires an agent with suitable file/image tools; historical attempts without recorded times cannot supply them. Reports are capped at 20 MiB without silent truncation. Next goals remain separately scoped Plugins and Explore.
+
+## Unreleased — Quiznet Alpha 15
+
+Stage: **Alpha**. Internal installer build: `1.16.0`. Local UI update; GitHub publication pending owner approval.
+
+- Implement the approved charcoal/sage design direction across Library, courses, quiz taking, editing, results, instruction preparation, import review, and Settings. Keep the existing offline JavaScript application and storage contracts.
+- Add collapsible navigation, compact quiz navigation icons, local course filtering, and direct New quiz actions in course sections. Place questions and answers side by side on wide windows and stack them in compact windows.
+- Give editing and import review full-window workspaces with bounded existing pagination. Add an editor question jump list and keep all content formats, previews, draft recovery, safe import rendering, and answer-reveal behavior.
+- Add a live instruction-brief summary, an Incorrect result filter that retains historical question indices, and grouped neutral Settings actions. Keep background controls inert while dialogs are open.
+- Focus the first dialog field, keep keyboard navigation inside dialogs, and prevent global search from replacing an open form with unsaved input. Keep import question-number labels on one line.
+- Update Electron to 44.9.3 and the locked undici/fast-uri patch versions to resolve the reported dependency advisories. Reviewed upstream [Electron](https://releases.electronjs.org/release/v44.9.3), [undici 7](https://github.com/nodejs/undici/releases/tag/v7.30.1), [undici 6](https://github.com/nodejs/undici/releases/tag/v6.29.1), and [fast-uri](https://github.com/fastify/fast-uri/releases/tag/v3.1.9) release notes. Preserve installer identity, library schema, offline study behavior, and the existing installation path.
+
+Validation: `npm run check` passed (50 JavaScript files and matching pinned offline assets), all 68 core/storage tests passed, and the final complete Electron suite passed all 50 tests with a 120-second per-test deadline. New checks cover course filtering, hidden navigation, wide/compact quiz layouts, answer preservation, historical mistake filtering across pages, editor jumps/draft recovery, escaped live-brief summaries, and keyboard protection of unsaved forms. The first run exposed a crash-test synchronization timeout; the test now waits for the replacement document to finish loading before inspecting it, passed five consecutive runs, and passed in the final full suite. Dependency audit reported zero vulnerabilities; the redacted 16-commit history scan found no leaks. Refreshed 42 screenshots using isolated synthetic study data.
+
+Built the offline `Quiznet-Setup.exe` and matched all 94 packaged source/assets to disk. Installed twice over the existing per-user installation, retaining its registry identity, install location, and one Desktop shortcut. Primary-library and rolling-backup SHA256 hashes remained unchanged after both installations and the installed-app smoke check. Verified version/data path, Electron 44.9.3, navigation visibility, protection of unsaved dialog input, offline math/fonts/diagrams, answer reveal/reset, read-only import cancellation/library checks, blocked renderer networking, and repeat-launch focus. Installer SHA256: `c6a9634c9dd754787154f3b2bea535385614fc84bb721aa19208771998b22e85`. Local update complete; no GitHub release was published.
+
+Known limits: the installer remains unsigned. Plugins and Explore remain separately scoped future goals; this UI update does not implement them or change the release stage.
+
+## Unreleased — Quiznet Alpha 14
+
+Stage: **Alpha**. Internal installer build: `1.15.0`. Local update authorized; GitHub publication pending owner approval.
+
+- Display LaTeX math offline in Markdown questions, choices, and explanations: fractions, matrices, integrals, inline/display equations, and fenced math blocks. Bundle KaTeX 0.19.0, its local fonts, and license; no runtime downloads.
+- Use embedded raster images for agent-prepared geometry and graphs, including solution diagrams in explanations. Update agent instructions and add a complete synthetic math/diagram quiz. Python remains display-only.
+- Bound formula size, count, macro expansion, visual dimensions, output, and cache. Keep malformed notation readable with a Check formula note; preserve literal code, escaped dollars, and Text/HTML content. Keep library schema and stored question fields unchanged.
+- Include the previously source-only import preview and its answer-reveal correction in this local update.
+
+- Browse every question before confirming an import, with a quiz selector, Previous/Next controls, direct question-number entry, and a Needs review filter. Show choices, safely rendered formatting, embedded images, and inert code. Keep correct-answer markers and explanations hidden until **Show correct answer** is selected; allow hiding them again and reset the reveal when browsing or reopening the preview. Answer-key warnings avoid revealing the key before that action.
+- Attach local review notes to specific questions: exact repeats, existing-library matches, conflicting keys for matching content, options differing only by case/spacing, possible placeholders, all-correct multiple-answer keys, missing explanations, and images without descriptions. Related-question links make conflicting/repeated questions easy to compare.
+- Detect invisible prompt/option text when the selected question is safely rendered. Formatting notes join the review filter as questions are viewed. These heuristics do not verify facts, reference pages, or the supplied source material.
+- Load one question at a time through a bounded token/index API; keep the full validated import in the main process. Navigation and cancellation do not write study data. Keep destination choices while browsing; filtering does not exclude questions from final import. Closing the dialog releases its pending import.
+
+Validation: source/offline-asset checks, all 68 core/storage tests, and all 46 Electron workflow tests passed. The three math workflows passed again after the final inline-formula spacing fix, covering local fonts, hidden answer/solution diagrams, authoring, import/export, resume, results, backup restore, compact layout, and no unintended inline scrollbars. Large malformed delimiter inputs remain readable within bounded parsing work. The full desktop run used a 120-second test deadline after transient Windows launch/shutdown timeouts; clipboard checks now wait for the asynchronous copy result. Dependency audit reported zero vulnerabilities, and the redacted 16-commit history scan found no leaks.
+
+Built `Quiznet-Setup.exe`; verified all 93 packaged source/assets against disk, including 60 local font files. Installed twice over the existing per-user installation, retaining its registry identity, install location, and one Desktop shortcut. Primary/rolling-backup SHA256 values stayed unchanged after both installs and the installed-app smoke check. Verified technical version/data path, math rendering/fonts/diagrams, answer reveal/reset, read-only import cancellation and library check, blocked renderer networking, and repeat-launch focus. Installer SHA256: `8989ef4d9dcd3b51cb08b493b6cfd33e5646b232b75778eb2228a9612d788db0`. Local update complete; no GitHub release was published.
+
+Known limits: math displays notation and prepared diagrams only; it does not calculate, run Python, or support every LaTeX command. Next goals remain Plugins and Explore, with scope to be agreed separately.
+
+## Unreleased — Quiznet Alpha 13
+
+Stage: **Alpha**. Internal installer build: `1.14.0`. Publication pending owner approval.
+
+- Add **Check for updates** in Settings using the fixed public GitHub Releases API, including Alpha prereleases with a complete newer `Quiznet-Setup.exe` asset.
+- Offer optional automatic checks every 48 hours, off until chosen. Queue update notices until outside the quiz and other dialogs. Support Later (24 hours), Skip this version, and manual override.
+- Open the verified release page only after an explicit Download click. Preserve the offline study workflow, renderer network restrictions, installed identity, and user-controlled installer flow.
+- Keep manual checks nonblocking so navigation and answering remain usable. Bound checks by time, response size, and page count; share concurrent checks; honor retry/rate-limit delays. Report failed/offline checks without interrupting saved study progress or falsely reporting a fresh success.
+- Store update preferences separately from the library, with atomic writes and recovery of damaged preferences. Cancel pending release requests during graceful shutdown.
+
+Validation: source/offline-asset checks, 58 core/storage tests, and all 38 Electron workflow tests passed. Coverage includes prerelease selection, version/URL/asset validation, pagination/size bounds, offline/rate-limit errors, concurrent checks, atomic preferences, reminder behavior, quiz deferral, nonblocking manual checks while answering, and cancelling a request on close. Dependency audit reported zero vulnerabilities; the redacted history scan found no leaks. Visual review confirmed the compact Settings layout. The installer built successfully; 29 packaged source/asset files matched the tested source and runtime metadata matched. Two in-place reinstalls preserved the installed identity, shortcut, data paths, and library/rolling-backup hashes. The installed app completed a real public API check, retained blocked renderer networking, and passed single-instance and recovery-settings checks. The installer remains unsigned; no GitHub release was published.
+
+Known limitations: detection requires a published public release with the expected installer asset. Local/unpublished builds and draft/private releases are not offered. Automatic checking runs only while the app is open, and is off by default. Downloads open the browser; no installer is downloaded or executed by the app. Installer unsigned. Publication and new product features remain separate work.
+
+## Quiznet Alpha 12
+
+Stage: **Alpha**. Internal installer build: `1.13.0`. Publication pending owner approval.
+
+- Recover incomplete editor work, destination names, code, and images from a separate atomic local draft. Display saving/failure state, flush before normal close, and retain failed writes for retry. Closing the editor keeps its draft; Cancel discards it; saving the quiz clears it.
+- Keep bounded local backup history before daily changes, imports, deletions, and restores. Browse backups, create a recovery point, and validate a snapshot before confirming a whole-library restore. Retain up to seven copies within 128 MiB, keeping a newest oversized copy alone.
+- Add a read-only library check for current/rolling-copy structure, references, attempts, and item counts. No automatic repair or data-format migration.
+- Show import type totals, exact-content duplicate warnings, existing-library matches, and missing explanations. Imports from Prepare a quiz also compare explicit totals/type choices with the valid current brief. Warnings preserve every question and do not certify factual correctness.
+- Keep editor controls stable while a save is pending. Preserve the existing offline model, app identity, library schema, installer name, and shortcut.
+
+Validation: syntax/offline-asset checks, 47 core/storage tests, all 32 Electron workflow tests, dependency audit (zero vulnerabilities), redacted secret scan, and visual review passed. Checks cover display crash, abrupt main-process exit, last-acknowledged draft recovery, immediate-close flushing, failed writes/retries, bounded history, damaged backups, read-only health checks, and complete warned imports. Pressure checks used 10,000 questions, six completed attempts, and roughly 39 MB libraries; eight snapshot creations retained five copies below 128 MiB without changing the active library. The installer built successfully; 28 packaged source/asset files matched byte for byte and runtime package metadata matched. Two in-place reinstalls and installed-app checks preserved one app, its shortcut/install/data paths, library/rolling-backup hashes, and single-instance focus. Installed read-only recovery settings were verified. No GitHub release was published.
+
+Known limitations: one recovery draft; abrupt termination can lose edits after the last acknowledged save. Agent preferences remain in memory. Backups on the same drive do not protect against drive loss, and pre-restore/exported copies are outside history retention. JSON library capacity still depends on RAM and disk space. Installer unsigned. Plugins/Explore remain Alpha goals; no online updater or GitHub publication is included.
+
+## Quiznet Alpha 11
+
+Stage: **Alpha**. Internal installer build: `1.12.0`. Publication pending owner approval.
+
+- Save pending progress before closing the window; keep it open for retry if the final save fails.
+- Replace rolling backups atomically and retry temporary Windows replacement locks. Failed background checkpoints report an error and cannot queue overlapping checkpoints.
+- Reopen a crashed display with saved quiz progress paused and ready to resume; unsaved editor drafts may need to be entered again.
+- Use indexed lookups for large-quiz validation, grading, and navigation, and avoid unused full-library response copies on internal checkpoints and shutdown.
+- Render large editors in groups of 25 and result reviews in groups of 50 while saving and grading the complete quiz. Validate hidden editor groups before saving and reveal the group containing a validation error.
+- Export compact JSON when formatting would push a valid large quiz over the 20 MB import limit. Reject oversized question batches early and reject sparse question drafts before saving.
+- Document hard limits, tested workloads, disk/RAM pressure, and recovery behavior in `docs/LIMITS.md`. Optional update checking remains a separate proposal pending the owner's preference.
+
+Validation: source checks, 39 core/storage tests, 26 Electron workflow tests, a roughly 39 MB pressure library, 100 queued valid/invalid transactions, dependency/secret checks, visual inspection, and the Windows installer build passed. Eight packaged source files matched the tested sources. Two in-place reinstalls and installed-app checks retained one app, the same shortcut/data path, single-instance focus, and unchanged library/backup hashes. No GitHub release was published.
+
+Known limitations: the library is still loaded and saved as one JSON document; capacity depends on RAM and disk space. Testing covers 10,000-question desktop workflows and a roughly 39 MB pressure library, not unlimited workloads. The installer is unsigned. Plugins and Explore remain Alpha goals.
+
+## Quiznet Alpha 10
+
+Stage: **Alpha**. Internal installer build: `1.11.1`. Publication pending owner approval.
+
+- Keep the total in sync when exact question-type counts or included types change in **Prepare a quiz**. Show the minimum for mixes with undecided counts, preserve explicit **Ask me** totals, and include a resolved exact total in generated instructions.
+- Clear and disable the code-language preference when **No code** is selected, so stale language choices cannot block saving or copying instructions.
+- Keep duplicate imported quiz names within the 200-character limit, including their numeric suffix, so the saved library remains valid on restart.
+- Recover a missing library file from its automatic backup before considering sample data. Preserve an unreadable backup and report a recoverable error instead of starting a sample library.
+
+Validation: source checks, 33 core tests, 22 Electron workflow tests, targeted layout checks, dependency/secret checks, Windows installer build, matching packaged sources, and two in-place reinstalls. Installed-app checks verified automatic totals, No code instruction preview, the normal data path, single-instance focus, one unchanged Desktop shortcut, and unchanged library/backup hashes. The installer remains unsigned.
+
+Known limitations: automatic recovery contains the last successful rolling backup; external agents still need to follow the generated instructions. Plugins and Explore remain Alpha goals.
+
+## Quiznet Alpha 9
 
 Stage: **Alpha**. Internal installer build: `1.11.0`. Publication pending owner approval.
 

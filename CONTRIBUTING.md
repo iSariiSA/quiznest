@@ -35,7 +35,7 @@ The development app uses that directory. The packaged app always uses the normal
 
 ## Keep these properties stable
 
-- Study material stays local. The app must work without accounts, servers, telemetry, or a network connection.
+- Study material stays local. Studying must work without accounts, servers, telemetry, or a network connection. Optional update checking is a narrow main-process exception for fixed-source public release metadata; never upload study content or enable renderer networking.
 - Updates preserve courses, quizzes, scores, history, and unfinished attempts.
 - Keep `com.quiznet.desktop`, product name `Quiznet`, and `%APPDATA%\Quiznet\data` stable.
 - Ship `Quiznet-Setup.exe` and update the same installation and shortcut.

@@ -1,6 +1,6 @@
 # Quiznet releases
 
-Quiznet is currently **Alpha**. The latest published release is **Quiznet Alpha 8**. The next build is **Quiznet Alpha 9**, with publication pending owner approval. Remain in Alpha until the owner explicitly approves changing the stage.
+Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 16**, using internal installer version `1.17.0`. The owner approved publishing this Alpha; Beta remains a future owner decision. Remain in Alpha until the owner explicitly approves changing the stage.
 
 ## Names and stages
 
@@ -26,7 +26,7 @@ These are development goals, not features available in Alpha 8; Explore currentl
 ```json
 "quiznetRelease": {
   "stage": "alpha",
-  "number": 9
+  "number": 16
 }
 ```
 
@@ -34,7 +34,7 @@ These are development goals, not features available in Alpha 8; Explore currentl
 
 For the next Alpha release, increment `quiznetRelease.number` while keeping `stage` equal to `alpha`. Only after explicit owner approval, set `stage` to `beta` or `official` and start that stage at number 1. The internal `version` must continue increasing for Windows installer ordering and diagnostics. Never set the technical version to the word Alpha or lower its numeric value just to match a public name.
 
-Alpha 9 uses internal installer build `1.11.0`; the published Alpha 8 installer remains `1.10.1`. Build and release records are in [CHANGELOG.md](../CHANGELOG.md).
+Alpha 16 uses internal installer version `1.17.0`; the previous public Alpha 8 installer was `1.10.1`. Build and release records are in [CHANGELOG.md](../CHANGELOG.md).
 
 ## Preparing release notes
 

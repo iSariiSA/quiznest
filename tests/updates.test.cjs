@@ -1,0 +1,50 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),https=require('node:https'),{EventEmitter}=require('node:events');
+const {UpdateService,compare,version,candidate,fetchPage,INTERVAL,MIN_CHECK,MAX_BYTES,MAX_PAGES,API_ROOT}=require('../src/updates.cjs');
+function release(v,extra={}){const tag=`v${v}`,root='https://github.com/iSariiSA/quiznest/releases';return {tag_name:tag,draft:false,prerelease:true,published_at:'2026-10-22T00:00:00Z',html_url:`${root}/tag/${tag}`,assets:[{name:'Quiznet-Setup.exe',state:'uploaded',size:100,browser_download_url:`${root}/download/${tag}/Quiznet-Setup.exe`}],...extra};}
+const response=(releases,status=200,headers={})=>({status,headers,body:JSON.stringify(releases)});
+async function fixture(run){const directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-updates-'));let service;try{service=new UpdateService(directory,'1.13.0');let now=Date.parse('2026-10-22T00:00:00Z');service.now=()=>now;await service.load();await run(service,ms=>{now+=ms;},directory);}finally{await service?.close();const resolved=path.resolve(directory);assert.ok(resolved.startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(resolved).startsWith('quiznet-updates-'));await fs.rm(resolved,{recursive:true,force:true});}}
+test('technical versions sort numerically, including prereleases, and malformed tags are rejected',()=>{
+  assert.equal(compare('1.10.0','1.9.9'),1);assert.equal(compare('1.13.0','1.13.0'),0);assert.equal(compare('2.0.0','2.0.0-beta.2'),1);assert.equal(compare('2.0.0-beta.10','2.0.0-beta.2'),1);assert.equal(compare('2.0.0-beta','2.0.0-beta.1'),-1);
+  for(const bad of ['v1.0.0','1.02.0','1.0.0-alpha.01','1.0','1.0.0/evil','1.0.0?x','1.0.0\r\n','1.0.0\n'])assert.equal(version(bad),null);
+});
+test('only complete installers from the fixed release source qualify; Alpha prereleases are included',()=>{
+  assert.deepEqual(candidate(release('1.14.0')),{version:'1.14.0',tag:'v1.14.0'});
+  for(const bad of [release('1.14.0',{draft:true}),release('1.14.0',{assets:[]}),release('1.14.0',{published_at:null}),release('1.14.0',{html_url:'https://evil.invalid/update'}),release('1.14.0',{assets:[{...release('1.14.0').assets[0],state:'new'}]}),release('1.14.0',{assets:[{...release('1.14.0').assets[0],browser_download_url:'https://evil.invalid/Quiznet-Setup.exe'}]})])assert.equal(candidate(bad),null);
+});
+test('automatic checks default off, run every 48 hours when chosen, and persist separately from study data',()=>fixture(async(service,advance,directory)=>{
+  let calls=0;service.fetchPage=async()=>{calls++;return response([release('1.14.0')]);};await service.check('automatic');assert.equal(calls,0);assert.deepEqual(await fs.readdir(directory),[]);
+  await service.setAutomatic(true);const checked=await service.check('automatic');assert.equal(calls,1);assert.equal(checked.checking,false);assert.equal(checked.notify,true);assert.equal(checked.available.version,'1.14.0');await service.check('automatic');assert.equal(calls,1);advance(INTERVAL-1);assert.equal(service.due(),false);advance(1);await service.check('automatic');assert.equal(calls,2);
+  const reopened=new UpdateService(directory,'1.13.0');await reopened.load();assert.equal(reopened.snapshot().automatic,true);assert.equal(reopened.snapshot().available.version,'1.14.0');await reopened.close();assert.deepEqual(await fs.readdir(directory),['updates.json']);
+}));
+test('concurrent clicks share one request and a bounded manual cooldown prevents rapid polling',()=>fixture(async(service,advance)=>{
+  let calls=0,resolve;service.fetchPage=()=>{calls++;return new Promise(r=>{resolve=r;});};const first=service.check(),second=service.check();assert.equal(first,second);await new Promise(r=>setImmediate(r));await service.queue;resolve(response([release('1.14.0')]));await first;assert.equal(calls,1);await service.check();assert.equal(calls,1);advance(MIN_CHECK);service.fetchPage=async()=>{calls++;return response([]);};const result=await service.check();assert.equal(calls,2);assert.equal(result.available,null);assert.equal(result.status,'current');
+}));
+test('pagination checks fixed page numbers, chooses the highest eligible version, and fails closed at its limit',()=>fixture(async(service,advance)=>{
+  const pages=[];service.fetchPage=async page=>{pages.push(page);return response([release(page===1?'1.14.0':'1.20.0')],200,page===1?{link:'<https://evil.invalid/private>; rel="next"'}:{});};const result=await service.check();assert.deepEqual(pages,[1,2]);assert.equal(result.available.version,'1.20.0');advance(MIN_CHECK);service.fetchPage=async()=>response([release('9.0.0')],200,{link:'<https://evil.invalid>; rel="next"'});const failed=await service.check();assert.equal(failed.status,'unavailable');assert.equal(failed.available.version,'1.20.0');assert.equal(failed.notify,false);assert.ok(MAX_PAGES<10);
+}));
+test('offline, malformed, oversized and HTTP errors never report a fresh successful check',()=>fixture(async(service,advance)=>{
+  for(const get of [async()=>{throw new Error('Synthetic offline');},async()=>({status:200,headers:{},body:'broken'}),async()=>({status:200,headers:{},body:'x'.repeat(MAX_BYTES+1)}),async()=>response([],302),async()=>response([],404),async()=>response([],500)]){service.fetchPage=get;const result=await service.check();assert.notEqual(result.status,'current');assert.equal(result.lastChecked,0);assert.equal(result.checking,false);advance(MIN_CHECK);}
+}));
+test('rate limits honor retry-after and reset time across restarts without embedding credentials',()=>fixture(async(service,advance,directory)=>{
+  let calls=0;service.fetchPage=async()=>{calls++;return response([],429,{'retry-after':'3600','x-ratelimit-remaining':'0','x-ratelimit-reset':String((service.now()+7200000)/1000)});};const result=await service.check();assert.equal(result.status,'rate-limited');assert.ok(result.retryAt>=service.now()+7200000);advance(3600000);await service.check();assert.equal(calls,1);
+  const reopened=new UpdateService(directory,'1.13.0');reopened.now=service.now;await reopened.load();reopened.fetchPage=async()=>{throw new Error('Should not connect');};await reopened.check();assert.equal(reopened.snapshot().lastChecked,0);await reopened.close();
+}));
+test('Later postpones reminders, Skip suppresses only that version, and manual checks still return it',()=>fixture(async(service,advance)=>{
+  await service.setAutomatic(true);service.fetchPage=async()=>response([release('1.14.0')]);await service.check();await service.remind('later','1.14.0');assert.equal(service.snapshot().notify,false);advance(24*60*60*1000);assert.equal(service.snapshot().notify,true);await service.remind('skip','1.14.0');assert.equal(service.snapshot().notify,false);assert.equal((await service.check()).available.version,'1.14.0');assert.equal(service.snapshot().notify,false);await service.remind('later','1.14.0');advance(MIN_CHECK);service.fetchPage=async()=>response([release('1.15.0')]);assert.equal((await service.check()).notify,true);assert.equal(service.openPage('1.15.0'),'https://github.com/iSariiSA/quiznest/releases/tag/v1.15.0');assert.throws(()=>service.openPage('https://evil.invalid'));
+}));
+test('failed preference writes preserve settings, while damaged preferences disable automation and remain recoverable',()=>fixture(async(service,_advance,directory)=>{
+  await service.setAutomatic(true);const before=await fs.readFile(service.file,'utf8'),rename=fs.rename;
+  try{fs.rename=async(...args)=>{if(args[1]===service.file)throw Object.assign(new Error('Synthetic full disk'),{code:'ENOSPC'});return rename(...args);};await assert.rejects(service.setAutomatic(false),/full disk/);}finally{fs.rename=rename;}
+  assert.equal(service.snapshot().automatic,true);assert.equal(await fs.readFile(service.file,'utf8'),before);await fs.writeFile(service.file,'damaged');const reopened=new UpdateService(directory,'1.13.0');assert.equal((await reopened.load()).automatic,false);assert.match(reopened.snapshot().warning,/preserved/);await reopened.setAutomatic(false);assert.ok((await fs.readdir(directory)).some(f=>f.startsWith('updates.json.damaged-')));await reopened.close();
+}));
+test('HTTPS transport is fixed, bounded, unauthenticated, and refuses oversized responses',async()=>{
+  const get=https.get;let captured;
+  try{https.get=(url,options,callback)=>{captured={url,options};const request=new EventEmitter();request.destroy=error=>request.emit('error',error);process.nextTick(()=>{const res=new EventEmitter();res.statusCode=200;res.headers={};callback(res);res.emit('data',Buffer.from('[]'));res.emit('end');});return request;};assert.equal((await fetchPage(1,new AbortController().signal)).body,'[]');assert.equal(captured.url,API_ROOT+'?per_page=20&page=1');assert.deepEqual(Object.keys(captured.options.headers).sort(),['Accept','User-Agent','X-GitHub-Api-Version']);await assert.rejects(fetchPage(99));
+    https.get=(_url,_options,callback)=>{const request=new EventEmitter();request.destroy=error=>request.emit('error',error);process.nextTick(()=>{const res=new EventEmitter();res.statusCode=200;res.headers={};callback(res);res.emit('data',Buffer.alloc(MAX_BYTES+1));});return request;};await assert.rejects(fetchPage(1,new AbortController().signal),/size limit/);
+  }finally{https.get=get;}
+});
+test('closing cancels an in-flight check and a disappearing display cannot fail preference persistence',()=>fixture(async(service)=>{
+  service.onChange=()=>{throw new Error('Synthetic destroyed display');};await service.setAutomatic(true);assert.equal(service.snapshot().automatic,true);
+  service.fetchPage=async(_page,signal)=>new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>reject(new Error('Aborted')),{once:true}));const pending=service.check();await service.queue;await new Promise(r=>setImmediate(r));const started=Date.now();await service.close();await pending;assert.ok(Date.now()-started<1000);assert.equal(service.snapshot().checking,false);
+}));

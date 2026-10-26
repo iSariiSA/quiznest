@@ -1,0 +1,90 @@
+const {test,expect,_electron:electron}=require('@playwright/test');
+const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
+let app,page,directory;
+test.beforeEach(async()=>{
+  directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-workspace-'));
+  const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
+  app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();
+  await expect(page.locator('.brand')).toBeVisible();
+});
+test.afterEach(async()=>{
+  await app?.close();
+  const resolved=path.resolve(directory);
+  if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith('quiznet-workspace-'))throw new Error('Unexpected test directory');
+  await fs.rm(resolved,{recursive:true,force:true});
+});
+const menu=async action=>{await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:action,exact:true}).click();};
+async function bounds(width,height){await app.evaluate(({BrowserWindow},size)=>BrowserWindow.getAllWindows()[0].setBounds(size),{width,height});await expect.poll(()=>page.evaluate(()=>innerWidth)).toBe(width);}
+test('dialogs focus their form, keep keyboard focus inside, and protect unsaved input from global search',async()=>{
+  const trigger=page.getByRole('button',{name:'New course',exact:true});await trigger.click();
+  const name=page.getByRole('textbox',{name:'Course name',exact:true});await expect(name).toBeFocused();
+  await name.fill('Unsaved course');await page.keyboard.press('Control+k');
+  await expect(page.getByRole('dialog')).toHaveAccessibleName('New course');await expect(name).toHaveValue('Unsaved course');
+  const close=page.getByRole('button',{name:'Close dialog'}),create=page.getByRole('button',{name:'Create',exact:true});
+  await create.focus();await page.keyboard.press('Tab');await expect(close).toBeFocused();
+  await page.keyboard.press('Shift+Tab');await expect(create).toBeFocused();
+  await page.keyboard.press('Escape');await expect(trigger).toBeFocused();
+  await page.keyboard.press('Control+k');await expect(page.getByRole('dialog')).toHaveAccessibleName('Search');
+});
+test('navigation can disappear, quiz columns adapt, and answers survive layout changes',async()=>{
+  await bounds(1440,900);
+  const library=await fs.readFile(path.join(directory,'data/library.json'),'utf8');
+  await page.getByRole('searchbox',{name:'Search courses',exact:true}).fill('biology');
+  await expect(page.locator('.course-row:visible')).toHaveCount(1);
+  await page.getByRole('searchbox',{name:'Search courses',exact:true}).fill('no such course');
+  await expect(page.locator('#course-search-empty')).toBeVisible();
+  await page.getByRole('searchbox',{name:'Search courses',exact:true}).fill('');
+  await expect(page.locator('.course-row:visible')).toHaveCount(3);
+  await page.locator('#navigation-toggle').click();await expect(page.locator('#sidebar')).toBeHidden();
+  await page.locator('#navigation-toggle').click();await expect(page.locator('#sidebar')).toBeVisible();
+  expect(await fs.readFile(path.join(directory,'data/library.json'),'utf8')).toBe(library);
+  await page.locator('.course-row').first().getByRole('button').click();await page.locator('[data-action="start"]').first().click();
+  await page.getByRole('button',{name:'Start quiz',exact:true}).click();
+  const q=page.locator('.quiz-question-column'),a=page.locator('.quiz-answer-column');
+  expect((await a.boundingBox()).x).toBeGreaterThan((await q.boundingBox()).x+(await q.boundingBox()).width);
+  await page.locator('[data-action="answer"][data-index="1"]').click();
+  await page.locator('#navigation-toggle').click();await page.locator('#navigation-toggle').click();
+  await expect(page.locator('#sidebar')).toBeHidden();await expect(page.locator('[data-action="answer"][data-index="1"]')).toHaveAttribute('aria-pressed','true');
+  await bounds(760,560);expect((await a.boundingBox()).y).toBeGreaterThan((await q.boundingBox()).y);
+  expect(await page.locator('#main').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+  await page.getByRole('button',{name:'Exit',exact:true}).click();await page.getByRole('button',{name:'Resume',exact:true}).click();
+  await expect(page.locator('[data-action="answer"][data-index="1"]')).toHaveAttribute('aria-pressed','true');
+});
+test('incorrect review uses historical answer indices across pages without writing the library',async()=>{
+  await page.evaluate(async()=>{
+    const {library}=await window.quiznet.get();const c=library.courses[0],u=c.units[0];
+    const questions=Array.from({length:60},(_,i)=>({prompt:'Review item '+(i+1),options:['Correct','Incorrect'],correctAnswer:0}));
+    const saved=await window.quiznet.change({type:'saveQuiz',courseId:c.id,unitId:u.id,title:'Review pagination',questions});
+    const quiz=saved.courses[0].units[0].quizzes.at(-1);
+    await window.quiznet.change({type:'start',quizId:quiz.id});
+    for(let i=0;i<quiz.questions.length;i++)await window.quiznet.change({type:'answer',questionId:quiz.questions[i].id,answer:i===1?0:1});
+    await window.quiznet.change({type:'finish'});
+  });
+  await page.reload();await page.getByRole('button',{name:'History',exact:true}).click();await page.locator('.history-row').first().click();
+  const before=await fs.readFile(path.join(directory,'data/library.json'),'utf8');
+  await page.getByRole('button',{name:'Incorrect (59)',exact:true}).click();
+  await expect(page.locator('.review-card')).toHaveCount(50);
+  await expect(page.locator('.review-number').nth(1)).toHaveText('3.');
+  await page.getByLabel('Review questions',{exact:true}).selectOption('1');
+  await expect(page.locator('.review-card')).toHaveCount(9);await expect(page.locator('.review-number').first()).toHaveText('52.');
+  await page.getByRole('button',{name:'All questions',exact:true}).click();await expect(page.locator('.review-number').first()).toHaveText('1.');
+  expect(await fs.readFile(path.join(directory,'data/library.json'),'utf8')).toBe(before);
+});
+test('editor workspace jumps to questions and preserves drafts; brief summary tracks choices safely',async()=>{
+  await bounds(1440,900);await page.locator('.course-row').first().getByRole('button').click();
+  await page.locator('[data-action="quizMenu"]').first().click();await page.getByRole('menuitem',{name:'Edit…',exact:true}).click();
+  await expect(page.locator('.editor-workspace')).toBeVisible();
+  expect((await page.getByRole('dialog').boundingBox()).width).toBe(1440);
+  await page.locator('.editor-outline button').nth(2).click();
+  await expect(page.locator('[data-editor="prompt"][data-index="2"]')).toBeFocused();
+  await page.locator('[data-editor="prompt"][data-index="2"]').fill('A recovered edit');
+  await expect(page.locator('#draft-status')).toHaveText('Draft saved on this device');
+  await page.getByRole('button',{name:'Close dialog'}).click();await page.getByRole('button',{name:'Recover draft'}).click();
+  await expect(page.locator('[data-editor="prompt"][data-index="2"]')).toHaveValue('A recovered edit');
+  await bounds(760,560);expect(await page.locator('.modal-body').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+  await page.getByRole('button',{name:'Close dialog'}).click();await page.getByRole('button',{name:'Prepare a quiz',exact:true}).click();
+  await page.getByLabel('Number of questions',{exact:true}).selectOption('value');await page.getByLabel('Number of questions value',{exact:true}).fill('12');
+  await expect(page.locator('#brief-summary')).toContainText('12 questions');
+  await page.getByLabel('Course',{exact:true}).selectOption('new');await page.getByLabel('New course name',{exact:true}).fill('<b>New course</b>');
+  await expect(page.locator('#brief-summary')).toContainText('<b>New course</b>');await expect(page.locator('#brief-summary b')).toHaveCount(0);
+});
