@@ -1,9 +1,9 @@
 {
   "name": "quiznet",
-  "version": "1.17.0",
+  "version": "1.24.0",
   "quiznetRelease": {
     "stage": "alpha",
-    "number": 16
+    "number": 23
   },
   "description": "Offline multiple-choice quizzes for Windows.",
   "main": "src/main.cjs",
@@ -14,7 +14,7 @@
     "assets:content": "node scripts/sync-content-vendor.cjs",
     "start": "electron .",
     "check": "node scripts/check-syntax.cjs && node scripts/sync-content-vendor.cjs --check",
-    "test": "node --test tests/core.test.cjs tests/stability.test.cjs tests/recovery.test.cjs tests/updates.test.cjs tests/math.test.cjs tests/study-report.test.cjs",
+    "test": "node --test tests/core.test.cjs tests/stability.test.cjs tests/recovery.test.cjs tests/updates.test.cjs tests/math.test.cjs tests/study-report.test.cjs tests/daily-review.test.cjs tests/mistake-notebook.test.cjs tests/saved-questions.test.cjs",
     "test:app": "playwright test",
     "release:info": "node scripts/release-info.cjs",
     "build": "node scripts/release-info.cjs && electron-builder --win nsis --x64 --publish never",

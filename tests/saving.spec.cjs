@@ -10,6 +10,7 @@ test.beforeEach(async()=>{
   await fs.mkdir(path.join(directory,'data'));await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(data));
   const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
   app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();
+  await page.getByRole('button',{name:'Library',exact:true}).click();
   await page.locator('.course-row button').click();await page.locator('[data-action="start"]').click();await page.getByRole('button',{name:'Start quiz',exact:true}).click();
   await expect(page.locator('.question-prompt')).toContainText('One plus one?');
 });

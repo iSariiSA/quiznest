@@ -1,10 +1,11 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const os=require('node:os');
 const path=require('node:path');
 const core=require('../src/core.cjs');
 let app,page,directory;
-async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
 async function library(){return page.evaluate(async()=>(await window.quiznet.get()).library);}
 async function now(value){await app.evaluate((_,value)=>{Date.now=()=>value;},value);await page.evaluate(value=>{Date.now=()=>value;},value);}
 test.beforeAll(async()=>{
@@ -40,7 +41,7 @@ test('agent entry from New quiz, start options, instant feedback, restart, resto
   await page.getByRole('button',{name:'Previous',exact:true}).click();await expect(page.locator('.answer-feedback')).toContainText('Incorrect');
   await page.locator('#question-jump').selectOption('2');await page.locator('[data-action="answer"][data-index="1"]').click();await expect(page.locator('.answer-feedback')).toContainText('Correct');
   const backup=path.join(directory,'instant-backup.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
+  await command(page,'Settings');await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
   await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},backup);await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(page.locator('.answer-feedback')).toContainText('Correct');
   await page.getByRole('button',{name:'Finish',exact:true}).click();await expect(page.locator('.score-value')).toHaveText('67%');await expect(page.locator('.result-summary')).toContainText('Instant feedback');await expect(page.locator('.question-time')).toHaveCount(3);
   expect((await library()).attempts[0].practice).toEqual({showTotalTimer:false,showQuestionTimer:true,feedback:'instant',showNavigator:true,showProgress:true,allowFlags:true});

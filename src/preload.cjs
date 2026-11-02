@@ -7,6 +7,9 @@ const invoke=async(name,...args)=>{
 contextBridge.exposeInMainWorld('quiznet',Object.freeze({
   onNotice:callback=>{const listener=(_event,message)=>callback(message);ipcRenderer.on('quiznet:notice',listener);return ()=>ipcRenderer.removeListener('quiznet:notice',listener);},
   onBeforeClose:callback=>{const listener=async(_event,token)=>{let error=null;try{await callback();}catch(e){error=e.message;}await invoke('flushDone',token,error);};ipcRenderer.on('quiznet:before-close',listener);return ()=>ipcRenderer.removeListener('quiznet:before-close',listener);},
+  copyQuestion:text=>invoke('copyQuestion',text),
+  notebook:index=>invoke('notebook',index),
+  savedQuestions:index=>invoke('savedQuestions',index),
   get:()=>invoke('get'), change:action=>invoke('change',action),
   onUpdates:callback=>{const listener=(_event,state)=>callback(state);ipcRenderer.on('quiznet:updates',listener);return ()=>ipcRenderer.removeListener('quiznet:updates',listener);},
   getUpdates:()=>invoke('getUpdates'),checkUpdates:()=>invoke('checkUpdates'),setUpdateAutomatic:enabled=>invoke('setUpdateAutomatic',enabled),remindUpdate:(action,version)=>invoke('remindUpdate',action,version),openUpdate:version=>invoke('openUpdate',version),

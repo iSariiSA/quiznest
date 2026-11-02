@@ -1,11 +1,12 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const example=require('../examples/math-diagrams.json');
 let app,page,directory;
-async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
 test.beforeEach(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-math-'));await launch();});
 test.afterEach(async()=>{await app?.close();const resolved=path.resolve(directory);if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith('quiznet-math-'))throw new Error('Unexpected test directory');await fs.rm(resolved,{recursive:true,force:true});});
-async function menu(item){await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:item,exact:true}).click();}
+async function menu(item){await command(page,item);}
 async function pick(file){await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},file);}
 async function save(file){await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},file);}
 async function imageLoaded(locator){await expect.poll(()=>locator.evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);}
@@ -48,7 +49,7 @@ test('math rendering does not activate HTML, remote resources, controls or code,
 });
 
 test('manual authoring previews formulas and attached diagrams before saving',async()=>{
-  await page.locator('.course-row').filter({hasText:'Mathematics'}).getByRole('button').click();await page.getByRole('button',{name:/Manage/}).first().click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
+  await page.locator('.course-row').filter({hasText:'Mathematics'}).getByRole('button').click();await page.locator('.unit-link').first().click();await command(page,'New quiz…');await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Manual math');const section=page.locator('.editor-question');await section.getByLabel('Question format',{exact:true}).selectOption('markdown');await section.locator('[data-editor="prompt"]').fill('Find $c$ in the triangle.');await section.locator('[data-editor="option"][data-option="0"]').fill('$5$');await section.locator('[data-editor="option"][data-option="1"]').fill('$7$');await section.locator('[data-editor="explanation"]').fill('$$c^2=25$$');
   const png=path.join(directory,'triangle.png');await fs.writeFile(png,Buffer.from(example.questions[0].image.split(',')[1],'base64'));await pick(png);await section.getByRole('button',{name:'Add image',exact:true}).click();await section.locator('.editor-preview summary').click();await expect(section.locator('.preview-content .katex')).toHaveCount(4);await imageLoaded(section.locator('.preview-content img'));await page.getByRole('button',{name:'Save quiz',exact:true}).click();await expect(page.locator('#toast')).toContainText('Saved.');
 });

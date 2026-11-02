@@ -82,12 +82,15 @@ if(primaryInstance) app.whenReady().then(async()=>{
   window.webContents.on('will-navigate',event=>event.preventDefault());
   window.webContents.on('will-attach-webview',event=>event.preventDefault());
   handle('get',async()=>{await store.queue;await store.recovery.draftQueue;let draft=null,draftError='';try{const saved=await store.recovery.draft();if(saved)draft={title:saved.editor.title,savedAt:saved.savedAt};}catch(error){draftError=error.message;}return {library:structuredClone(store.data),meta:{...meta(),draft,draftError}};});
+  handle('copyQuestion',async text=>{if(typeof text!=='string'||!text.trim()||Buffer.byteLength(text)>20*1024*1024)throw new Error('Copy a question up to 20 MB.');await clipboard.writeText(text);return true;});
+  handle('notebook',index=>store.inspect(data=>require('./mistake-notebook.cjs').page(data,index)));
+  handle('savedQuestions',index=>store.inspect(data=>require('./saved-questions.cjs').page(data,index)));
   handle('getUpdates',()=>updates.snapshot());
   handle('checkUpdates',()=>updates.check('manual'));
   handle('setUpdateAutomatic',async enabled=>{await updates.setAutomatic(enabled);if(enabled)updates.check('automatic').catch(()=>{});return updates.snapshot();});
   handle('remindUpdate',(action,version)=>updates.remind(action,version));
   handle('openUpdate',async version=>{const url=updates.openPage(version);await updates.remind('later',version);await shell.openExternal(url);return updates.snapshot();});
-  handle('change',action=>store.change(data=>core.mutate(data,action),{snapshotReason:action?.type==='delete'?'delete':'daily'}));
+  handle('change',action=>store.change(data=>core.mutate(data,action),{snapshotReason:['delete','mistakeRemove','savedRemove'].includes(action?.type)?'delete':'daily'}));
   handle('readDraft',async()=>{await store.recovery.draftQueue;return store.recovery.draft();});
   handle('saveDraft',draft=>store.recovery.saveDraft(draft));
   handle('flushDone',(token,error)=>{if(closeFlush?.token===token){if(error)closeFlush.reject(new Error(String(error).slice(0,1000)));else closeFlush.resolve();}return true;});
@@ -98,7 +101,7 @@ if(primaryInstance) app.whenReady().then(async()=>{
   handle('instructions',async(action,preferences)=>{
     if(!['save','copy'].includes(action))throw new Error('Choose Save Markdown or Copy instructions.');
     const markdown=instructions.generate(preferences);
-    if(action==='copy'){clipboard.writeText(markdown);return true;}
+    if(action==='copy'){await clipboard.writeText(markdown);return true;}
     const result=await dialog.showSaveDialog(window,{defaultPath:'Quiznet-instructions.md',filters:[{name:'Markdown instructions',extensions:['md']}],title:'Save quiz instructions'});
     if(result.canceled)return false;
     await fs.writeFile(result.filePath,markdown,'utf8');return true;

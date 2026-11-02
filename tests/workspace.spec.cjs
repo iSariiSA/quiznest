@@ -1,3 +1,4 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 let app,page,directory;
@@ -5,7 +6,7 @@ test.beforeEach(async()=>{
   directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-workspace-'));
   const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
   app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();
-  await expect(page.locator('.brand')).toBeVisible();
+  await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();
 });
 test.afterEach(async()=>{
   await app?.close();
@@ -13,10 +14,10 @@ test.afterEach(async()=>{
   if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith('quiznet-workspace-'))throw new Error('Unexpected test directory');
   await fs.rm(resolved,{recursive:true,force:true});
 });
-const menu=async action=>{await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:action,exact:true}).click();};
+const menu=async action=>{await command(page,action);};
 async function bounds(width,height){await app.evaluate(({BrowserWindow},size)=>BrowserWindow.getAllWindows()[0].setBounds(size),{width,height});await expect.poll(()=>page.evaluate(()=>innerWidth)).toBe(width);}
 test('dialogs focus their form, keep keyboard focus inside, and protect unsaved input from global search',async()=>{
-  const trigger=page.getByRole('button',{name:'New course',exact:true});await trigger.click();
+  const trigger=page.getByRole('button',{name:'Library actions',exact:true});await command(page,'New course…');
   const name=page.getByRole('textbox',{name:'Course name',exact:true});await expect(name).toBeFocused();
   await name.fill('Unsaved course');await page.keyboard.press('Control+k');
   await expect(page.getByRole('dialog')).toHaveAccessibleName('New course');await expect(name).toHaveValue('Unsaved course');
@@ -29,11 +30,12 @@ test('dialogs focus their form, keep keyboard focus inside, and protect unsaved 
 test('navigation can disappear, quiz columns adapt, and answers survive layout changes',async()=>{
   await bounds(1440,900);
   const library=await fs.readFile(path.join(directory,'data/library.json'),'utf8');
-  await page.getByRole('searchbox',{name:'Search courses',exact:true}).fill('biology');
-  await expect(page.locator('.course-row:visible')).toHaveCount(1);
-  await page.getByRole('searchbox',{name:'Search courses',exact:true}).fill('no such course');
-  await expect(page.locator('#course-search-empty')).toBeVisible();
-  await page.getByRole('searchbox',{name:'Search courses',exact:true}).fill('');
+  await page.getByRole('button',{name:'Search library',exact:true}).click();
+  await page.getByRole('searchbox',{name:'Search your library',exact:true}).fill('biology');
+  await expect(page.locator('.search-result[data-action="course"]')).toHaveCount(1);
+  await page.getByRole('searchbox',{name:'Search your library',exact:true}).fill('no such course');
+  await expect(page.locator('.search-empty')).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(page.locator('.course-row:visible')).toHaveCount(3);
   await page.locator('#navigation-toggle').click();await expect(page.locator('#sidebar')).toBeHidden();
   await page.locator('#navigation-toggle').click();await expect(page.locator('#sidebar')).toBeVisible();
@@ -82,7 +84,7 @@ test('editor workspace jumps to questions and preserves drafts; brief summary tr
   await page.getByRole('button',{name:'Close dialog'}).click();await page.getByRole('button',{name:'Recover draft'}).click();
   await expect(page.locator('[data-editor="prompt"][data-index="2"]')).toHaveValue('A recovered edit');
   await bounds(760,560);expect(await page.locator('.modal-body').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
-  await page.getByRole('button',{name:'Close dialog'}).click();await page.getByRole('button',{name:'Prepare a quiz',exact:true}).click();
+  await page.getByRole('button',{name:'Close dialog'}).click();await command(page,'Prepare a quiz…');
   await page.getByLabel('Number of questions',{exact:true}).selectOption('value');await page.getByLabel('Number of questions value',{exact:true}).fill('12');
   await expect(page.locator('#brief-summary')).toContainText('12 questions');
   await page.getByLabel('Course',{exact:true}).selectOption('new');await page.getByLabel('New course name',{exact:true}).fill('<b>New course</b>');

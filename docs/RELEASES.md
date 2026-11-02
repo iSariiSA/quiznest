@@ -1,6 +1,6 @@
 # Quiznet releases
 
-Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 16**, using internal installer version `1.17.0`. The owner approved publishing this Alpha; Beta remains a future owner decision. Remain in Alpha until the owner explicitly approves changing the stage.
+Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 23**, using internal installer version `1.24.0`. The owner approved publishing this Alpha; Beta remains a future owner decision. Remain in Alpha until the owner explicitly approves changing the stage.
 
 ## Names and stages
 
@@ -17,7 +17,7 @@ There is no automatic stage promotion, scheduled launch date, or change of stage
 - **Plugins — planned:** let Quiznet grow through optional capabilities for studying. Agree on the first useful extension and its interface before selecting the implementation.
 - **Explore — planned:** let people discover tests shared by others and add chosen tests to their own library. Agree on discovery, sharing, and distribution before selecting hosting or account requirements.
 
-These are development goals, not features available in Alpha 8; Explore currently has a placeholder screen only. See [ROADMAP.md](ROADMAP.md) for intended outcomes and readiness checks. Core studying and saved material must continue to work offline. Sharing must be explicit; do not automatically publish or upload private libraries.
+These are development goals, not features available in Alpha 23; Explore currently has a placeholder screen only. See [ROADMAP.md](ROADMAP.md) for intended outcomes and readiness checks. Core studying and saved material must continue to work offline. Sharing must be explicit; do not automatically publish or upload private libraries.
 
 ## Release metadata
 
@@ -26,7 +26,7 @@ These are development goals, not features available in Alpha 8; Explore currentl
 ```json
 "quiznetRelease": {
   "stage": "alpha",
-  "number": 16
+  "number": 23
 }
 ```
 
@@ -34,7 +34,7 @@ These are development goals, not features available in Alpha 8; Explore currentl
 
 For the next Alpha release, increment `quiznetRelease.number` while keeping `stage` equal to `alpha`. Only after explicit owner approval, set `stage` to `beta` or `official` and start that stage at number 1. The internal `version` must continue increasing for Windows installer ordering and diagnostics. Never set the technical version to the word Alpha or lower its numeric value just to match a public name.
 
-Alpha 16 uses internal installer version `1.17.0`; the previous public Alpha 8 installer was `1.10.1`. Build and release records are in [CHANGELOG.md](../CHANGELOG.md).
+Alpha 23 uses internal installer version `1.24.0`; the previous public Alpha 16 installer was `1.17.0`. Build and release records are in [CHANGELOG.md](../CHANGELOG.md).
 
 ## Preparing release notes
 

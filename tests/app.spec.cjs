@@ -1,3 +1,4 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
@@ -5,7 +6,7 @@ const os=require('node:os');
 const {spawn}=require('node:child_process');
 let app,page,directory;
 const outputs=process.env.QUIZNET_SCREENSHOTS || path.resolve(__dirname,'../test-results/screenshots');
-async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
 test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-app-'));await launch();});
 test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true,force:true});});
 test('real desktop workflow: hierarchy, scoring, resume, import/export and backup',async()=>{
@@ -61,9 +62,9 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   await page.screenshot({path:path.join(outputs,'Quiznet-results.png')});
   await page.getByRole('button',{name:'Library',exact:true}).first().click();
   // Create an entire course and a quiz through the actual editor.
-  await page.getByRole('button',{name:'New course',exact:true}).last().click();
+  await command(page,'New course…');
   await page.getByLabel('Course name').fill('Physics');await page.getByRole('button',{name:'Create',exact:true}).click();
-  await page.getByRole('button',{name:'New unit',exact:true}).click();
+  await command(page,'New unit…');
   await page.getByLabel('Unit name').fill('Unit 1: Waves');await page.getByRole('button',{name:'Create',exact:true}).click();
   await page.getByRole('button',{name:'New quiz',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Wave basics');
@@ -90,15 +91,14 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   // Native file pickers are stubbed; parsing, disk I/O, preview and confirmation are real.
   const importPath=path.resolve(__dirname,'../examples/biology.json');
   await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},importPath);
-  await page.getByRole('button',{name:'App menu'}).click();
-  await page.getByRole('menuitem',{name:'Import…',exact:true}).click();
+  await command(page,'Import…');
   await expect(page.locator('.import-preview')).toContainText('Quiz 1');
   await page.locator('#import-target').selectOption('');
   await page.getByRole('button',{name:'Import',exact:true}).click();
   await expect(page.locator('.course-row')).toHaveCount(4);
   const backup=path.join(directory,'exported-backup.json');
   await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();
+  await command(page,'Settings');
   await expect(page.locator('.version-label')).toHaveText(`Quiznet ${require('../package.json').version}`);
   await expect(page.getByText('Release plan',{exact:true})).toHaveCount(0);
   await expect(page.locator('#main')).not.toContainText('Alpha');

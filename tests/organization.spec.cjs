@@ -1,10 +1,11 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const core=require('../src/core.cjs');
 let app,page,directory,seed,clipboard;
 const question={prompt:'Which value is even?',options:['2','3'],correctAnswer:0};
 const shots=process.env.QUIZNET_SCREENSHOTS||path.resolve(__dirname,'../test-results/screenshots');
-async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
 const library=()=>page.evaluate(async()=>(await window.quiznet.get()).library);
 async function enterUnit(){await page.getByRole('button',{name:'Mathematics',exact:true}).click();await page.getByRole('button',{name:'Basics',exact:true}).click();}
 async function chooseFile(){const file=path.join(directory,'returned.json');await fs.writeFile(file,JSON.stringify({course:'Wrong file course',unit:'Wrong file unit',title:'Returned quiz',questions:[question]}));await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},file);}
@@ -17,7 +18,7 @@ test.afterEach(async()=>{if(app){await app.evaluate(({clipboard},text)=>clipboar
 
 test('manual creation chooses a new course or an existing course and new unit, without creating canceled folders',async()=>{
   const before=await fs.readFile(path.join(directory,'data/library.json'),'utf8');
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
+  await command(page,'New quiz…');await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('New course name',{exact:true}).fill('Biology <lab>');await page.getByLabel('New unit name',{exact:true}).fill('Cells');await page.getByRole('button',{name:'Cancel',exact:true}).click();expect(await fs.readFile(path.join(directory,'data/library.json'),'utf8')).toBe(before);
   await enterUnit();await page.getByRole('button',{name:'New quiz',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await expect(page.getByLabel('Course',{exact:true})).toHaveValue(seed.courses[0].id);await expect(page.getByLabel('Unit',{exact:true})).toHaveValue(seed.courses[0].units[0].id);
@@ -44,12 +45,12 @@ test('move crosses courses, retains unfinished answers, and resumes after reopen
 });
 
 test('agent instructions include the chosen destination and returned imports can create or override it',async()=>{
-  const before=await fs.readFile(path.join(directory,'data/library.json'),'utf8');await enterUnit();await page.getByRole('button',{name:'Prepare a quiz',exact:true}).click();await expect(page.getByLabel('Course',{exact:true})).toHaveValue(seed.courses[0].id);await expect(page.getByLabel('Unit',{exact:true})).toHaveValue(seed.courses[0].units[0].id);
+  const before=await fs.readFile(path.join(directory,'data/library.json'),'utf8');await enterUnit();await command(page,'Prepare a quiz…');await expect(page.getByLabel('Course',{exact:true})).toHaveValue(seed.courses[0].id);await expect(page.getByLabel('Unit',{exact:true})).toHaveValue(seed.courses[0].units[0].id);
   await page.getByLabel('Course',{exact:true}).selectOption('new');await page.getByLabel('New course name',{exact:true}).fill('Biology <lab>');await page.getByLabel('Unit',{exact:true}).selectOption('new');await page.getByLabel('New unit name',{exact:true}).fill('Cells');
   await page.getByRole('button',{name:'Copy instructions',exact:true}).click();await expect(page.locator('#toast')).toHaveText('Instructions copied.');const markdown=await app.evaluate(({clipboard})=>clipboard.readText());expect(markdown).toContain('- Course name: "Biology <lab>"');expect(markdown).toContain('- Unit name: "Cells"');expect(await fs.readFile(path.join(directory,'data/library.json'),'utf8')).toBe(before);
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(760,560));await page.locator('#main').evaluate(el=>el.scrollTop=0);await page.screenshot({path:path.join(shots,'Quiznet-agent-destination.png')});expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
   await chooseFile();await page.getByRole('button',{name:'Import quiz…',exact:true}).click();await expect(page.getByRole('dialog').getByLabel('New course name',{exact:true})).toHaveValue('Biology <lab>');await expect(page.getByRole('dialog').getByLabel('New unit name',{exact:true})).toHaveValue('Cells');await page.getByRole('button',{name:'Cancel',exact:true}).click();expect(await fs.readFile(path.join(directory,'data/library.json'),'utf8')).toBe(before);
   await page.getByRole('button',{name:'Import quiz…',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Import',exact:true}).click();await expect(page.locator('.quiz-row')).toContainText('Returned quiz');let data=await library();expect(data.courses.at(-1).title).toBe('Biology <lab>');expect(data.courses.at(-1).units[0].title).toBe('Cells');expect(data.courses).toHaveLength(3);
   // The preview remains editable even when a destination was prepared earlier.
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Import…',exact:true}).click();await page.getByLabel('Course',{exact:true}).selectOption(seed.courses[1].id);await page.getByLabel('Unit',{exact:true}).selectOption('new');await page.getByLabel('New unit name',{exact:true}).fill('Waves');await page.getByRole('dialog').getByRole('button',{name:'Import',exact:true}).click();await expect(page.locator('.quiz-row')).toContainText('Returned quiz');data=await library();expect(data.courses[1].units.at(-1).title).toBe('Waves');
+  await command(page,'Import…');await page.getByLabel('Course',{exact:true}).selectOption(seed.courses[1].id);await page.getByLabel('Unit',{exact:true}).selectOption('new');await page.getByLabel('New unit name',{exact:true}).fill('Waves');await page.getByRole('dialog').getByRole('button',{name:'Import',exact:true}).click();await expect(page.locator('.quiz-row')).toContainText('Returned quiz');data=await library();expect(data.courses[1].units.at(-1).title).toBe('Waves');
 });
