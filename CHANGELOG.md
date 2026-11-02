@@ -10,7 +10,9 @@ Internal stage: `alpha` (early development). The owner authorized pushing the cu
 - Refresh the setup-node update against current main, retaining its official v7.1.0 SHA pin, Node 22, npm caching, and read-only workflow permissions.
 - Keep one offline `Quiznet-Setup.exe`, the same installed Quiznet/shortcut, and all study content. No Plugins/Explore implementation or stage promotion is included.
 
-Combined validation, packaging, and PR integration checks pending.
+Validation: source/offline assets checked; all 98 core/build-metadata tests and 71 Electron workflow tests passed. The dependency audit passes the high-severity threshold with 15 moderate build-tool findings. The Windows installer built with electron-builder 26.18.0; all 102 packaged source/assets match the tested files. Installing twice retained one app, the same installation/shortcut, and the library/rolling-backup hashes. The installed app passed runtime, offline-math, unified creation, Help/Settings, hidden-navigation, blocked-networking, and single-instance checks with unchanged library hashes.
+
+The offline installer is unsigned. SHA256: `ab34f71616d569b93625eb5d216fb546668f1da7dff04c94d09ea2b469c29cb8`. The existing development goals and internal stage remain unchanged; integration requires the final GitHub checks and maintainer review.
 
 ## Local milestone — Quiznet v1.25.0
 
