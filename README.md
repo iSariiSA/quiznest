@@ -8,7 +8,7 @@
 <p align="center">An offline Windows app for turning study material into quizzes, practicing at your own pace, and learning from your mistakes.</p>
 
 <p align="center">
-  <a href="https://github.com/iSariiSA/quiznest/releases/download/v1.17.0/Quiznet-Setup.exe"><strong>Download for Windows</strong></a> ·
+  <a href="https://github.com/iSariiSA/quiznest/releases/download/v1.24.0/Quiznet-Setup.exe"><strong>Download for Windows</strong></a> ·
   <a href="#get-started">Get started</a> ·
   <a href="#common-questions">Common questions</a> ·
   <a href="docs/USER_GUIDE.md">Study guide</a>
@@ -16,9 +16,9 @@
 
 **Windows 10/11 · x64 · Works offline · MIT licensed**
 
-Current release: **Quiznet Alpha 16** — a preview for testing and feedback. The installer is unsigned. See [release notes and the installer checksum](https://github.com/iSariiSA/quiznest/releases/tag/v1.17.0).
+Current release: **Quiznet Alpha 23** — a preview for testing and feedback. The installer is unsigned. See [release notes and the installer checksum](https://github.com/iSariiSA/quiznest/releases/tag/v1.24.0).
 
-![Quiznet's compact dark library, with sample Biology, Chemistry, and Mathematics courses](assets/screenshots/library.png)
+![Quiznet's compact dark library, with a synthetic Biology course and unified quiz creation](assets/screenshots/library.png)
 
 ## What is Quiznet?
 
@@ -27,6 +27,8 @@ Quiznet gives your study material a home: **Courses → Units → Quizzes**. Wri
 Studying requires no account or internet connection. Optional update checks in Settings read public GitHub release information; automatic checking is off until enabled. Your questions, images, results, and unfinished attempts stay in a local library on your computer.
 
 ## What can I do with it?
+
+Quiznet includes **Daily review**: choose quizzes, set a daily limit, and rate checked answers Again, Hard, Good, or Easy to schedule their return. Review progress stays offline and is included in library backups. See [daily review](docs/USER_GUIDE.md#daily-review).
 
 | You want to… | Quiznet helps you… |
 | --- | --- |
@@ -38,13 +40,21 @@ Studying requires no account or internet connection. Optional update checks in S
 | Learn from mistakes | Review explanations, practice missed questions, and export one Markdown study report for a tutor agent, including your answers and question timings. |
 | Keep a copy or share a quiz | Export quizzes, save a full backup, browse local backup history, and check stored library integrity. |
 
-This release includes a collapsible navigation rail, course search, wide question/answer layouts, full-window editing and import review, and an incorrect-answer filter in results. The instruction builder shows a live brief summary. History/results can export a complete or focused Markdown study report for another agent. Editor recovery, bounded backup history, a read-only library check, and optional GitHub release checking remain available. Math notation and prepared diagrams work offline in questions, choices, and explanations.
+This release includes a collapsible navigation rail, unified library search, wide question/answer layouts, full-window editing and import review, and an incorrect-answer filter in results. The instruction builder shows a live brief summary. History/results can export a complete or focused Markdown study report for another agent. Editor recovery, bounded backup history, a read-only library check, and optional GitHub release checking remain available. Math notation and prepared diagrams work offline in questions, choices, and explanations.
 
 ## Get started
 
+Star a question beside **Copy question**, then open **Home → Saved questions** to revisit it or practise a random selection. Saved copies keep their original content across quiz edits/deletion, include media and code, and travel with library backups. Unfinished saved practice resumes after reopening the app.
+
+Use **Copy question** on a quiz or review question to copy its text, code, and all labelled choices for pasting into an AI chat. Answer keys and personal notes are omitted; attach diagrams separately. Nothing is uploaded automatically.
+
+Quiznet opens on **Home**, with saved-session resume, today's daily reviews, Mistake Notebook access, and recent quizzes. One **New quiz** button groups **Write manually**, **Prepare with an agent**, and **Import file**. **Library** remains in the sidebar; **Library actions**, **Course actions**, and **Unit actions** hold local organization commands. Use **Search library** or **Ctrl + K** to find courses, units, quizzes, and question text. Open **Settings → Open help** for the in-app guide. Settings remains accessible when navigation is hidden.
+
+Open **Daily review → Mistake notebook** to review mistakes across saved quizzes and daily reviews, keep a personal explanation, and practise up to 20 recent mistakes in a resumable focused session. Notes and progress are included in library backups.
+
 ### 1. Install Quiznet
 
-1. [Download **Quiznet-Setup.exe**](https://github.com/iSariiSA/quiznest/releases/download/v1.17.0/Quiznet-Setup.exe) from the current release.
+1. [Download **Quiznet-Setup.exe**](https://github.com/iSariiSA/quiznest/releases/download/v1.24.0/Quiznet-Setup.exe) from the current release.
 2. Run the installer. It installs for your Windows account without administrator access.
 3. Open **Quiznet** from your Desktop or Start menu.
 
@@ -93,11 +103,11 @@ Yes. After downloading the installer, you can install and study offline. Quiznet
 
 ### Where are my questions and results stored?
 
-In `%APPDATA%\Quiznet\data\library.json`. Open **… → Settings → Open folder** to find it. Quiznet saves changes as you work and keeps the previous successful state in `library.json.bak`. See [local storage and recovery](docs/USER_GUIDE.md#local-storage).
+In `%APPDATA%\Quiznet\data\library.json`. Open **Settings → Open folder** to find it. Quiznet saves changes as you work and keeps the previous successful state in `library.json.bak`. See [local storage and recovery](docs/USER_GUIDE.md#local-storage).
 
 ### How do I back up my library or move to another computer?
 
-Choose **… → Settings → Save backup** and keep the file somewhere safe. On another computer, install Quiznet and choose **Restore** in Settings. A backup includes your questions, embedded media, practice history, presets, and unfinished progress.
+Choose **Settings → Save backup** and keep the file somewhere safe. On another computer, install Quiznet and choose **Restore** in Settings. A backup includes your questions, embedded media, practice history, presets, and unfinished progress.
 
 **Restore replaces the current library.** Quiznet also keeps a separate copy of the library from before the restore. Export a single quiz instead when you want to add or share only that quiz.
 

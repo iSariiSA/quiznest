@@ -1,3 +1,4 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
@@ -6,7 +7,7 @@ const core=require('../src/core.cjs');
 let app,page,directory;
 const sample=[{prompt:'Which value equals 2 + 2?',options:['4','5'],correctAnswer:0},{type:'multiple-answer',prompt:'Select even values.',options:['2','3','4'],correctAnswers:[0,2]},...Array.from({length:4},(_,i)=>({prompt:`Is ${i*2} even?`,options:['Yes','No'],correctAnswer:0}))];
 const shots=process.env.QUIZNET_SCREENSHOTS||path.resolve(__dirname,'../test-results/screenshots');
-async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
 async function library(){return page.evaluate(async()=>(await window.quiznet.get()).library);}
 async function course(){await page.getByRole('button',{name:'Library',exact:true}).first().click();await page.locator('.course-row').getByRole('button').click();}
 async function start(title){await page.getByRole('button',{name:`Start ${title}`,exact:true}).click();await expect(page.getByRole('dialog')).toBeVisible();}
@@ -39,9 +40,9 @@ test('saved presets, compact colored navigation, flags, backups, and practice on
     await expect(square(i)).toHaveAttribute('aria-label',new RegExp('\\banswered\\b')); // Flags remain independent of answering.
   }
   const backup=path.join(directory,'with-flags-and-presets.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
+  await command(page,'Settings');await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
   await app.close();await launch();track();await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(square(0)).toHaveClass(/flagged/);await expect(square(2)).toHaveClass(/flagged/);expect((await library()).practicePresets).toHaveLength(2);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},backup);await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('button',{name:'Resume',exact:true}).click();
+  await command(page,'Settings');await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},backup);await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('button',{name:'Resume',exact:true}).click();
   await page.getByRole('button',{name:'Finish',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('2 questions flagged');await page.getByRole('button',{name:'Review flags',exact:true}).click();await expect(page.locator('#question-jump')).toHaveValue('0');
   await page.locator('#question-jump').selectOption('5');await page.getByRole('button',{name:'Finish',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Finish quiz',exact:true}).click();await expect(page.locator('.score-value')).toHaveText('67%');
   const initial=await library(),source=initial.attempts[0],original=JSON.stringify(initial.courses);await page.getByRole('button',{name:'Practice missed questions',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('2 questions');await expect(page.getByLabel('Preset',{exact:true})).toHaveValue('practice');
@@ -55,7 +56,7 @@ test('saved presets, compact colored navigation, flags, backups, and practice on
 test('hide optional navigation and flags; large quizzes keep question squares bounded and keyboard navigation works',async()=>{
   await course();await start('Long practice');await page.getByRole('checkbox',{name:'Question squares',exact:true}).uncheck();await page.getByRole('checkbox',{name:'Progress bar',exact:true}).uncheck();await page.getByRole('checkbox',{name:'Flag for review',exact:true}).uncheck();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await expect(page.locator('.question-square')).toHaveCount(0);await expect(page.getByRole('progressbar')).toHaveCount(0);await expect(page.getByRole('button',{name:'Flag for review',exact:true})).toHaveCount(0);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Discard attempt…',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Discard attempt',exact:true}).click();await course();await start('Long practice');await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();await expect(page.locator('.question-square')).toHaveCount(100);
+  await command(page,'Discard attempt…');await page.getByRole('dialog').getByRole('button',{name:'Discard attempt',exact:true}).click();await course();await start('Long practice');await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();await expect(page.locator('.question-square')).toHaveCount(100);
   await page.getByRole('button',{name:'Next question group',exact:true}).click();await expect(page.locator('#question-jump')).toHaveValue('100');await expect(page.locator('.question-square')).toHaveCount(100);await expect(square(100)).toHaveAttribute('aria-current','step');await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','101');
   await page.getByRole('button',{name:'Next question group',exact:true}).click();await expect(page.locator('.question-square')).toHaveCount(5);await page.keyboard.press('ArrowRight');await expect(page.locator('#question-jump')).toHaveValue('201');expect(await page.evaluate(()=>document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth)).toBe(true);
 });

@@ -23,7 +23,7 @@ async function start({large=false}={}){
   const legacy={...structuredClone(a),id:core.id(),title:'Older quiz attempt'};delete legacy.timingMode;delete legacy.questionTimesMs;data.attempts.push(legacy);
   quiz.questions[0].prompt='Edited live question that must not replace history.';
   await fs.mkdir(path.join(profile,'data'),{recursive:true});await fs.writeFile(libraryFile(),JSON.stringify(core.validateLibrary(data),null,2));
-  const env={...process.env,QUIZNET_TEST_DATA:profile};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();
+  const env={...process.env,QUIZNET_TEST_DATA:profile};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();
   await page.getByRole('button',{name:'History',exact:true}).click();await page.locator(`.history-row[data-id="${targetId}"]`).click();
 }
 async function saveTo(file){await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},file);}

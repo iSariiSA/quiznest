@@ -1,3 +1,4 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
@@ -8,7 +9,7 @@ test.beforeAll(async()=>{
   directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-instructions-'));
   const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
   app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});
-  page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();
+  page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();
   clipboardText=await app.evaluate(({clipboard})=>clipboard.readText());
 });
 test.afterAll(async()=>{if(app){await app.evaluate(({clipboard},value)=>clipboard.writeText(value),clipboardText||'');await app.close();}await fs.rm(directory,{recursive:true,force:true});});
@@ -16,7 +17,7 @@ test.afterAll(async()=>{if(app){await app.evaluate(({clipboard},value)=>clipboar
 test('prepare, validate, preview, copy and save instructions; import the complete generated quiz offline',async()=>{
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   const libraryFile=path.join(directory,'data/library.json'),before=await fs.readFile(libraryFile,'utf8');
-  await page.getByRole('button',{name:'Prepare a quiz',exact:true}).click();
+  await command(page,'Prepare a quiz…');
   await expect(page.getByRole('heading',{name:'Prepare a quiz',exact:true})).toBeVisible();
   await expect(page.locator('.instruction-advanced')).not.toHaveAttribute('open');
   await expect(page.locator('.instruction-mix')).toBeHidden();
@@ -53,11 +54,11 @@ test('prepare, validate, preview, copy and save instructions; import the complet
   // Main-process validation also rejects callers bypassing the form.
   expect(await page.evaluate(async()=>{try{await window.quiznet.instructions('copy',{});return 'unexpected';}catch(error){return error.message;}})).toContain('valid preference');
   expect(await fs.readFile(libraryFile,'utf8')).toBe(before);
-  await page.getByRole('button',{name:'Library',exact:true}).first().click();await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Prepare a quiz…',exact:true}).click();
+  await page.getByRole('button',{name:'Library',exact:true}).first().click();await command(page,'Prepare a quiz…');
   await expect(page.getByLabel('Quiz language value',{exact:true})).toHaveValue('العربية');
   // Hiding a custom mix must disable its required controls, including after navigation.
   await page.getByLabel('Question types',{exact:true}).selectOption('auto');await page.getByRole('button',{name:'History',exact:true}).click();
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Prepare a quiz…',exact:true}).click();
+  await command(page,'Prepare a quiz…');
   await page.getByRole('button',{name:'Copy instructions',exact:true}).click();await expect(page.locator('#toast')).toHaveText('Instructions copied.');
   await page.getByLabel('Question types',{exact:true}).selectOption('value');
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setBounds({width:760,height:700}));

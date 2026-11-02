@@ -1,9 +1,10 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const os=require('node:os');
 let app,page,directory;
-async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
 test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-code-ui-'));await launch();});
 test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true,force:true});});
 const python='\n# Print each value\nvalues = [1, 2, 3]\nfor value in values:\n    print(value)\n';
@@ -12,7 +13,7 @@ const markdown='**What is the output?**\n\n```javascript\nconst values = [1, 2, 
 test('author code and Markdown, preview, export, restart, review and restore offline',async()=>{
   const errors=[];const track=()=>page.on('pageerror',error=>errors.push(error.message));track();
   await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();
-  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
+  await page.getByRole('button',{name:'Unit 1: Cells',exact:true}).click();await command(page,'New quiz…');await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Code questions');
   let section=page.locator('.editor-question').first();
   await section.getByLabel('Question format',{exact:true}).selectOption('html');
@@ -42,7 +43,7 @@ test('author code and Markdown, preview, export, restart, review and restore off
   const pack=JSON.parse(await fs.readFile(exported,'utf8'));expect(pack.questions[0].code).toBe(python);expect(pack.questions[1].format).toBe('markdown');
   // Reimport a portable file using the real parser and native-dialog path.
   await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},exported);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Import…',exact:true}).click();await page.getByRole('button',{name:'Import',exact:true}).click();
+  await command(page,'Import…');await page.getByRole('button',{name:'Import',exact:true}).click();
   await page.getByRole('button',{name:'Start Code questions (2)',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Start quiz',exact:true}).click();
   await expect(page.locator('.question-prompt strong')).toHaveText('What values are printed?');
   expect(await page.locator('.question-prompt .code-block code').textContent()).toBe(python);
@@ -56,7 +57,7 @@ test('author code and Markdown, preview, export, restart, review and restore off
   await expect(page.locator('.score-value')).toHaveText('100%');await expect(page.locator('.review-list .code-block')).toHaveCount(3);
   await expect(page.locator('.explanation .hljs-built_in')).not.toHaveCount(0);
   const backup=path.join(directory,'backup.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
+  await command(page,'Settings');await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
   await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},backup);
   await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();
   await page.getByRole('button',{name:'History',exact:true}).click();await page.locator('.history-row').first().click();await expect(page.locator('.review-list .code-block')).toHaveCount(3);
