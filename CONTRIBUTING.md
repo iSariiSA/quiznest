@@ -4,7 +4,7 @@ Quiznet is a small offline Windows app for **Courses → Units → Quizzes**. Ch
 
 Use synthetic examples in issues and pull requests. Keep personal study material, credentials, and local audit records out of submissions.
 
-Quiznet is currently in Alpha. See the [roadmap](docs/ROADMAP.md) for planned features and [release policy](docs/RELEASES.md) for naming and stage changes.
+Quiznet is currently in early development. Public release names use the app version, such as **Quiznet v1.25.0**. See the [roadmap](docs/ROADMAP.md) for planned features and [release policy](docs/RELEASES.md) for naming and stage changes.
 
 ## Start with a focused change
 
@@ -52,7 +52,7 @@ npm run test:app
 npm audit --audit-level=high
 ```
 
-`check` verifies JavaScript syntax. Core tests cover parsing, validation, hierarchy, scoring, storage transactions, and recovery. The Electron test covers the real desktop workflow, including saved progress, repeat launches, import/export, and backup/restore.
+`check` verifies JavaScript syntax. Core tests cover parsing, validation, hierarchy, scoring, storage transactions, and recovery. `test:app` prepares the pinned Electron development binary before starting timed tests; Electron 45 no longer downloads it during `npm ci`. The desktop tests cover the real workflow, including saved progress, repeat launches, import/export, and backup/restore. The packaged installer already contains Electron and needs no runtime download.
 
 Add a regression test when fixing behavior that could recur. Parser or storage changes need core tests; interaction changes need an appropriate desktop check. For documentation-only changes, verify commands and links; rerun application tests when behavior or the build changes.
 
@@ -70,7 +70,7 @@ Keep the change small enough to review. Explain the problem, resulting behavior,
 
 Do not include generated installers, runtime dependencies, private data, or unrelated formatting changes. Update the README and unreleased changelog entry when behavior changes. Treat other contributors respectfully and respond to review with concrete changes or an explanation.
 
-Keep the README focused on what Quiznet does, installation, first use, and common questions. Put detailed study instructions in [USER_GUIDE.md](docs/USER_GUIDE.md) and file-format details in [IMPORT_FORMATS.md](docs/IMPORT_FORMATS.md). When publishing an approved release, match the README's public release name to `package.json` and point its download and release-note links at that release's uploaded installer. Alpha releases are prereleases, so do not assume GitHub's `releases/latest` URL points to the current Alpha. Check relative links and keep examples synthetic.
+Keep the README focused on what Quiznet does, installation, first use, and common questions. Put detailed study instructions in [USER_GUIDE.md](docs/USER_GUIDE.md) and file-format details in [IMPORT_FORMATS.md](docs/IMPORT_FORMATS.md). When publishing an approved release, match the README's public release name to `package.json` and point its download and release-note links at that release's uploaded installer. Early-development releases are prereleases, so do not assume GitHub's `releases/latest` URL points to the current release. Check relative links and keep examples synthetic.
 
 GitHub Actions checks history for secrets, audits dependencies, runs the tests, and builds the Windows installer. Dependency-update pull requests still need review and validation; they are not merged automatically.
 
