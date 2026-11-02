@@ -1,6 +1,23 @@
 # Changelog
 
-## Quiznet Alpha 23
+## Local milestone — Quiznet v1.25.0
+
+Stage: **Alpha**. Internal installer build: `1.25.0`. Local Electron maintenance update.
+
+- Use version-only public release names, such as **Quiznet v1.25.0**. Rename existing GitHub release titles while preserving tags, downloads, prerelease status, and development-stage metadata.
+
+- Update the pinned Electron runtime from `44.9.3` to the latest stable `45.2.1`, including its Chromium fixes. Keep electron-builder and other development dependencies unchanged.
+- Review Electron 45's sandboxed-preload, permission, ASAR, and window behavior changes. Quiznet's preload only requires Electron, file writes stay outside ASAR, all renderer permissions remain denied, and child windows remain blocked; no application API or storage changes are needed.
+- Prepare Electron's development binary before timed desktop tests, accommodating Electron 45's first-use download behavior without adding runtime downloads to the packaged application.
+- Preserve the same offline installer, installation identity, Desktop shortcut, and local study library. Plugins and Explore remain planned Alpha goals.
+
+Release-name follow-up: syntax/offline-asset checks passed (73 JavaScript files) and all 98 core/build-metadata tests passed. The three published release titles now use their existing version tags (`v1.24.0`, `v1.17.0`, `v1.10.1`), with release IDs, tag targets, notes, asset IDs/checksums, download URLs, and prerelease status verified unchanged. The application identity and installed study files are unaffected.
+
+Validation: source/offline-asset checks passed (72 JavaScript files), all 96 core/storage tests passed, and all 71 desktop workflows are verified on Electron 45.2.1. The initial cold-download run passed 70 workflows and timed out in the first workflow's setup; preparing the runtime outside Playwright's timed hooks fixed that path, and the full first workflow passed through the updated test command. The dependency audit passed its high-severity threshold with 15 existing moderate build-tool findings, and the redacted history scan found no leaks.
+
+Matched all 102 packaged source/assets and retained package metadata to the tested files. Installed twice over the existing per-user application, retaining the registry identity, path, single Desktop shortcut, and library/rolling-backup/editor-draft hashes where present. Installed-app verification confirmed Electron `45.2.1`, Chromium `156.0.8078.75`, Node.js `24.22.1`, the normal data path, denied renderer networking, single-instance focus, and unchanged library hashes after navigation. Local update complete; the installer remains unsigned. Installer SHA256: `8235e9051aff53e8a80932bfc61088cac609c6c399ea5227b15543c87ba70344`.
+
+## Quiznet v1.24.0
 
 Stage: **Alpha**. Internal installer build: `1.24.0`. The owner requested publication on 2 November 2026.
 
@@ -14,7 +31,7 @@ Validation: source/offline-asset checks passed (72 JavaScript files) and all 96 
 
 Matched all 102 packaged source/assets to disk and the installed archive to the tested package. Installed twice over the existing per-user installation, retaining one registry identity, install directory, and Desktop shortcut; library, rolling-backup, and editor-draft hashes stayed unchanged where present. Installed-app checks verified unified creation, Help inside Settings, hidden-navigation access, the normal data path/version, denied renderer networking, repeat-launch focus, and unchanged library hashes after navigation. The installer remains unsigned. Installer SHA256: `33b2312a64530dd7abb8c769ff8a7cb86daacc1b300f48b15a44ebf2e62d65ed`.
 
-## Local milestone — Quiznet Alpha 22
+## Local milestone — Quiznet v1.23.0
 
 Stage: **Alpha**. Internal installer build: `1.23.0`. Local update; GitHub publication is not authorized.
 
@@ -30,7 +47,7 @@ Matched all 102 packaged source/assets to disk and the installed archive to the 
 
 Next goals remain the Alpha roadmap; no stage change or Plugins/Explore implementation is included.
 
-## Local milestone — Quiznet Alpha 21
+## Local milestone — Quiznet v1.22.0
 
 Stage: **Alpha**. Internal installer build: `1.22.0`. Local update; GitHub publication is not authorized.
 
@@ -46,7 +63,7 @@ Native clipboard follow-up: earlier Electron/Windows round trips returned empty 
 
 Matched all 102 packaged source/assets to disk and installed twice over the existing per-user Quiznet installation. Verified one registry identity, the same executable path and Desktop shortcut, and unchanged library/rolling-backup hashes. The installed-app smoke check verified Home/Saved questions navigation, synthetic saved practice after source deletion, the normal profile/version, blocked renderer networking, repeat-launch focus, and unchanged study files. Local update complete; no GitHub publication. Standard installer: `Quiznet-Setup.exe`. SHA256: `5de461cae8fef19e13d8636bff6275073d4e05a2ee3b5f643620d5ec3d41bebc`.
 
-## Local milestone — Quiznet Alpha 20
+## Local milestone — Quiznet v1.21.0
 
 Stage: **Alpha**. Internal installer build: `1.21.0`. Local update; GitHub publication is not authorized.
 
@@ -58,7 +75,7 @@ Validation: source/offline-asset checks passed (65 JavaScript files), all 88 cor
 
 Matched all 98 packaged source/assets to disk and installed twice over the existing per-user installation, preserving registry/path/shortcut identity and library/rolling-backup/editor-draft hashes. Verified the installed formatter and native clipboard using synthetic content, normal profile/version, Home/daily/notebook navigation, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. Installer SHA256: `48f79956b9bb1649e8f556735b28791848ab78ebf30edb861a91c12587e33caa`.
 
-## Local milestone — Quiznet Alpha 19
+## Local milestone — Quiznet v1.20.0
 
 Stage: **Alpha**. Internal installer build: `1.20.0`. Local update; GitHub publication is not authorized.
 
@@ -70,7 +87,7 @@ Validation: source/offline-asset checks passed (63 JavaScript files), all 88 cor
 
 Matched all 97 packaged source/assets to disk, installed twice over the existing per-user installation, and verified the same registry identity, path, single Desktop shortcut, and primary library/rolling-backup/editor-draft hashes. Verified installed Home startup and brand/Library navigation, normal version/profile, packaged daily/notebook behavior, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. Installer SHA256: `145567b3c45eeec1a09c6ad103580c36e6723be00057733838b498d164240dad`.
 
-## Local milestone — Quiznet Alpha 18
+## Local milestone — Quiznet v1.19.0
 
 Stage: **Alpha**. Internal installer build: `1.19.0`. Local update; GitHub publication is not authorized.
 
@@ -83,7 +100,7 @@ Validation: source/offline-asset checks passed (61 JavaScript files), all 88 cor
 
 Built the standard offline installer and matched all 95 packaged source/assets to disk. Installed twice over the existing per-user Quiznet installation with the same registry identity, path, single Desktop shortcut, and primary library/rolling-backup/editor-draft hashes. Verified installed notebook navigation, synthetic packaged note/session/backup validation, normal profile/version, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. Installer SHA256: `f26ff859dfc2407e3ce3c3786e5290893f63ccb03ab861024e225986f378336c`.
 
-## Local milestone — Quiznet Alpha 17
+## Local milestone — Quiznet v1.18.0
 
 Stage: **Alpha**. Internal installer build: `1.18.0`. Local update based on GitHub main; publication is not authorized. No Dev/Learn+ features are included.
 
@@ -96,7 +113,7 @@ Validation: syntax/offline-asset checks passed (57 JavaScript files), all 83 cor
 
 Built the standard offline installer and matched all 93 packaged source/assets to disk. Installed twice over the existing per-user Quiznet installation; the registry identity, installation path, single Desktop shortcut, and primary library/rolling-backup/editor-draft hashes stayed unchanged. Verified the installed version and normal data path, synthetic scheduling through the packaged module, review navigation/settings, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. Installer SHA256: `f252d54f6bc6fc8a95cd311bcef3d4d9a25fc217a7497c41dcfdaca9c63733bd`.
 
-## Quiznet Alpha 16
+## Quiznet v1.17.0
 
 Stage: **Alpha**. Internal installer build: `1.17.0`. Publication authorized by the owner on 25 October 2026. This release also includes the local reliability, math, import-review, and workspace-interface improvements developed since the previous public Alpha 8.
 
@@ -111,7 +128,7 @@ Built the offline `Quiznet-Setup.exe` and matched all 95 packaged source/assets 
 
 Known limits: diagram data requires an agent with suitable file/image tools; historical attempts without recorded times cannot supply them. Reports are capped at 20 MiB without silent truncation. Next goals remain separately scoped Plugins and Explore.
 
-## Unreleased — Quiznet Alpha 15
+## Unreleased — Quiznet v1.16.0
 
 Stage: **Alpha**. Internal installer build: `1.16.0`. Local UI update; GitHub publication pending owner approval.
 
@@ -128,7 +145,7 @@ Built the offline `Quiznet-Setup.exe` and matched all 94 packaged source/assets 
 
 Known limits: the installer remains unsigned. Plugins and Explore remain separately scoped future goals; this UI update does not implement them or change the release stage.
 
-## Unreleased — Quiznet Alpha 14
+## Unreleased — Quiznet v1.15.0
 
 Stage: **Alpha**. Internal installer build: `1.15.0`. Local update authorized; GitHub publication pending owner approval.
 
@@ -148,7 +165,7 @@ Built `Quiznet-Setup.exe`; verified all 93 packaged source/assets against disk, 
 
 Known limits: math displays notation and prepared diagrams only; it does not calculate, run Python, or support every LaTeX command. Next goals remain Plugins and Explore, with scope to be agreed separately.
 
-## Unreleased — Quiznet Alpha 13
+## Unreleased — Quiznet v1.14.0
 
 Stage: **Alpha**. Internal installer build: `1.14.0`. Publication pending owner approval.
 
@@ -162,7 +179,7 @@ Validation: source/offline-asset checks, 58 core/storage tests, and all 38 Elect
 
 Known limitations: detection requires a published public release with the expected installer asset. Local/unpublished builds and draft/private releases are not offered. Automatic checking runs only while the app is open, and is off by default. Downloads open the browser; no installer is downloaded or executed by the app. Installer unsigned. Publication and new product features remain separate work.
 
-## Quiznet Alpha 12
+## Quiznet v1.13.0
 
 Stage: **Alpha**. Internal installer build: `1.13.0`. Publication pending owner approval.
 
@@ -176,7 +193,7 @@ Validation: syntax/offline-asset checks, 47 core/storage tests, all 32 Electron 
 
 Known limitations: one recovery draft; abrupt termination can lose edits after the last acknowledged save. Agent preferences remain in memory. Backups on the same drive do not protect against drive loss, and pre-restore/exported copies are outside history retention. JSON library capacity still depends on RAM and disk space. Installer unsigned. Plugins/Explore remain Alpha goals; no online updater or GitHub publication is included.
 
-## Quiznet Alpha 11
+## Quiznet v1.12.0
 
 Stage: **Alpha**. Internal installer build: `1.12.0`. Publication pending owner approval.
 
@@ -192,7 +209,7 @@ Validation: source checks, 39 core/storage tests, 26 Electron workflow tests, a 
 
 Known limitations: the library is still loaded and saved as one JSON document; capacity depends on RAM and disk space. Testing covers 10,000-question desktop workflows and a roughly 39 MB pressure library, not unlimited workloads. The installer is unsigned. Plugins and Explore remain Alpha goals.
 
-## Quiznet Alpha 10
+## Quiznet v1.11.1
 
 Stage: **Alpha**. Internal installer build: `1.11.1`. Publication pending owner approval.
 
@@ -205,7 +222,7 @@ Validation: source checks, 33 core tests, 22 Electron workflow tests, targeted l
 
 Known limitations: automatic recovery contains the last successful rolling backup; external agents still need to follow the generated instructions. Plugins and Explore remain Alpha goals.
 
-## Quiznet Alpha 9
+## Quiznet v1.11.0
 
 Stage: **Alpha**. Internal installer build: `1.11.0`. Publication pending owner approval.
 
@@ -218,7 +235,7 @@ Validation: source checks, 31 core tests, 20 Electron workflow tests, dependency
 
 Known limitations: the Windows installer is unsigned. Destination drafts stay in memory until the app closes. Plugins and Explore remain planned; further Alpha work follows the roadmap and user feedback.
 
-## Quiznet Alpha 8
+## Quiznet v1.10.1
 
 Stage: **Alpha**. Internal installer build: `1.10.1`.
 
@@ -230,7 +247,7 @@ Validation: source checks, 28 core tests, 17 Electron workflow tests including s
 
 Known limitations: the Windows installer is unsigned. Plugins and Explore discovery remain planned. Next goals are those Alpha features and reliability improvements from feedback.
 
-## Quiznet Alpha 7
+## Quiznet v1.10.0
 
 Stage: **Alpha**. Internal installer build: `1.10.0`.
 
@@ -243,7 +260,7 @@ Validation: syntax, core and Electron workflows, dependency/secret checks, visua
 
 Known limitations: question wording imported from a file stays unchanged. Practice answers lock once feedback appears. A very quick Next or Finish click while an answer is saving can be ignored; wait for the answer highlight and click again. Plugins and Explore discovery remain Alpha goals.
 
-## Quiznet Alpha 6
+## Quiznet v1.9.0
 
 Stage: **Alpha**. Internal installer build: `1.9.0`.
 
@@ -256,7 +273,7 @@ Validation: syntax, core and Electron workflows, dependency/secret checks, visua
 
 Known limitations: flags belong to unfinished attempts; progress colors show completion, not answer correctness. Older readers cannot resume missed-only sessions or retain presets/flags. Plugins and Explore discovery remain Alpha goals.
 
-## Quiznet Alpha 5
+## Quiznet v1.8.0
 
 Stage: **Alpha**. Internal installer build: `1.8.0`.
 
@@ -270,7 +287,7 @@ Validation: syntax, core and Electron workflows, dependency/secret checks, visua
 
 Known limitations: hiding timers affects the live quiz, while timing remains available in results. Checked instant-feedback answers require a new attempt to change. Older versions discard practice metadata. Plugins and Explore discovery remain Alpha goals.
 
-## Quiznet Alpha 4
+## Quiznet v1.7.0
 
 Stage: **Alpha**. Internal installer build: `1.7.0`.
 
@@ -284,7 +301,7 @@ Validation: syntax, core and Electron workflows, dependency/secret checks, visua
 
 Known limitations: external agents must follow the instructions and their answers need review. Image embedding depends on the agent’s tools. Draft preferences last for the current app session. Plugins and Explore discovery remain Alpha goals.
 
-## Quiznet Alpha 3
+## Quiznet v1.6.0
 
 Stage: **Alpha**. Internal installer build: `1.6.0`.
 
@@ -299,7 +316,7 @@ Validation: syntax, core and Electron workflows, dependency/secret checks, visua
 
 Known limitations: older attempts have no per-question times. Abrupt termination can lose time since the last answer, navigation, or 15-second checkpoint; normal app closing flushes timing. Plugins and Explore discovery remain Alpha goals.
 
-## Quiznet Alpha 2
+## Quiznet v1.5.0
 
 Stage: **Alpha**. Internal installer build: `1.5.0`.
 
@@ -314,7 +331,7 @@ Validation: syntax and offline-asset checks, core and Electron workflows, depend
 
 Known limitations: code is for reading, not execution; unknown languages and very long blocks display as plain code. Plugins and Explore remain planned Alpha goals. Stage changes still require owner approval.
 
-## Quiznet Alpha 1
+## Quiznet v1.4.3
 
 Stage: **Alpha**. Internal installer build: `1.4.3`.
 

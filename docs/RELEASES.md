@@ -1,45 +1,46 @@
 # Quiznet releases
 
-Quiznet is currently **Alpha**. The current release is **Quiznet Alpha 23**, using internal installer version `1.24.0`. The owner approved publishing this Alpha; Beta remains a future owner decision. Remain in Alpha until the owner explicitly approves changing the stage.
+Public releases use **Quiznet v<app version>**, such as **Quiznet v1.25.0**. The owner replaced the former stage-based names on 2 November 2026. The current published release is **Quiznet v1.24.0**. The local Electron maintenance build is **Quiznet v1.25.0**.
 
-## Names and stages
+Use the same version in `package.json`, the Git tag (`v1.25.0`), and the public release name. Keep the download named `Quiznet-Setup.exe`; every update uses the same installation, Desktop shortcut, and local library.
 
-| Stage | Public names | Purpose | Requirement for the next stage |
-| --- | --- | --- | --- |
-| Alpha — current | Quiznet Alpha 1, Quiznet Alpha 2, … | Build and refine the application, including Plugins and Explore. | Both features are implemented and verified, and the owner explicitly approves Beta. |
-| Beta — planned | Quiznet Beta 1, Quiznet Beta 2, … | Distribute to a wider group, collect feedback, improve the app, and test its workflows. | Resolve release-blocking issues, complete release checks, and obtain explicit owner approval for the first Official Release. |
-| Official Release — planned | Quiznet Official Release; later updates can use Quiznet Official Release 2, … | Deliver the tested application for regular use. | Further updates continue through review and release checks. |
+## Internal development stages
 
-There is no automatic stage promotion, scheduled launch date, or change of stage caused by a version-number increase. Finishing Plugins and Explore makes Quiznet ready for the owner's Beta decision; it does not change Alpha on its own. Wider distribution and publication are separate owner-controlled actions.
+Removing the stage from a release title does not promote the application to a stable release. The existing `quiznetRelease` stage and counter remain internal metadata for compatibility:
 
-## Current Alpha goals
+| Internal stage | Purpose | Requirement for the next stage |
+| --- | --- | --- |
+| `alpha` — current | Early development and refinement of the offline study app, including the agreed Plugins and Explore goals. | Both features are implemented and verified, and the owner explicitly approves wider testing. |
+| `beta` — planned | Wider testing, feedback, and fixes. | Resolve release-blocking issues, complete release checks, and obtain explicit owner approval for a stable release. |
+| `official` — planned | Tested releases for regular use. | Further updates continue through review and release checks. |
 
-- **Plugins — planned:** let Quiznet grow through optional capabilities for studying. Agree on the first useful extension and its interface before selecting the implementation.
-- **Explore — planned:** let people discover tests shared by others and add chosen tests to their own library. Agree on discovery, sharing, and distribution before selecting hosting or account requirements.
+The current internal stage remains `alpha`. Releases remain GitHub prereleases until the owner approves a stage change. There is no automatic promotion or scheduled launch date. Public titles never include the stage name or its counter.
 
-These are development goals, not features available in Alpha 23; Explore currently has a placeholder screen only. See [ROADMAP.md](ROADMAP.md) for intended outcomes and readiness checks. Core studying and saved material must continue to work offline. Sharing must be explicit; do not automatically publish or upload private libraries.
+## Planned development
+
+- **Plugins:** agree on the first useful extension and its interface before selecting an implementation.
+- **Explore:** agree on discovery, sharing, and distribution before selecting hosting or accounts. The application currently has only a placeholder screen.
+
+These plans do not authorize implementation or publication. Studying must remain offline, and sharing private material always requires an explicit action. See [ROADMAP.md](ROADMAP.md).
 
 ## Release metadata
 
-`package.json` is the single source for the current stage and release number being built:
-
 ```json
+"version": "1.25.0",
 "quiznetRelease": {
   "stage": "alpha",
-  "number": 23
+  "number": 24
 }
 ```
 
-`scripts/release.cjs` derives the repository release name from that metadata. `npm run release:info` prints the public name and internal installer build. The build commands validate this metadata before packaging. Public release names, the stage plan, and development milestones belong only in the GitHub repository and release notes. The application does not display them; Settings retains the technical app version for diagnostics.
+`scripts/release.cjs` derives the public name from `version`, validates the internal metadata, and preserves the stage. `npm run release:info` prints **Quiznet v1.25.0**. For each packaged update, increase the app version and internal counter; changing the stage still requires owner approval.
 
-For the next Alpha release, increment `quiznetRelease.number` while keeping `stage` equal to `alpha`. Only after explicit owner approval, set `stage` to `beta` or `official` and start that stage at number 1. The internal `version` must continue increasing for Windows installer ordering and diagnostics. Never set the technical version to the word Alpha or lower its numeric value just to match a public name.
+Release planning and milestones belong in the repository and release notes. Do not display them in Settings or study screens. Settings may show the technical app version for diagnostics.
 
-Alpha 23 uses internal installer version `1.24.0`; the previous public Alpha 16 installer was `1.17.0`. Build and release records are in [CHANGELOG.md](../CHANGELOG.md).
+## Publishing
 
-## Preparing release notes
+Each release entry records its version, changes, validation, known limitations, and next goals. Historical notes may retain their original development-stage wording.
 
-Each release entry must state its public name and stage, what changed, validation performed, known limitations, and the next goals. Technical build IDs can appear as secondary maintenance information.
+After the owner authorizes publication, tag the tested commit with `v<app version>`, title the release with the version-based public name, and attach `Quiznet-Setup.exe` with its SHA256 checksum. Mark internal `alpha` and `beta` builds as prereleases; a stable release requires explicit owner approval. Verify the downloaded asset against the checksum.
 
-When the owner authorizes a GitHub release, use the derived public name for its title. Alpha and Beta are prereleases; Official Release is a stable release. Keep the existing technical `v<app version>` tag convention for identifying the exact tested commit, and retain the stable `Quiznet-Setup.exe` asset name. Publication requires owner approval. Keep the repository's name, URL, and visibility unchanged unless the owner requests a change.
-
-Follow [MAINTENANCE.md](MAINTENANCE.md) for the full test, backup, reinstall, and checksum checks. All stages update the same installed Quiznet application and preserve the same local library and shortcut.
+Keep the repository name, URL, visibility, application identity, and study-data path unchanged unless the owner requests a change. Follow [MAINTENANCE.md](MAINTENANCE.md) for source review, tests, backup, reinstall, and publication checks.

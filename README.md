@@ -16,7 +16,9 @@
 
 **Windows 10/11 · x64 · Works offline · MIT licensed**
 
-Current release: **Quiznet Alpha 23** — a preview for testing and feedback. The installer is unsigned. See [release notes and the installer checksum](https://github.com/iSariiSA/quiznest/releases/tag/v1.24.0).
+Current release: **Quiznet v1.24.0** — a preview for testing and feedback. The installer is unsigned. See [release notes and the installer checksum](https://github.com/iSariiSA/quiznest/releases/tag/v1.24.0).
+
+The local maintenance build uses Electron **45.2.1**. The published download above remains v1.24.0; local updates use the same installation and Desktop shortcut.
 
 ![Quiznet's compact dark library, with a synthetic Biology course and unified quiz creation](assets/screenshots/library.png)
 
@@ -137,7 +139,7 @@ The current packaged app supports **Windows 10/11 on x64 computers**. Other plat
 
 ### Are Plugins and Explore available?
 
-Plugins are planned. Explore currently shows a **Coming soon** placeholder; discovery and sharing are planned. Quiznet remains in **Alpha**. See the [roadmap](docs/ROADMAP.md) for planned features.
+Plugins are planned. Explore currently shows a **Coming soon** placeholder; discovery and sharing are planned. Quiznet remains in early development. See the [roadmap](docs/ROADMAP.md) for planned features.
 
 ## Guides and support
 

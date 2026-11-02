@@ -1,8 +1,8 @@
 # Quiznet roadmap
 
-The goal is to let you test yourself in the way you choose, with a compact interface and a local library. Quiznet is currently **Alpha** and stays in Alpha until the owner explicitly approves Beta. See [RELEASES.md](RELEASES.md) for release names and stage rules. There are no committed launch dates.
+The goal is to let you test yourself in the way you choose, with a compact interface and a local library. Quiznet is in early development; wider testing requires explicit owner approval. Public names use app versions, without a stage label. See [RELEASES.md](RELEASES.md) for release names and stage rules. There are no committed launch dates.
 
-## Alpha — current
+## Early development — current
 
 Continue refining the local study application. Existing capabilities include courses, units, mixed question types, images, Markdown and code, saved progress, practice presets, missed-question practice, results, and backup/restore.
 
