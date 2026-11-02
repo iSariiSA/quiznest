@@ -83,7 +83,7 @@ Keep GitHub token permissions at read access for builds and disable persisted ch
 
 ## Build and verify an update
 
-1. Increment the public release number in `package.json` under `quiznetRelease`; keep the current stage unless the owner explicitly approved changing it. Increase the internal installer version with `npm version <version> --no-git-tag-version`. Run `npm run release:info` and update `CHANGELOG.md` using the public name and stage, changes, checks, limitations, and next goals. Keep the app ID, product name, data path, installer name, and shortcut name unchanged.
+1. Increase the app version with `npm version <version> --no-git-tag-version`; public names use that version, such as `Quiznet v1.25.0`. Advance the internal `quiznetRelease` counter and keep its stage unless the owner explicitly approved changing it. Run `npm run release:info` and update `CHANGELOG.md` using the public name and stage, changes, checks, limitations, and next goals. Keep the app ID, product name, data path, installer name, and shortcut name unchanged.
 2. Run syntax, core, Electron, dependency, and secret checks from `CONTRIBUTING.md`.
 3. Build on Windows:
 
@@ -110,7 +110,7 @@ The build creates an offline installer and does not publish automatically. `--pu
 
 The Windows workflow uploads `Quiznet-Windows`, containing `Quiznet-Setup.exe`. Artifact downloads require GitHub sign-in and read access, and artifacts can expire. [GitHub artifact documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts).
 
-After the owner approves publication, tag the tested commit with `v<app version>` and create a GitHub Release titled with the public name from `npm run release:info`, such as `Quiznet Alpha 1`. Mark Alpha and Beta as prereleases; mark Official Release as stable. Include the installer, its SHA256 checksum, and notes from the changelog. Verify the downloaded release asset against the checksum. Maintain one installer filename; releases do not create separate installed programs. Publishing or completing features never changes the stage automatically.
+After the owner approves publication, tag the tested commit with `v<app version>` and create a GitHub Release titled with the public name from `npm run release:info`, such as `Quiznet v1.25.0`. Internal `alpha` and `beta` stages remain prereleases; marking a release stable requires owner approval. Include the installer, its SHA256 checksum, and notes from the changelog. Verify the downloaded release asset against the checksum. Maintain one installer filename; releases do not create separate installed programs. Publishing or completing features never changes the stage automatically.
 
 Updates use the same installer filename and existing installation. Keep study backups and local test artifacts outside tracked source. The optional main-process release checker queries only the fixed public GitHub source and never changes study files. Settings offers a manual check and opt-in 48-hour checks. It opens a verified release page after an explicit click; installation still uses the same offline NSIS installer. Device preferences live in `updates.json` outside the library. Keep renderer requests/navigation blocked and never accept a renderer-supplied source URL or credential. See [update checking](UPDATE_CHECKING_PROPOSAL.md) for bounds, retry behavior, and the separate future installer-verification work.
 
