@@ -1,12 +1,13 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const image=require('../examples/images-html.json').questions[0].image;
 let app,page,directory;
 const q={prompt:'Which number is even?',options:['2','3'],correctAnswer:0,explanation:'Two is divisible by two.'};
-test.beforeEach(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-import-preview-'));const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();});
+test.beforeEach(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-import-preview-'));const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();});
 test.afterEach(async()=>{await app?.close();const resolved=path.resolve(directory);if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith('quiznet-import-preview-'))throw new Error('Unexpected test directory');await fs.rm(resolved,{recursive:true,force:true});});
 async function pick(packs){const file=path.join(directory,'preview.json');await fs.writeFile(file,JSON.stringify(packs));await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},file);return file;}
-async function open(){await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Import…',exact:true}).click();}
+async function open(){await command(page,'Import…');}
 const libraryFile=()=>path.join(directory,'data/library.json');
 async function expectAnswerHidden(){await expect(page.locator('.import-correct-label, .import-choice.is-correct, .import-question-card .explanation')).toHaveCount(0);await expect(page.getByRole('button',{name:'Show correct answer',exact:true})).toHaveAttribute('aria-expanded','false');}
 test('browse full questions, answers, explanations, code and images before importing; destination survives navigation',async()=>{

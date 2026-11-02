@@ -1,3 +1,4 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
@@ -7,9 +8,9 @@ let app,page,directory;
 async function launch() {
   const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
   app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});
-  page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();
+  page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();
 }
-async function openMenu(item) { await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:item,exact:true}).click(); }
+async function openMenu(item) { await command(page,item); }
 async function pick(file) { await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},file); }
 async function saveTo(file) { await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},file); }
 async function loadedImage(locator) { await expect.poll(()=>locator.evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true); }
@@ -20,7 +21,7 @@ test('editor images and HTML survive export, import, restart, review and backup'
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const picture=path.join(directory,'cell.png');await fs.writeFile(picture,Buffer.from(example.questions[0].image.split(',')[1],'base64'));
   await page.locator('.course-row').filter({hasText:'Biology'}).getByRole('button').click();
-  await page.getByRole('button',{name:'Manage Unit 1: Cells'}).click();await page.getByRole('menuitem',{name:'New quiz…',exact:true}).click();await page.getByRole('button',{name:'Write manually',exact:true}).click();
+  await page.getByRole('button',{name:'Unit 1: Cells',exact:true}).click();await command(page,'New quiz…');await page.getByRole('button',{name:'Write manually',exact:true}).click();
   await page.getByLabel('Quiz title').fill('Cell image');
   await page.getByRole('combobox',{name:'Question format',exact:true}).selectOption('html');
   await page.locator('[data-editor="prompt"]').fill(example.questions[0].prompt);

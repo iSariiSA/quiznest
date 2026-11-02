@@ -1,10 +1,11 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const os=require('node:os');
 const path=require('node:path');
 const core=require('../src/core.cjs');
 let app,page,directory;
-async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
 async function now(value){await app.evaluate((_,value)=>{Date.now=()=>value;},value);await page.evaluate(value=>{Date.now=()=>value;},value);}
 async function library(){return page.evaluate(async()=>(await window.quiznet.get()).library);}
 test.beforeAll(async()=>{
@@ -31,7 +32,7 @@ test('small stopwatch, hidden question timing, revisits, Explore, restart, resto
   // A restored active cursor belongs to its previous process, so downtime is excluded.
   const restoreFile=path.join(directory,'active-backup.json');saved.activeSession.timing.runningSince=base;await fs.writeFile(restoreFile,JSON.stringify(saved));
   await now(base+day);await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},restoreFile);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();
+  await command(page,'Settings');await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();
   saved=await library();expect(saved.activeSession.timing.elapsedMs).toBe(11000);expect(saved.activeSession.timing.runningSince).toBeNull();
   await page.getByRole('button',{name:'Resume',exact:true}).click();await expect(page.getByRole('timer')).toHaveText('00:11');await page.getByRole('button',{name:'Next',exact:true}).click();
   await now(base+day+2000);await app.close();
@@ -47,7 +48,7 @@ test('small stopwatch, hidden question timing, revisits, Explore, restart, resto
   await expect(page.locator('.attempt-comparison')).toContainText('Previous: 50% · 00:15. 50 points higher · 00:07 faster.');await expect(page.locator('.question-time')).toHaveText(['Time spent 00:03','Time spent 00:05']);
   await page.screenshot({path:path.join(outputs,'Quiznet-timed-results.png')});
   const backup=path.join(directory,'results-backup.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
+  await command(page,'Settings');await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
   await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},backup);await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();
   await page.getByRole('button',{name:'History',exact:true}).click();await expect(page.locator('.history-row').first()).toContainText('00:08');await page.locator('.history-row').first().click();await expect(page.locator('.question-time')).toHaveCount(2);await expect(page.locator('.attempt-comparison')).toContainText('00:07 faster');
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setBounds({width:760,height:560}));expect(await page.evaluate(()=>document.querySelector('#main').scrollWidth<=document.querySelector('#main').clientWidth)).toBe(true);

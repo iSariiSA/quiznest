@@ -25,13 +25,21 @@
 .breadcrumbs { font-size: 12px; font-weight: 400; }
 .breadcrumbs button, .breadcrumbs span { max-width: 280px; }
 .top-actions { flex-wrap: wrap; margin-left: auto; }
-.app-menu { margin-left: 0; }
+.header-settings { display: none; }
+.navigation-hidden .header-settings { display: inline-flex; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.course-search input { width: 170px; min-height: 34px; padding: 7px 11px; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 6px; font-size: 12px; }
-.course-search input::placeholder { color: var(--muted); }
-.course-row[hidden], #course-search-empty[hidden] { display: none; }
+.library-search kbd { margin-left: 14px; font: 11px 'Segoe UI', Arial, sans-serif; color: var(--muted); }
+.search-scope { margin-bottom: 14px; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .main-content { max-width: none; padding: 16px 32px 32px; }
-.page-heading { margin: 0 0 26px; }
+.page-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin: 0 0 26px; }
+.page-title { flex: 1 1 200px; min-width: 0; }
+.page-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.quiz-create-choice strong { display: block; font-size: 14px; font-weight: 500; }
+.quiz-create-choice small { display: block; color: var(--muted); font-size: 12px; font-weight: 400; white-space: normal; line-height: 1.5; margin-top: 6px; }
+.home-heading { flex-wrap: wrap; }
+.home-recent { grid-column: 1 / -1; }
+.daily-question .answer-option { justify-content: flex-start; }
+.daily-question .answer-option > .rich-content { flex: 1; }
 .page-heading h1 { font-size: 30px; font-weight: 600; letter-spacing: -.7px; overflow-wrap: anywhere; }
 .page-heading p { margin-top: 9px; color: var(--muted); font-size: 13px; }
 .btn { min-height: 34px; border-radius: 6px; }

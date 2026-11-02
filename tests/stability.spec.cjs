@@ -8,6 +8,7 @@ test.beforeEach(async()=>{
   await fs.mkdir(path.join(directory,'data'));await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(data));
   const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
   app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();
+  await page.getByRole('button',{name:'Library',exact:true}).click();
   await page.locator('.course-row button').click();await page.locator('[data-action=start]').click();await page.getByRole('button',{name:'Start quiz',exact:true}).click();
   await page.locator('[data-action=answer][data-index="0"]').click();
   await expect(page.locator('[data-action=answer][data-index="0"]')).toHaveAttribute('aria-pressed','true');
@@ -50,7 +51,7 @@ test('10,000-question quizzes can be edited, reviewed, navigated, saved and resu
   const quiz=data.courses[0].units[0].quizzes[0];core.mutate(data,{type:'start',quizId:quiz.id});for(const q of quiz.questions)data.activeSession.answers[q.id]=0;core.mutate(data,{type:'finish'});
   quiz.questions[9999].code='\nprint(2)\n';quiz.questions[9999].codeLanguage='python';
   await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(data));
-  const launch=async()=>{const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();};
+  const launch=async()=>{const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();};
   await launch();const failures=[];page.on('pageerror',error=>failures.push(error.message));
   await page.getByRole('button',{name:'History',exact:true}).click();await page.locator('.history-row').click();await expect(page.locator('.review-card')).toHaveCount(50);await page.getByLabel('Review questions',{exact:true}).selectOption('199');await expect(page.locator('.review-card').last()).toContainText('Question 10000:');
   await page.getByRole('button',{name:'Library',exact:true}).first().click();await page.locator('.course-row button').click();

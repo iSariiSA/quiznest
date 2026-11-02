@@ -4,6 +4,9 @@ const questionModel = require('./ui/question-types.js');
 const codePolicy = require('./ui/code-policy.js');
 const timing = require('./ui/timing.js');
 const practice = require('./ui/practice.js');
+const notebook=require('./mistake-notebook.cjs');
+const savedQuestions=require('./saved-questions.cjs');
+const dailyReview = require('./ui/daily-review.js');
 const id = () => randomUUID();
 const COLORS = ['sage', 'peach', 'lavender', 'blue', 'sand'];
 const MAX_IMPORT_BYTES=20*1024*1024;
@@ -179,6 +182,9 @@ function validateLibrary(raw) {
     }
     if(s.practice?.feedback==='instant'&&(!s.checkedQuestionIds||q.questions.some(item=>questionModel.typeOf(item).selection!=='multiple'&&questionModel.validAnswer(item,answers[item.id])&&!checkedIds.has(item.id))))throw new Error('Backup has inconsistent instant feedback.');
   }
+  if(raw.dailyReview!==undefined)library.dailyReview=dailyReview.validate(raw.dailyReview,library);
+  if(raw.mistakeNotebook!==undefined)library.mistakeNotebook=notebook.validate(raw.mistakeNotebook,question);
+  if(raw.savedQuestions!==undefined)library.savedQuestions=savedQuestions.validate(raw.savedQuestions,question);
   return library;
 }
 function findQuiz(data, quizId) {
@@ -228,6 +234,9 @@ function importPacks(data, packs, target) {
 }
 function mutate(data, action, now=Date.now()) {
   if (!action || typeof action.type !== 'string') throw new Error('Invalid action.');
+  if(['savedAdd','savedRemove','savedStart','savedAnswer','savedCheck','savedNext','savedDiscard'].includes(action.type)){savedQuestions.mutate(data,action,now,question);return data;}
+  if(['mistakeRemove','mistakeNote','mistakeStart','mistakeAnswer','mistakeCheck','mistakeNext'].includes(action.type)){notebook.mutate(data,action);return data;}
+  if(['reviewSettings','reviewBegin','reviewAnswer','reviewCheck','reviewRate'].includes(action.type)){const unchecked=action.type==='reviewCheck'&&!data.dailyReview?.active?.checked;dailyReview.mutate(data,action,now,id);if(unchecked){const item=dailyReview.current(data);notebook.record(data,item.question,data.dailyReview.active.answer,item.quiz.title,now);}return data;}
   const course = data.courses.find(c => c.id === action.courseId);
   const unit = course?.units.find(u => u.id === action.unitId);
   const found = action.quizId ? findQuiz(data, action.quizId) : null;
@@ -258,6 +267,7 @@ function mutate(data, action, now=Date.now()) {
       const portable={course:place.course.title,unit:place.unit.title,title,questions:questions.map(({id,...q})=>q)};
       if (Buffer.byteLength(JSON.stringify(portable,null,2))>19*1024*1024) throw new Error('Keep a quiz below 19 MB so it can be exported and imported. Use smaller images or split it into quizzes.');
       if (action.quizId) {
+        dailyReview.remapQuiz(data,found.quiz.questions,questions);
         found.quiz.title = title; found.quiz.questions = questions;
       } else {commitDestination(data,place);place.unit.quizzes.push({id:id(),title,questions,createdAt:new Date().toISOString()});}
       break;
@@ -342,6 +352,7 @@ function mutate(data, action, now=Date.now()) {
     }
     default: throw new Error('Unknown action.');
   }
+  if(['saveQuiz','delete'].includes(action.type))dailyReview.reconcile(data);
   return data;
 }
 module.exports = { id, COLORS, question, parseCSV, parseImport, exportQuiz, emptyLibrary, validateLibrary, findQuiz, importPacks, mutate, ...questionModel };

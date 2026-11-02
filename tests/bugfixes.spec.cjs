@@ -1,3 +1,4 @@
+const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
@@ -7,7 +8,7 @@ test.beforeEach(async()=>{
   directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-bugfixes-'));
   const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
   app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});
-  page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();
+  page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();
   clipboardText=await app.evaluate(({clipboard})=>clipboard.readText());
 });
 test.afterEach(async()=>{
@@ -16,7 +17,7 @@ test.afterEach(async()=>{
   await fs.rm(resolved,{recursive:true,force:true});
 });
 test('exact question mixes update the total when counts and included types change',async()=>{
-  await page.getByRole('button',{name:'Prepare a quiz',exact:true}).click();
+  await command(page,'Prepare a quiz…');
   await page.getByLabel('Question types',{exact:true}).selectOption('value');
   await page.getByLabel('Multiple answers',{exact:true}).selectOption('omit');
   await page.getByLabel('True / false',{exact:true}).selectOption('omit');
@@ -34,7 +35,7 @@ test('exact question mixes update the total when counts and included types chang
   await expect.poll(()=>app.evaluate(({clipboard})=>clipboard.readText())).toContain('- Number of questions: 7');
   const before=await fs.readFile(path.join(directory,'data/library.json'),'utf8');
   await page.getByRole('button',{name:'History',exact:true}).click();
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Prepare a quiz…',exact:true}).click();
+  await command(page,'Prepare a quiz…');
   await expect(page.getByLabel('Number of questions value',{exact:true})).toHaveValue('7');
   await page.getByLabel('Multiple answers',{exact:true}).selectOption('auto');
   await expect(page.getByLabel('Number of questions value',{exact:true})).toHaveValue('8');
@@ -50,7 +51,7 @@ test('exact question mixes update the total when counts and included types chang
   expect(await fs.readFile(path.join(directory,'data/library.json'),'utf8')).toBe(before);
 });
 test('disabling code clears its dependent language setting and allows instruction export',async()=>{
-  await page.getByRole('button',{name:'Prepare a quiz',exact:true}).click();
+  await command(page,'Prepare a quiz…');
   await page.locator('.instruction-advanced summary').click();
   await page.getByLabel('Code questions',{exact:true}).selectOption('required');
   await page.getByLabel('Code language',{exact:true}).selectOption('value');
@@ -62,7 +63,7 @@ test('disabling code clears its dependent language setting and allows instructio
   await expect(page.locator('.instruction-error')).toBeEmpty();
   await expect.poll(()=>app.evaluate(({clipboard})=>clipboard.readText())).toContain('- Code questions: No code');
   await page.getByRole('button',{name:'History',exact:true}).click();
-  await page.getByRole('button',{name:'App menu'}).click();await page.getByRole('menuitem',{name:'Prepare a quiz…',exact:true}).click();
+  await command(page,'Prepare a quiz…');
   await page.locator('.instruction-advanced summary').click();
   await expect(page.getByLabel('Code language',{exact:true})).toBeDisabled();
   await page.getByLabel('Code questions',{exact:true}).selectOption('relevant');

@@ -1,5 +1,101 @@
 # Changelog
 
+## Quiznet Alpha 23
+
+Stage: **Alpha**. Internal installer build: `1.24.0`. The owner requested publication on 2 November 2026.
+
+- Use one **New quiz** entry for manual writing, agent preparation, and importing an existing file. Keep the selected course/unit across each route and explain the three choices in the creation dialog.
+- Remove the App menu, standalone Prepare/Import commands, repeated creation buttons in Home and unit cards, and duplicated Home library/focused-review shortcuts. Keep folder creation in **Library actions** / **Course actions**, item commands beside their course/unit/quiz, and **Help** inside **Settings**.
+- Hide creation controls during quiz/review answers and brief preparation. Keep Settings accessible when navigation is hidden, give saved practice/notebook/daily/results pages meaningful breadcrumbs, and keep discard actions beside the active quiz or saved resume card. Offer daily-review start/resume once on Home, with review settings as a distinct action. Align answer choices across quiz, daily, saved, and mistake practice. Preserve existing confirmation and cancellation behavior.
+- Include the previously verified local milestones since Alpha 16: offline Daily review, Mistake Notebook with personal notes and focused practice, Home with saved-session resume and recent results, Copy question, Saved questions with resumable practice, and unified library search. Keep all material local and include saved study state in ordinary backups.
+- Preserve the existing app ID, one offline installer and Desktop shortcut, plain JavaScript implementation, library schema, and in-place update behavior. Plugins and Explore remain planned; no stage change is included.
+
+Validation: source/offline-asset checks passed (72 JavaScript files) and all 96 core/storage tests passed. All 70 desktop workflows passed together; the final Home refinement then passed all four Home workflows, including its new duplicate-action regression (71 distinct desktop workflows overall). Reviewed 21 screens/states at 1280×800 and the 760×560 minimum, with no horizontal overflow or renderer errors. The existing dependency tree has 15 moderate audit findings and no high/critical findings; dependencies are unchanged. The redacted history scan passed before the release commit; the release history is checked again before pushing.
+
+Matched all 102 packaged source/assets to disk and the installed archive to the tested package. Installed twice over the existing per-user installation, retaining one registry identity, install directory, and Desktop shortcut; library, rolling-backup, and editor-draft hashes stayed unchanged where present. Installed-app checks verified unified creation, Help inside Settings, hidden-navigation access, the normal data path/version, denied renderer networking, repeat-launch focus, and unchanged library hashes after navigation. The installer remains unsigned. Installer SHA256: `33b2312a64530dd7abb8c769ff8a7cb86daacc1b300f48b15a44ebf2e62d65ed`.
+
+## Local milestone — Quiznet Alpha 22
+
+Stage: **Alpha**. Internal installer build: `1.23.0`. Local update; GitHub publication is not authorized.
+
+- Replace the separate course filter and icon-only search with one labelled **Search library** button on every page, retaining **Ctrl + K**. Search course and unit names, quiz titles, and question text; include empty units and identify each result's type and location.
+- Replace the application ellipsis with a labelled **App** menu. Place **Course actions** / **Unit actions**, **Prepare a quiz**, and the primary creation button beside the current page title, separating page actions from global commands. Individual quiz menus remain attached to their rows.
+- Keep controls usable at the minimum window size, with long titles and hidden navigation. No storage, dependency, or application identity changes.
+
+Validation: source/offline-asset checks passed (71 JavaScript files), all 96 core/storage tests and 68 Electron workflows passed, and the redacted history scan found no leaks in 19 commits. Header regressions cover one search entry, case-insensitive course matches, empty units, question-text results, escaped titles, empty results, focus restoration, current creation/brief destinations, cancelled actions, long titles, compact layout, hidden navigation, and unchanged library files. Normal and compact layouts were visually checked.
+
+The dependency audit passed the high-severity threshold with no high/critical findings; it reported 15 moderate findings in the existing minimatch/build-tool dependency tree. Dependencies are unchanged; the audit's proposed forced downgrade is outside this interface fix.
+
+Matched all 102 packaged source/assets to disk and the installed archive to the tested package. Installed the standard offline installer twice over the existing per-user installation, retaining one registry identity, install path, Desktop shortcut, and unchanged library/rolling-backup/editor-draft hashes where present. The installed-app smoke check verified the normal data path/version, single search across study pages, named context actions, empty search/focus restoration, hidden-navigation access, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. The installer remains unsigned. Installer SHA256: `620e9f296f40b437cfbbf84201e76f32b6c9957c883a962049d927ba560ef0d1`.
+
+Next goals remain the Alpha roadmap; no stage change or Plugins/Explore implementation is included.
+
+## Local milestone — Quiznet Alpha 21
+
+Stage: **Alpha**. Internal installer build: `1.22.0`. Local update; GitHub publication is not authorized.
+
+- Add a persistent star beside **Copy question** in quizzes, historical results, Daily review, Mistake Notebook, and focused reviews. Save questions regardless of correctness and open **Saved questions** from Home.
+- Preserve an independent question snapshot with wording, choices, answer key, explanation, formatting, code, and embedded diagrams. Exactly matching content shares one star across source IDs; changed content can be saved separately. Saved copies remain available after original quizzes move, change, or are deleted.
+- Browse 20 saved questions per page with answers hidden until requested, copy their question/choices, or practise a random selection of 1–100 saved questions. Save checked answers and round progress across pause, restart, and backup/restore. Saved practice uses its own score and leaves quiz history and daily scheduling untouched.
+- Validate saved-question sources in the main process, reject stale practice tokens, bound the collection at 20,000 items / 64 MiB, and include it in existing atomic library saves/backups. Removal creates a recovery snapshot and is blocked for questions in an unfinished saved round until that round finishes or is ended.
+- Await native clipboard completion for question and AI-instruction copying so asynchronous errors reach the UI. Keep study material local and renderer permissions denied.
+
+Validation: source/offline-asset checks passed (70 JavaScript files), all 96 core/storage tests passed, the dependency audit reported zero vulnerabilities, and the redacted history scan found no leaks in 19 commits. All 66 Electron workflows are verified across the filtered run and follow-up checks: the first run passed 58 of 60, both timing-related failures passed an unchanged serial retry (all three app/navigation tests passed), and all six native-clipboard workflows passed on follow-up. All five Saved questions workflows passed, covering unanswered/correct stars, historical indices and pagination, inert content, media/code/math snapshots after source deletion, checked-answer locks, restart/backup restore, shared daily/notebook stars, failed-save rollback/retry, and asynchronous clipboard-error handling. Normal and compact saved-question layouts were visually checked.
+
+Native clipboard follow-up: earlier Electron/Windows round trips returned empty text and a read-only Win32 probe reported access denied (error 5). Access later succeeded without app or permission changes. All six remaining workflows passed, verifying question/choice copying, HTML paragraphs, Markdown/math/code, images, omitted answer keys, unchanged selections, daily/notebook/focused contexts, and AI-instruction copying/export. A fresh installed-app smoke check also verified the native clipboard round trip and unchanged library/backup hashes. Renderer permissions remain denied.
+
+Matched all 102 packaged source/assets to disk and installed twice over the existing per-user Quiznet installation. Verified one registry identity, the same executable path and Desktop shortcut, and unchanged library/rolling-backup hashes. The installed-app smoke check verified Home/Saved questions navigation, synthetic saved practice after source deletion, the normal profile/version, blocked renderer networking, repeat-launch focus, and unchanged study files. Local update complete; no GitHub publication. Standard installer: `Quiznet-Setup.exe`. SHA256: `5de461cae8fef19e13d8636bff6275073d4e05a2ee3b5f643620d5ec3d41bebc`.
+
+## Local milestone — Quiznet Alpha 20
+
+Stage: **Alpha**. Internal installer build: `1.21.0`. Local update; GitHub publication is not authorized.
+
+- Add **Copy question** to the quiz runner, historical result questions, Daily review, Mistake Notebook, and focused mistake practice. Copy the selected question and all choices labelled A, B, C, D and onward for pasting into an external chat.
+- Preserve Markdown/math source, readable HTML paragraphs, code attachments, and multiple-answer instructions. Omit saved answers, answer keys, explanations, and personal notes. Insert image descriptions and a reminder to attach diagrams separately instead of dumping encoded images into the chat.
+- Use the existing trusted main-process bridge for a bounded plain-text clipboard write. Copying does not submit answers, reveal feedback, change the library, upload material, or open a chat service.
+
+Validation: source/offline-asset checks passed (65 JavaScript files), all 88 core/storage tests and 61 Electron workflow tests passed, dependency audit reported zero vulnerabilities, and the redacted history scan found no leaks. New native-clipboard tests cover all choices through AD, multiple-answer instructions, readable HTML paragraphs, Markdown/math/code, image descriptions, preserved suffix text, omitted answer keys/explanations, untouched selected answers, historical result selection, daily/notebook/focused contexts, hidden feedback, and rejected invalid/oversized requests without overwriting the clipboard.
+
+Matched all 98 packaged source/assets to disk and installed twice over the existing per-user installation, preserving registry/path/shortcut identity and library/rolling-backup/editor-draft hashes. Verified the installed formatter and native clipboard using synthetic content, normal profile/version, Home/daily/notebook navigation, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. Installer SHA256: `48f79956b9bb1649e8f556735b28791848ab78ebf30edb861a91c12587e33caa`.
+
+## Local milestone — Quiznet Alpha 19
+
+Stage: **Alpha**. Internal installer build: `1.20.0`. Local update; GitHub publication is not authorized.
+
+- Open on a new **Home** page with an actionable Continue studying card, today's review counts and allowance, Mistake Notebook access, recently studied quizzes, and create/import/agent shortcuts.
+- Prioritize unfinished quiz answers, then saved focused mistake practice, then daily review. Keep each mode's existing resume behavior and pause quiz timing when returning Home. Show recent live quizzes once each, with their latest saved result and a fresh-practice action.
+- Keep Home read-only, use existing library/history/schedule state, refresh due/day counts while open, preserve editor-draft recovery, and adapt the layout to compact windows. Home and Library have separate sidebar actions; the Quiznet brand returns Home.
+
+Validation: source/offline-asset checks passed (63 JavaScript files), all 88 core/storage tests and 59 Electron workflow tests passed, dependency audit reported zero vulnerabilities, and the redacted history scan found no leaks. Home checks cover default/empty startup, read-only navigation and cancelled creation/import, escaped titles, saved-answer resume, pause timing on return Home, recent-quiz deduplication and result links, focused-session resume, daily allowance/day refresh, and compact layout. Existing workflow suites explicitly enter Library.
+
+Matched all 97 packaged source/assets to disk, installed twice over the existing per-user installation, and verified the same registry identity, path, single Desktop shortcut, and primary library/rolling-backup/editor-draft hashes. Verified installed Home startup and brand/Library navigation, normal version/profile, packaged daily/notebook behavior, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. Installer SHA256: `145567b3c45eeec1a09c6ad103580c36e6723be00057733838b498d164240dad`.
+
+## Local milestone — Quiznet Alpha 18
+
+Stage: **Alpha**. Internal installer build: `1.19.0`. Local update; GitHub publication is not authorized.
+
+- Add **Daily review → Mistake notebook**, automatically collecting incorrect answers from historical quiz results and new daily reviews. Group exactly matching question content and show the saved question, last incorrect answer, correct answer, explanation, and mistake count.
+- Save a personal “What did I misunderstand?” note with each question. Preserve annotated question snapshots across quiz edits and include notes in normal library backups and recovery.
+- Add a focused review of up to 20 recent mistakes with answer checking, saved pause/resume progress, and a completion score. Keep ordinary quiz history, daily allowance, and spaced schedules separate.
+- Validate notebook state/actions in the main process, reject stale/double advances, and save through existing atomic transactions. Bound saved snapshots/notes at 20,000 entries / 64 MiB and notes at 5,000 characters; render 20 notebook entries per page. Storage-limit failures are explicit and preserve the last successful save.
+
+Validation: source/offline-asset checks passed (61 JavaScript files), all 88 core/storage tests and 56 Electron workflow tests passed, dependency audit reported zero vulnerabilities, and the redacted history scan found no leaks. New tests cover historical/daily grouping, saved question content and notes, exact-set answers, stale/double advances, failed-save retry, restart/restore, compact layout, and safe saved-copy removal that preserves original attempts. A removal requires confirmation, saves a recovery snapshot, and is blocked for questions in an unfinished focused session.
+
+Built the standard offline installer and matched all 95 packaged source/assets to disk. Installed twice over the existing per-user Quiznet installation with the same registry identity, path, single Desktop shortcut, and primary library/rolling-backup/editor-draft hashes. Verified installed notebook navigation, synthetic packaged note/session/backup validation, normal profile/version, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. Installer SHA256: `f26ff859dfc2407e3ce3c3786e5290893f63ccb03ab861024e225986f378336c`.
+
+## Local milestone — Quiznet Alpha 17
+
+Stage: **Alpha**. Internal installer build: `1.18.0`. Local update based on GitHub main; publication is not authorized. No Dev/Learn+ features are included.
+
+- Add an offline **Daily review** screen with quiz selection, a configurable daily limit, due-first review, and Again / Hard / Good / Easy ratings showing their next intervals.
+- Save answers before checking; lock checked answers and show explanations before rating. Incorrect answers return through Again. Repetitions count toward the daily cap, which resets at local midnight.
+- Preserve review progress across pause, restart, backups, restores, moves, and unchanged question edits. Keep ordinary quiz attempts and scores separate. Use the existing atomic library storage and validate all review actions in the main process.
+- Use a documented simple interval scheduler; no Anki dependency, cloud service, or FSRS claim. Keep the existing app identity and in-place installer.
+
+Validation: syntax/offline-asset checks passed (57 JavaScript files), all 83 core/storage tests and 55 Electron workflow tests passed, dependency audit reported zero vulnerabilities, and the redacted history scan found no leaks. Verified review settings, exact-set answers, answer locking, rating intervals, daily rollover/cap, stale and duplicate actions, failed-save retry, unchanged-question remapping, pause/restart, backup/restore, and compact layout using synthetic data.
+
+Built the standard offline installer and matched all 93 packaged source/assets to disk. Installed twice over the existing per-user Quiznet installation; the registry identity, installation path, single Desktop shortcut, and primary library/rolling-backup/editor-draft hashes stayed unchanged. Verified the installed version and normal data path, synthetic scheduling through the packaged module, review navigation/settings, blocked renderer networking, and repeat-launch focus. Local update complete; no GitHub publication. Installer SHA256: `f252d54f6bc6fc8a95cd311bcef3d4d9a25fc217a7497c41dcfdaca9c63733bd`.
+
 ## Quiznet Alpha 16
 
 Stage: **Alpha**. Internal installer build: `1.17.0`. Publication authorized by the owner on 25 October 2026. This release also includes the local reliability, math, import-review, and workspace-interface improvements developed since the previous public Alpha 8.

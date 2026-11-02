@@ -6,7 +6,7 @@ const core=require('../src/core.cjs');
 let app,page,directory;
 const shots=process.env.QUIZNET_SCREENSHOTS||path.resolve(__dirname,'../test-results/screenshots');
 const questions=[{type:'multiple-answer',prompt:'Select the even numbers.',options:['2','3','4'],correctAnswers:[0,2],explanation:'Both two and four are even.'},{prompt:'Which value equals 1 + 1?',options:['2','3'],correctAnswer:0},{type:'multiple-answer',prompt:'Which values exceed 2?',options:['1','3','4'],correctAnswers:[1,2]}];
-async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();}
+async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
 test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-refinements-'));await fs.mkdir(path.join(directory,'data'));await fs.mkdir(shots,{recursive:true});const data=core.emptyLibrary();core.importPacks(data,core.parseImport(JSON.stringify({course:'Mathematics',unit:'Basics',title:'Feedback flow',questions})));await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(data,null,2));await launch();});
 test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true,force:true});});
 
