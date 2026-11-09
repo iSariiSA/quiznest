@@ -4,7 +4,7 @@ The goal is to let you test yourself in the way you choose, with a compact inter
 
 ## Early development — current
 
-Continue refining the local study application. Existing capabilities include courses, units, mixed question types, images, Markdown and code, saved progress, practice presets, missed-question practice, results, and backup/restore.
+Continue refining the local study application. Quiznet v1.37.0 includes Home, collections and course focus; five question types; images, Markdown, math and code; daily/saved/mistake review; History dashboards; appearance previews; English/Arabic/Spanish; hints/reference sheets; written self-correction; and local backup/recovery. See the [documentation index](README.md) for current behavior. The decisions below concern future work.
 
 The two major goals before Beta are:
 

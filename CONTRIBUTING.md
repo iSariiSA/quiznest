@@ -4,7 +4,7 @@ Quiznet is a small offline Windows app for **Courses → Units → Quizzes**. Ch
 
 Use synthetic examples in issues and pull requests. Keep personal study material, credentials, and local audit records out of submissions.
 
-Quiznet is currently in early development. Public release names use the app version, such as **Quiznet v1.25.0**. See the [roadmap](docs/ROADMAP.md) for planned features and [release policy](docs/RELEASES.md) for naming and stage changes.
+Quiznet is currently in early development. Public release names use the app version, such as **Quiznet v1.37.0**. See the [roadmap](docs/ROADMAP.md) for planned features and [release policy](docs/RELEASES.md) for naming and stage changes.
 
 ## Start with a focused change
 
@@ -39,7 +39,7 @@ The development app uses that directory. The packaged app always uses the normal
 - Updates preserve courses, quizzes, scores, history, and unfinished attempts.
 - Keep `com.quiznet.desktop`, product name `Quiznet`, and `%APPDATA%\Quiznet\data` stable.
 - Ship `Quiznet-Setup.exe` and update the same installation and shortcut.
-- Keep the dark interface compact. Put secondary actions in menus and use clear labels with accessible names.
+- Keep the desktop interface compact and support its appearance settings. Put secondary actions in menus and use clear labels with accessible names.
 - Treat imported questions and HTML as untrusted content. Keep the HTML element/attribute allowlist, raster-only embedded images, sandbox, IPC validation, blocked navigation, denied permissions, and network restrictions. Never insert raw question HTML directly into the live document.
 - Use synthetic questions and temporary data in tests. Keep personal libraries, backups, credentials, and original-history bundles out of Git.
 
@@ -47,7 +47,7 @@ The development app uses that directory. The packaged app always uses the normal
 
 For interface text or a new language, follow [LANGUAGES.md](docs/LANGUAGES.md). Keep translations bundled, study content unchanged and RTL layouts usable. Run `npm run locales:sync` after editing message catalogs; `npm run check` verifies their keys, placeholders and generated assets.
 
-When the owner requests a feature batch, record its scope/status as in [FEATURE_BATCH.md](docs/FEATURE_BATCH.md). Run the quick `npm run check` for source edits, prepare meaningful regression coverage, and defer executing the core/Electron suites, building installers, and installing updates until the owner asks for the final testing pass. Keep the installed app and its study data unchanged while that batch is open. The full checks below remain required before packaging; the History/Collections batch is now complete.
+When the owner requests a feature batch, record its scope/status as in [FEATURE_BATCH.md](docs/FEATURE_BATCH.md). Run the quick `npm run check` for source edits, prepare meaningful regression coverage, and defer executing the core/Electron suites, building installers, and installing updates until the owner asks for the final testing pass. Keep the installed app and its study data unchanged while that batch is open. The full checks below remain required before packaging. [Feature batching](docs/FEATURE_BATCH.md) records the current batch status.
 
 ```sh
 npm run check
@@ -58,7 +58,7 @@ npm audit --audit-level=high
 
 `check` verifies JavaScript syntax, pinned offline assets and bundled language catalogs. Core tests cover parsing, validation, hierarchy, scoring, storage transactions, and recovery. `test:app` prepares the pinned Electron development binary before starting timed tests; Electron 45 no longer downloads it during `npm ci`. The desktop tests cover the real workflow, including saved progress, repeat launches, import/export, and backup/restore. The packaged installer already contains Electron and needs no runtime download.
 
-Add a regression test when fixing behavior that could recur. Parser or storage changes need core tests; interaction changes need an appropriate desktop check. For documentation-only changes, verify commands and links; rerun application tests when behavior or the build changes.
+Add a regression test when fixing behavior that could recur. Parser or storage changes need core tests; interaction changes need an appropriate desktop check. For documentation-only changes, verify commands, relative links/anchors and screenshots against the current app. Use synthetic material and the [brand/screenshot guide](docs/BRAND.md). Update `main` without a version bump, installer build or release unless the owner requests one. Rerun application tests when behavior or the build changes.
 
 On Windows, you can also run the redacted history scan used by CI:
 

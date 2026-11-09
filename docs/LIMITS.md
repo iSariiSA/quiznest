@@ -9,12 +9,14 @@ These are the current limits, checked against the parser, editor, storage code, 
 | Saving an edited quiz | At most 19 MiB of formatted portable JSON, leaving room for export/import |
 | Export | At most 20 MiB; compact JSON is used when indentation would exceed that limit |
 | Choice questions | 2–100 choices; true/false has exactly 2 |
-| Written answers | 1–20 accepted alternatives; each alternative and typed response at most 2,000 characters. Deterministic Unicode/whitespace normalization; optional case sensitivity; no fuzzy/AI grading |
+| Written answers | 1–20 accepted alternatives; each alternative and typed response at most 2,000 characters. Deterministic Unicode/whitespace normalization and optional case sensitivity. Explicit self-correction is available after checking; future accepted wording uses the same 20-answer limit |
 | Matching | 2–20 pairs; each side at most 1,000 plain-text characters, unique within its side. One-to-one responses; all pairs required for credit |
 | Plain text | Prompt/explanation: 10,000 characters; each choice: 5,000 |
 | Markdown | 100,000 characters per prompt, choice, or explanation |
 | Markdown math | 4,000 characters per formula; at most 64 formulas and 16,000 formula-source characters rendered per field. Unsupported/oversized formulas remain readable; display-budget overflow retains the source with a note. Macro expansions and visual dimensions are capped. Math displays notation; it does not run Python or calculate answers |
 | HTML | 4,194,304 characters per prompt, choice, or explanation; formatting is sanitized |
+| Question hints | Optional Markdown, up to 10,000 characters |
+| Exam reference sheet | Up to 50,000 Markdown characters and a 120-character title; every question or a validated selected-question scope |
 | Attached code | 50,000 characters; highlighting stops above 12,000 characters per block |
 | Images | Embedded PNG/JPEG/GIF/WebP; 2 MiB per image; description up to 500 characters |
 | Names | Course/unit/quiz: 200 characters; custom practice preset: 60 |
@@ -24,7 +26,7 @@ These are the current limits, checked against the parser, editor, storage code, 
 | Large editors and results | 25 questions per editor group; 50 per review group. Saving and grading use the complete quiz |
 | Backup restore | Separate from quiz import; no 20 MiB file cap. Available memory and disk space still apply |
 | Editor recovery draft | One draft, 1–10,000 incomplete questions, at most 20 MiB compact JSON; saved after a 500 ms input debounce and flushed before normal app close |
-| Backup history | Up to 7 copies within 128 MiB; if the newest copy alone exceeds that budget, retain it alone. Exported/pre-restore copies are outside this budget |
+| Backup history | Default 7 copies within 128 MiB; Settings offers 3/7/14/30 copies and 64/128/256/512 MiB. The newest copy is retained even if it alone exceeds the budget. Exported/pre-restore copies are separate |
 | Update checking | Optional; 8 seconds per network check, 2 MiB per response, at most 100 releases across 5 pages. Automatic schedule 48 hours; failed checks can retry after 2 hours, subject to rate limits |
 | Courses, units, quizzes, history | No configured total count cap; practical capacity depends on content and hardware |
 | Study report | One completed attempt, up to 10,000 questions and 20 MiB of UTF-8 Markdown including embedded diagrams. All questions or mistakes/time priorities; no silent truncation. Most-time priorities: top 20% of positive recorded question times, capped at 5, with ties resolved by saved question order |

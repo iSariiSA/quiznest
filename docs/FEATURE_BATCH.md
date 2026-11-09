@@ -1,25 +1,22 @@
-# Current feature batch
+# Feature batching workflow
 
-Status: complete. The owner requested batching on 3 November 2026, then explicitly authorized the final pass after the Collections/appearance feature. The validated batch is installed as Quiznet v1.28.0.
+[Documentation index](README.md) · [Contributing](../CONTRIBUTING.md)
 
-The batch workflow was to implement requested changes in source, prepare regression coverage for meaningful changes, and run quick source checks while collecting features. Full core/Electron checks, dependency/privacy scans and packaging were deferred until the owner authorized the final pass. For a future requested batch, record its scope and status separately and use the same explicit final-pass boundary.
+**Current status: no open feature batch.** The published application is Quiznet v1.37.0. Its completed validation is recorded in the [release notes](https://github.com/iSariiSA/quiznest/releases/tag/v1.37.0) and [changelog](../CHANGELOG.md).
 
-Final results: syntax/offline assets passed; all 108 core/build-metadata tests and 75 Electron workflows passed. History and Library layouts were reviewed. All 110 packaged files matched source; installing twice retained app/shortcut identity and study-file hashes. The installed smoke check passed. See CHANGELOG.md for checksum and validation details. No publication or stage change was requested.
+The owner prefers to collect small changes before a final testing and installation pass. When a new batch is explicitly requested, record its scope, completed work and remaining decisions here.
 
-## Included so far
+## While a batch is open
 
-- History: cascading course/unit/quiz filters, course-focus filter, date range and session-type filters; Overview, Sessions, and Quiz details views.
-- Overview: completed-session counts, answer accuracy, recorded active time with partial/missing timing explicit, local study days, recent scores, effort by course focus, and course coverage.
-- Course study focus: Long-term focus, For now, Low priority, or Not set. Edit from the course page, Course actions, or History course progress. Existing courses remain unclassified until chosen.
-- Course focus is organizational metadata. The user's daily-review quiz selection, study material, unfinished attempts, and historical answers retain their existing behavior.
-- Library: Collections above courses, course/collection icons and independent icon/name colors, custom emoji/symbols, moving courses between collections, pinning and manual up/down order. Removing a collection preserves its courses and progress.
+1. Implement the agreed changes and keep a short scope/status list.
+2. Run `npm run check` for source edits and prepare meaningful regression coverage.
+3. Defer the complete core/Electron suites, packaging and installation until the owner authorizes the final pass.
+4. Preserve the installed app and real study files while collecting features.
 
-## Final validation scope
+## Final pass
 
-- Run syntax/offline-asset, core, Electron, dependency, and privacy checks from CONTRIBUTING.md.
-- The new History and library-organization model/storage and desktop tests were executed successfully in the final pass.
-- Check focus save/reset, invalid metadata, failed-write rollback, restart and backup/restore; preserve attempts and sessions.
-- Check History cascade resets, date boundaries, focus/session filters, unlinked legacy attempts, paging, empty states, and links to results/reports and practice.
-- Check weighted accuracy, fully/partially timed versus untracked attempts, full-quiz coverage and latest/best full scores; keep missed-question sessions separate in those comparisons.
-- Review normal/compact layouts, escaped imported names, keyboard focus, large histories and read-only browsing. Verify older History/result workflows against the richer dashboard.
-- When the owner requests delivery, assign the next technical version and internal counter, build the standard installer, install/reinstall in place and verify profile/shortcut identity and study-file hashes per MAINTENANCE.md. Preserve the current public release naming and internal stage. Mark this batch complete only after the agreed validation and delivery are complete.
+Follow [Contributing](../CONTRIBUTING.md#check-your-change) and the [Windows delivery checks](MAINTENANCE.md#build-and-verify-an-update). Verify affected behavior, data compatibility, recovery and compact/accessible layouts. For an authorized app update, build the standard installer, install/reinstall in place and compare study-file hashes.
+
+Publish owner-authorized source changes directly to `main`. Create a prerelease only when publication is requested; documentation and screenshot maintenance can be committed without a new release. Preserve the current internal development stage.
+
+Mark the batch complete after its agreed validation and delivery. Keep detailed historical counts and installer checksums in the corresponding changelog/release entry, rather than presenting an older batch as current work.

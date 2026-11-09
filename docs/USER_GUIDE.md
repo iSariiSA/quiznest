@@ -1,6 +1,6 @@
 # Studying with Quiznet
 
-[Back to the README](../README.md) · [Import format reference](IMPORT_FORMATS.md)
+[Back to the README](../README.md) · [Documentation index](README.md) · [Import format reference](IMPORT_FORMATS.md)
 
 Detailed instructions for preparing quizzes, choosing feedback, reviewing mistakes, and keeping your library safe. For installation and a first quiz, start with the [README](../README.md#get-started).
 
@@ -36,6 +36,8 @@ Editing and import review use the full window. The editor's **Questions** list j
 
 ## Personalize Appearance
 
+![Current Quiz appearance controls beside the real-screen preview](../assets/screenshots/appearance.png)
+
 Open **Settings → Appearance** and choose **App**, **Quiz**, **Review**, or **Editor**. Controls sit beside a large preview at the actual reading size. **Expand** opens it across the window; its layout responds to the available width just like a real study screen. Change the sample between **Question**, **Code**, and **Math**. In Review, switch between **Daily review** and **Quiz results**. These are synthetic samples: answering, navigating, flagging, checking and rating in the preview never changes your own questions, attempts, daily allowance or schedules. Editor samples are read-only and never create a recovery draft.
 
 Changes apply immediately on this device. **Follow app** and **Use app color** keep existing defaults. Text sizes also follow the global Text size and Interface size controls. Controls and previews scroll independently on wide windows; narrow windows place the preview above the controls.
@@ -57,7 +59,7 @@ New courses and units are created together with the quiz when you confirm **Save
 
 To reorganize a quiz, open its **… → Move…** menu, choose a destination, and confirm **Move quiz**. You can also create a course or unit there. Its questions, history, flags, and unfinished attempt stay with it, and you can resume normally. Moving does not delete the source course or unit.
 
-![Moving a sample quiz from Mathematics / Basics to Physics / Motion](../assets/screenshots/move-quiz.png)
+![Current Move quiz dialog with course and unit choices for a synthetic robotics quiz](../assets/screenshots/move-quiz.png)
 
 ## Prepare a quiz with an agent
 
@@ -89,7 +91,7 @@ Completed review is available in both modes. History and results label instant-f
 
 ## Course study focus and History dashboard
 
-History and course organization are included in Quiznet v1.28.0; see [FEATURE_BATCH.md](FEATURE_BATCH.md) for the completed validation summary.
+![Current History filters and dashboard using synthetic study results](../assets/screenshots/history.png)
 
 On a course page, choose **Course actions → Study focus…**. Choose **Long-term focus** for subjects you want to keep building on, **For now** for material you need to finish now, **Low priority** for material you want to put aside, or **Not set** to clear the label. Assigned focus appears as a compact course summary and in Library/History, and travels with library backups. Your existing daily-review selections and unfinished practice remain as configured.
 
@@ -192,7 +194,7 @@ The report contains the saved questions and choices, your selected answers, the 
 
 Everything is kept in one Markdown file. Diagrams use embedded raster data URLs; an agent may need file/image tools to decode them. The report instructs it to ask for an image if it cannot inspect one. Content is quoted as source text so original code, HTML, and LaTeX remain available without execution. Reports have a 20 MiB limit; oversized reports fail visibly without truncating questions. Try the priority selection if a complete report is too large.
 
-![Exporting a synthetic completed attempt as one Markdown study report](../assets/screenshots/study-report.png)
+![Current study-report dialog for a synthetic completed robotics quiz](../assets/screenshots/study-report.png)
 
 ## Local storage
 
@@ -243,6 +245,8 @@ Try [math-diagrams.json](../examples/math-diagrams.json), which includes a label
 
 ## Hints and exam reference sheets
 
+![Optional exam reference sheet with locally rendered formulas](../assets/screenshots/reference-sheet.png)
+
 The quiz editor has a collapsible **Reference sheet** section. Enable it, enter a title and Markdown content, then choose **Every question** or **Selected questions**. Selected scope accepts one-based numbers and ranges such as `1, 3-5`. Deleting a question updates these selections; an empty selection must be corrected before saving. Each question also has its own optional **Question hint** section.
 
 Learners see one small book button beside Copy/Save only where content is available. It opens a scrollable reference page, with the sheet and the current hint when both apply. Opening or closing it preserves answers, position and score; the study timer continues. Markdown, formulas and safe code blocks render offline. Imported content cannot run scripts or load remote resources.
@@ -250,6 +254,8 @@ Learners see one small book button beside Copy/Save only where content is availa
 References travel with JSON quiz exports, library backups and editor recovery. Completed attempts retain one reference snapshot with remapped scope, including shuffled and missed-only practice; saved questions and mistake copies retain the applicable reference even after the source is removed. Question hints are also supported in CSV through the optional `hint` column. Copied questions omit these aids; full study reports include hints and deduplicate shared reference text. Limits: 10,000 characters per hint, 50,000 per reference and 120 per title. Older app versions may omit optional aid fields on save; keep a backup before rolling back.
 
 ## Review a written answer yourself
+
+![Comparing a written response with accepted answers before marking it correct](../assets/screenshots/written-review.png)
 
 After checking a written response, choose **My answer is correct** if a valid alternative was rejected. Compare your response with the listed accepted answers, then choose **Mark correct**. The response stays unchanged and is labeled **Marked correct by you**. This works in instant-feedback quizzes, completed results, Daily review, Saved practice and mistake review. **Review correction → Undo correction** removes that manual mark. Delayed-feedback quizzes reveal this only after completion.
 

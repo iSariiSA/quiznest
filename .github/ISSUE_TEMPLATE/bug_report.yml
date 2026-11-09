@@ -9,8 +9,8 @@ body:
     id: versions
     attributes:
       label: Quiznet and Windows versions
-      description: Find the Quiznet version in Settings.
-      placeholder: Quiznet 1.2.0, Windows 11 x64
+      description: Find the Quiznet version in Settings → About.
+      placeholder: Quiznet 1.37.0, Windows 11 x64
     validations:
       required: true
   - type: textarea
