@@ -20,7 +20,7 @@
       ids.add(p.id);names.add(p.name.trim().toLowerCase());return {id:p.id,name:p.name.trim(),options:validate(p.options),shuffle:p.shuffle};
     });
   }
-  const missed=attempt=>attempt.questions.filter((q,i)=>!questions.isCorrect(q,attempt.answers[i]));
+  const missed=attempt=>attempt.questions.filter((q,i)=>!questions.resultCorrect(attempt,i));
   const missedTitle=title=>`${title.slice(0,180)} · Missed questions`;
   function sessionQuiz(data,s){
     if(!s)return undefined;

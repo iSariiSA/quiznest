@@ -68,11 +68,22 @@
     const selected = selectedIndices(q, answer);
     return (selected.includes(index) ? selected.filter(i => i !== index) : [...selected, index]).sort((a, b) => a - b);
   }
+  const reviewedCorrect=(q,answer,selfCorrected=false)=>isCorrect(q,answer)||(selfCorrected===true&&typeOf(q).id==='written-answer'&&validAnswer(q,answer));
+  const resultCorrect=(attempt,index,q=attempt.questions?.[index])=>Boolean(q)&&reviewedCorrect(q,attempt.answers[index],attempt.selfCorrectedIndices?.includes(index));
+  function selfCorrectionFlag(value,q,answer,checked){
+    if(value!==undefined&&typeof value!=='boolean'||value===true&&(!checked||typeOf(q).id!=='written-answer'||!validAnswer(q,answer)))throw new Error('Backup contains an invalid written-answer correction.');
+    return value===true;
+  }
+  function selfCorrectionIndices(value,questions,answers){
+    if(value===undefined)return undefined;
+    if(!Array.isArray(value)||value.length>questions.length||new Set(value).size!==value.length||Array.from(value).some(index=>!Number.isInteger(index)||index<0||index>=questions.length||typeOf(questions[index]).id!=='written-answer'||!validAnswer(questions[index],answers[index])))throw new Error('Backup contains invalid written-answer corrections.');
+    return [...value];
+  }
   function blankQuestion(typeId = types[0].id) {
     const type = typeOf({ type: typeId });
     if(type.selection==='text')return {type:type.id,prompt:'',acceptedAnswers:[''],caseSensitive:false,explanation:''};
     if(type.selection==='matching')return {type:type.id,prompt:'',pairs:[{left:'',right:''},{left:'',right:''}],explanation:''};
     return { type: type.id, prompt: '', options: type.defaultOptions ? [...type.defaultOptions] : Array(type.minOptions).fill(''), ...(type.selection === 'multiple' ? { correctAnswers: [] } : { correctAnswer: 0 }), explanation: '' };
   }
-  return { types, typeOf, isChoice, normalizeWritten, responseLimits, answerFields, answerKey, correctValue, matchingOrder, optionLabel, correctIndices, selectedIndices, validAnswer, isCorrect, toggleAnswer, blankQuestion };
+  return { types, typeOf, isChoice, normalizeWritten, responseLimits, answerFields, answerKey, correctValue, matchingOrder, optionLabel, correctIndices, selectedIndices, validAnswer, isCorrect, reviewedCorrect, resultCorrect, selfCorrectionFlag, selfCorrectionIndices, toggleAnswer, blankQuestion };
 });

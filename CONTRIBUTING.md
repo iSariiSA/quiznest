@@ -68,6 +68,10 @@ On Windows, you can also run the redacted history scan used by CI:
 
 This downloads a pinned, checksum-verified Gitleaks tool for development. The finished app stays offline. Changes to scanner rules or exclusions need maintainer review.
 
+## Maintainer updates
+
+The sole maintainer publishes owner-authorized updates directly to `main` after the required local checks. Pull requests are not required for that workflow. Keep the existing repository protections; the owner controls administrator access. External contributions can still use the pull-request process below.
+
 ## Send a pull request
 
 Keep the change small enough to review. Explain the problem, resulting behavior, and checks you ran. Include a screenshot for visible changes, using a disposable demo library. Mention storage or compatibility effects explicitly.

@@ -44,7 +44,7 @@
     const cards=raw.cards.map(c=>{if(!c||!byId.has(c.questionId)||seen.has(c.questionId)||!integer(c.due,0,8640000000000000)||!integer(c.interval,0,365)||!integer(c.reviews,1,1000000000)||!['again','hard','good','easy'].includes(c.rating))fail();seen.add(c.questionId);return {questionId:c.questionId,due:c.due,interval:c.interval,reviews:c.reviews,rating:c.rating};});
     const days=raw.days.map(d=>{if(!d||typeof d.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(d.date)||!Number.isFinite(Date.parse(d.date))||dates.has(d.date)||!integer(d.count,0,1000000000))fail();dates.add(d.date);return {date:d.date,count:d.count};});
     let active=null;
-    if(raw.active!==null){const a=raw.active,item=a&&byId.get(a.questionId);if(!item||item.quiz.id!==a.quizId||!raw.quizIds.includes(a.quizId)||typeof a.token!=='string'||!a.token||a.token.length>100||typeof a.checked!=='boolean'||(a.answer!==null&&!questions.validAnswer(item.question,a.answer,true))||(a.checked&&!questions.validAnswer(item.question,a.answer)))fail();active={token:a.token,quizId:a.quizId,questionId:a.questionId,answer:structuredClone(a.answer),checked:a.checked};}
+    if(raw.active!==null){const a=raw.active,item=a&&byId.get(a.questionId);if(!item||item.quiz.id!==a.quizId||!raw.quizIds.includes(a.quizId)||typeof a.token!=='string'||!a.token||a.token.length>100||typeof a.checked!=='boolean'||(a.answer!==null&&!questions.validAnswer(item.question,a.answer,true))||(a.checked&&!questions.validAnswer(item.question,a.answer)))fail();active={token:a.token,quizId:a.quizId,questionId:a.questionId,answer:structuredClone(a.answer),checked:a.checked,...(questions.selfCorrectionFlag(a.selfCorrected,item.question,a.answer,a.checked)?{selfCorrected:true}:{})};}
     return {version:1,limit:raw.limit,quizIds:[...raw.quizIds],cards,days,active};
   }
   function mutate(data,action,now,newId){
@@ -80,7 +80,7 @@
     if(action.type==='reviewRate'){
       if(!a.checked)throw new Error('Check your answer before rating it.');
       if(!['again','hard','good','easy'].includes(action.rating))throw new Error('Choose Again, Hard, Good, or Easy.');
-      if(!questions.isCorrect(item.question,a.answer)&&action.rating!=='again')throw new Error('Use Again for an incorrect answer.');
+      if(!questions.reviewedCorrect(item.question,a.answer,a.selfCorrected)&&action.rating!=='again')throw new Error('Use Again for an incorrect answer.');
       const old=s.cards.find(c=>c.questionId===a.questionId),interval=intervals(old)[action.rating];
       const card={questionId:a.questionId,due:dueAt(now,interval),interval,reviews:(old?.reviews||0)+1,rating:action.rating};
       if(old)Object.assign(old,card);else {if(s.cards.length>=MAX_CARDS)throw new Error('Daily review supports up to 100,000 scheduled questions.');s.cards.push(card);}

@@ -2,6 +2,7 @@ const { randomUUID } = require('node:crypto');
 const { MAX_HTML_LENGTH, imageData } = require('./ui/content-policy.js');
 const questionModel = require('./ui/question-types.js');
 const aids=require('./ui/study-aids.js');
+const writtenReview=require('./ui/written-review.js');
 const codePolicy = require('./ui/code-policy.js');
 const timing = require('./ui/timing.js');
 const practice = require('./ui/practice.js');
@@ -204,7 +205,8 @@ function validateLibrary(raw) {
     const questions = Array.from(a.questions,question);
     if (!questions.length || a.answers.length !== questions.length || Array.from(a.answers).some((v,i) => !questionModel.validAnswer(questions[i],v))) throw new Error('Backup contains invalid answers.');
     if(a.missedOnly!==undefined&&typeof a.missedOnly!=='boolean')throw new Error('Backup has invalid attempt scope.');
-    return { id: checkedID(a.id), quizId: a.quizId, title: text(a.title, 'Attempt title'), ...(a.reference?{reference:aids.reference(a.reference,questions.length)}:{}), completedAt: a.completedAt, elapsedSeconds: a.elapsedSeconds, questions, answers: structuredClone(a.answers), total: questions.length, score: questions.filter((q,i)=>questionModel.isCorrect(q,a.answers[i])).length, ...timing.validateAttempt(a,questions.length), ...(a.practice!==undefined?{practice:practice.validate(a.practice)}:{}),...(a.missedOnly!==undefined?{missedOnly:a.missedOnly}:{}) };
+    const corrections=questionModel.selfCorrectionIndices(a.selfCorrectedIndices,questions,a.answers);
+    return { id: checkedID(a.id), quizId: a.quizId, title: text(a.title, 'Attempt title'), ...(a.reference?{reference:aids.reference(a.reference,questions.length)}:{}), completedAt: a.completedAt, elapsedSeconds: a.elapsedSeconds, questions, answers: structuredClone(a.answers), total: questions.length, ...(corrections!==undefined?{selfCorrectedIndices:corrections}:{}), score: questions.filter((q,i)=>questionModel.reviewedCorrect(q,a.answers[i],corrections?.includes(i))).length, ...timing.validateAttempt(a,questions.length), ...(a.practice!==undefined?{practice:practice.validate(a.practice)}:{}),...(a.missedOnly!==undefined?{missedOnly:a.missedOnly}:{}) };
   });
   if (raw.activeSession) {
     const s = raw.activeSession, q = practice.sessionQuiz(library,s),byId=new Map(q?.questions.map(item=>[item.id,item])),questionIds=new Set(Array.isArray(s.questionIds)?s.questionIds:[]),checkedIds=new Set(Array.isArray(s.checkedQuestionIds)?s.checkedQuestionIds:[]);
@@ -229,6 +231,7 @@ function validateLibrary(raw) {
       library.activeSession.checkedQuestionIds=[...s.checkedQuestionIds];
     }
     if(s.practice?.feedback==='instant'&&(!s.checkedQuestionIds||q.questions.some(item=>questionModel.typeOf(item).selection==='single'&&questionModel.validAnswer(item,answers[item.id])&&!checkedIds.has(item.id))))throw new Error('Backup has inconsistent instant feedback.');
+    if(s.selfCorrectedIndices!==undefined){const ordered=s.questionIds.map(id=>byId.get(id)),corrections=questionModel.selfCorrectionIndices(s.selfCorrectedIndices,ordered,s.questionIds.map(id=>answers[id]));if(s.practice?.feedback!=='instant'||corrections.some(i=>!checkedIds.has(s.questionIds[i])))throw new Error('Backup contains unchecked written-answer corrections.');library.activeSession.selfCorrectedIndices=corrections;}
   }
   if(raw.dailyReview!==undefined)library.dailyReview=dailyReview.validate(raw.dailyReview,library);
   if(raw.mistakeNotebook!==undefined)library.mistakeNotebook=notebook.validate(raw.mistakeNotebook,question);
@@ -282,6 +285,12 @@ function importPacks(data, packs, target) {
 }
 function mutate(data, action, now=Date.now()) {
   if (!action || typeof action.type !== 'string') throw new Error('Invalid action.');
+  if(action.type==='selfReview'){
+    const effect=writtenReview.mutate(data,action);
+    if(effect.source==='quiz')timing.settle(data.activeSession,now);
+    if(effect.source==='daily'&&effect.wasCorrect!==effect.correct){if(effect.correct)notebook.removeDailyOccurrence(data,effect.beforeQuestion);else{const item=dailyReview.current(data);notebook.record(data,aids.capture(item.question,item.quiz),effect.answer,item.quiz.title,now);}}
+    return data;
+  }
   if(organization.TYPES.includes(action.type)){organization.mutate(data,action);return data;}
   if(['savedAdd','savedRemove','savedStart','savedAnswer','savedCheck','savedNext','savedDiscard'].includes(action.type)){savedQuestions.mutate(data,action,now,question);return data;}
   if(['mistakeRemove','mistakeNote','mistakeStart','mistakeAnswer','mistakeCheck','mistakeNext'].includes(action.type)){notebook.mutate(data,action);return data;}
@@ -404,7 +413,7 @@ function mutate(data, action, now=Date.now()) {
       if(s.practice?.feedback==='instant'&&s.questionIds.some(key=>!checked.has(key)))throw new Error('Check every answer before finishing.');
       timing.settle(s,now);
       const answers=s.questionIds.map(key=>s.answers[key]);
-      data.attempts.push({id:id(),quizId:q.id,title:q.title,questions:structuredClone(questions),...(aids.remap(q.reference,q.questions,questions)?{reference:aids.remap(q.reference,q.questions,questions)}:{}),answers:structuredClone(answers),score:questions.filter((q,i)=>questionModel.isCorrect(q,answers[i])).length,total:questions.length,completedAt:new Date(now).toISOString(),elapsedSeconds:s.timing?Math.round(s.timing.elapsedMs/1000):Math.max(0,Math.round((now-Date.parse(s.startedAt))/1000)),...timing.attemptFields(s),...(s.practice?{practice:{...s.practice}}:{}),...(s.sourceAttemptId?{missedOnly:true}:{})});
+      data.attempts.push({id:id(),quizId:q.id,title:q.title,questions:structuredClone(questions),...(aids.remap(q.reference,q.questions,questions)?{reference:aids.remap(q.reference,q.questions,questions)}:{}),answers:structuredClone(answers),...(s.selfCorrectedIndices?{selfCorrectedIndices:[...s.selfCorrectedIndices]}:{}),score:questions.filter((q,i)=>questionModel.reviewedCorrect(q,answers[i],s.selfCorrectedIndices?.includes(i))).length,total:questions.length,completedAt:new Date(now).toISOString(),elapsedSeconds:s.timing?Math.round(s.timing.elapsedMs/1000):Math.max(0,Math.round((now-Date.parse(s.startedAt))/1000)),...timing.attemptFields(s),...(s.practice?{practice:{...s.practice}}:{}),...(s.sourceAttemptId?{missedOnly:true}:{})});
       data.activeSession=null; break;
     }
     default: throw new Error('Unknown action.');

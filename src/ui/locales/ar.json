@@ -1356,5 +1356,19 @@
   "Only this question shows this hint. Markdown and math are supported.": "يظهر هذا التلميح لهذا السؤال فقط. يدعم Markdown والمعادلات.",
   "Choose question numbers, such as 1, 3-5.": "اختر أرقام الأسئلة، مثل 1, 3-5.",
   "Choose question numbers within this quiz.": "اختر أرقام أسئلة ضمن هذا الاختبار.",
-  "Select valid questions for the reference sheet.": "اختر أسئلة صالحة للورقة المرجعية."
+  "Select valid questions for the reference sheet.": "اختر أسئلة صالحة للورقة المرجعية.",
+  "Marked correct by you": "صحّحتها بنفسك",
+  "Review correction": "مراجعة التصحيح",
+  "My answer is correct": "إجابتي صحيحة",
+  "Answer accepted in the original quiz.": "أُضيفت الإجابة إلى الإجابات المقبولة في الاختبار الأصلي.",
+  "Response marked correct.": "تم احتساب إجابتك صحيحة.",
+  "Self-correction removed.": "تم التراجع عن التصحيح الذاتي.",
+  "Review written answer": "مراجعة الإجابة المكتوبة",
+  "Accept a different wording only if it answers the question correctly.": "اقبل صياغة مختلفة فقط إذا كانت تجيب عن السؤال بشكل صحيح.",
+  "Also accept this answer in the original quiz": "اقبل هذه الإجابة أيضًا في الاختبار الأصلي",
+  "The original question is unavailable or has changed. You can still correct this response.": "السؤال الأصلي غير متاح أو تم تغييره. لا يزال بإمكانك تصحيح هذه الإجابة.",
+  "This question already has 20 accepted answers. You can still correct this response.": "لهذا السؤال 20 إجابة مقبولة بالفعل. لا يزال بإمكانك تصحيح هذه الإجابة.",
+  "Other past results and saved question copies keep their original answer keys.": "تحتفظ النتائج السابقة الأخرى ونسخ الأسئلة المحفوظة بإجاباتها الأصلية.",
+  "Undo correction": "التراجع عن التصحيح",
+  "Mark correct": "احتسابها صحيحة"
 }

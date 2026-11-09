@@ -1317,5 +1317,19 @@
   "Only this question shows this hint. Markdown and math are supported.": "Esta pista solo aparece en esta pregunta. Admite Markdown y fórmulas.",
   "Choose question numbers, such as 1, 3-5.": "Elige números de pregunta, como 1, 3-5.",
   "Choose question numbers within this quiz.": "Elige números de pregunta de este cuestionario.",
-  "Select valid questions for the reference sheet.": "Selecciona preguntas válidas para la hoja de referencia."
+  "Select valid questions for the reference sheet.": "Selecciona preguntas válidas para la hoja de referencia.",
+  "Marked correct by you": "Marcada como correcta por ti",
+  "Review correction": "Revisar corrección",
+  "My answer is correct": "Mi respuesta es correcta",
+  "Answer accepted in the original quiz.": "Respuesta aceptada en el cuestionario original.",
+  "Response marked correct.": "Respuesta marcada como correcta.",
+  "Self-correction removed.": "Se ha eliminado la autocorrección.",
+  "Review written answer": "Revisar respuesta escrita",
+  "Accept a different wording only if it answers the question correctly.": "Acepta una redacción diferente solo si responde correctamente a la pregunta.",
+  "Also accept this answer in the original quiz": "Aceptar también esta respuesta en el cuestionario original",
+  "The original question is unavailable or has changed. You can still correct this response.": "La pregunta original no está disponible o ha cambiado. Aún puedes corregir esta respuesta.",
+  "This question already has 20 accepted answers. You can still correct this response.": "Esta pregunta ya tiene 20 respuestas aceptadas. Aún puedes corregir esta respuesta.",
+  "Other past results and saved question copies keep their original answer keys.": "Los demás resultados anteriores y las copias de preguntas guardadas conservan sus respuestas originales.",
+  "Undo correction": "Deshacer corrección",
+  "Mark correct": "Marcar como correcta"
 }

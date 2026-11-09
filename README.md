@@ -8,7 +8,7 @@
 <p align="center">An offline Windows app for turning study material into quizzes, practicing at your own pace, and learning from your mistakes.</p>
 
 <p align="center">
-  <a href="https://github.com/iSariiSA/quiznest/releases/download/v1.36.1/Quiznet-Setup.exe"><strong>Download for Windows</strong></a> ·
+  <a href="https://github.com/iSariiSA/quiznest/releases/download/v1.37.0/Quiznet-Setup.exe"><strong>Download for Windows</strong></a> ·
   <a href="#get-started">Get started</a> ·
   <a href="#common-questions">Common questions</a> ·
   <a href="docs/USER_GUIDE.md">Study guide</a>
@@ -16,9 +16,9 @@
 
 **Windows 10/11 · x64 · Works offline · MIT licensed**
 
-Current release: **Quiznet v1.36.1** — a preview for testing and feedback. The installer is unsigned. See [release notes and the installer checksum](https://github.com/iSariiSA/quiznest/releases/tag/v1.36.1).
+Current release: **Quiznet v1.37.0** — a preview for testing and feedback. The installer is unsigned. See [release notes and the installer checksum](https://github.com/iSariiSA/quiznest/releases/tag/v1.37.0).
 
-The local maintenance build uses Electron **45.2.1** and bundles KaTeX **0.19.1** for offline math. The published download above remains v1.36.1; local updates use the same installation and Desktop shortcut.
+The local maintenance build uses Electron **45.2.1** and bundles KaTeX **0.19.1** for offline math. The published download above remains v1.37.0; local updates use the same installation and Desktop shortcut.
 
 ![Quiznet's compact dark library, with a synthetic Biology course and unified quiz creation](assets/screenshots/library.png)
 
@@ -60,7 +60,7 @@ Open **Daily review → Mistake notebook** to review mistakes across saved quizz
 
 ### 1. Install Quiznet
 
-1. [Download **Quiznet-Setup.exe**](https://github.com/iSariiSA/quiznest/releases/download/v1.36.1/Quiznet-Setup.exe) from the current release.
+1. [Download **Quiznet-Setup.exe**](https://github.com/iSariiSA/quiznest/releases/download/v1.37.0/Quiznet-Setup.exe) from the current release.
 2. Run the installer. It installs for your Windows account without administrator access.
 3. Open **Quiznet** from your Desktop or Start menu.
 
@@ -135,7 +135,7 @@ You must select every correct choice and no incorrect choices. There is no parti
 
 ### How are written and matching answers scored?
 
-Written answers match an author-provided accepted alternative after Unicode/whitespace normalization and, by default, ignoring capitalization. Authors can require case sensitivity. Accents, punctuation and wording still matter; no AI or fuzzy grading is used. Matching requires every connection to be correct, with each answer used once. Both types work offline and retain unfinished responses.
+Written answers match an author-provided accepted alternative after Unicode/whitespace normalization and, by default, ignoring capitalization. Authors can require case sensitivity. Accents, punctuation and wording still matter; no AI or fuzzy grading is used. After checking, **My answer is correct** lets you compare accepted answers and correct a rejected valid response. You can also save that wording as an accepted answer in the original quiz. Matching requires every connection to be correct, with each answer used once. Both types work offline and retain unfinished responses.
 
 ### Can I import a PDF, Word document, or Markdown notes directly?
 

@@ -119,9 +119,9 @@ function mutate(data,action,now,normalizeQuestion){
   }
   if(action.type==='savedNext'){
     if(!s.checked)throw new Error('Check your answer before continuing.');
-    if(questions.isCorrect(item.question,s.answer))s.correct++;
+    if(questions.reviewedCorrect(item.question,s.answer,s.selfCorrected))s.correct++;
     if(s.position===s.keys.length-1){data.savedQuestions.lastResult={correct:s.correct,total:s.keys.length,completedAt:new Date(now).toISOString()};data.savedQuestions.session=null;}
-    else{s.position++;s.token=randomUUID();s.answer=null;s.checked=false;}
+    else{s.position++;s.token=randomUUID();s.answer=null;s.checked=false;delete s.selfCorrected;}
     bounded(data.savedQuestions);return;
   }
   throw new Error('Unknown saved-question action.');
@@ -148,7 +148,7 @@ function validate(raw,normalizeQuestion){
     if(!s||!Array.isArray(s.keys)||!integer(s.keys.length,1,MAX_PRACTICE)||new Set(s.keys).size!==s.keys.length||s.keys.some(key=>!keys.has(key))||!integer(s.position,0,s.keys.length-1)||typeof s.token!=='string'||!s.token||s.token.length>100||typeof s.checked!=='boolean'||!integer(s.correct,0,s.position))fail();
     const q=items.find(item=>item.key===s.keys[s.position]).question;
     if((s.answer!==null&&!questions.validAnswer(q,s.answer,true))||(s.checked&&!questions.validAnswer(q,s.answer)))fail();
-    result.session={token:s.token,keys:[...s.keys],position:s.position,answer:structuredClone(s.answer),checked:s.checked,correct:s.correct};
+    result.session={token:s.token,keys:[...s.keys],position:s.position,answer:structuredClone(s.answer),checked:s.checked,...(questions.selfCorrectionFlag(s.selfCorrected,q,s.answer,s.checked)?{selfCorrected:true}:{}),correct:s.correct};
   }
   if(raw.lastResult!==undefined){const r=raw.lastResult;if(!r||!integer(r.total,1,MAX_PRACTICE)||!integer(r.correct,0,r.total)||!timestamp(r.completedAt))fail();result.lastResult={correct:r.correct,total:r.total,completedAt:r.completedAt};}
   bounded(result);return result;

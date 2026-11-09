@@ -19,3 +19,5 @@ The owner controls repository visibility. Keep its name, URL, and visibility unl
 Keep personal questions, libraries, exports, credentials, audit logs, and original-history backups out of Git. `work/` and `outputs/` are ignored workspace directories. Use synthetic examples and isolated temporary data in tests and screenshots.
 
 Read `CONTRIBUTING.md` for development and review expectations, and `docs/MAINTENANCE.md` for storage, releases, and publication checks. Run `npm run check` for source changes. Follow meaningful tests for the affected behavior and the complete Windows checks for releases. Preserve the plain JavaScript implementation and compact desktop interface; discuss large architecture changes before implementing them.
+
+The sole maintainer has authorized direct updates to `main` after validation. Do not create pull requests for owner-authorized application updates. Keep existing repository protection settings and publish early-development updates as prereleases.

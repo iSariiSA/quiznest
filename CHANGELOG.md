@@ -1,5 +1,15 @@
 # Changelog
 
+## Quiznet v1.37.0
+
+- Add explicit self-correction for checked written responses in quizzes, completed results, Daily review, Saved practice and mistake review. A compact dialog compares the original response and accepted answers; corrections are labeled and can be undone.
+- Optionally save the response as an accepted alternative in one unchanged original quiz question. Preserve original responses, independent saved copies and other historical results. Keep answer limits, case-sensitivity and deterministic grading.
+- Persist validated corrections through resume and backup; reflect them in scores, missed practice, notebook counts and study reports. Keep Daily-review ratings and mistake occurrences consistent, and roll back both grading and accepted-answer changes if saving fails.
+- Follow the sole maintainer’s direct-to-main workflow for owner-authorized changes; retain repository protections and prerelease status.
+
+Release validation, in-place installation checks and the exact installer checksum are recorded in the GitHub prerelease and its attached checksum file.
+
+
 ## Quiznet v1.36.1
 
 Includes the scoped reference sheets, question hints, Settings cleanup and study updates described below. The development stage remains Alpha; this release is a prerelease. The v1.36.0 installer was verified locally but its release remained a draft while GitHub found the Windows-path issue fixed here.

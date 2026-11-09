@@ -14,7 +14,7 @@ function analyze(attempt){
   const rows=attempt.questions.map((q,index)=>{
     if(!questions.validAnswer(q,attempt.answers[index]))throw new Error('This completed quiz has an invalid saved answer.');
     const value=attempt.questionTimesMs?.[index];
-    return {index,correct:questions.isCorrect(q,attempt.answers[index]),timeMs:timing.validMs(value)?value:null};
+    return {index,correct:questions.resultCorrect(attempt,index),timeMs:timing.validMs(value)?value:null};
   });
   const recorded=rows.filter(row=>row.timeMs!==null),positive=recorded.filter(row=>row.timeMs>0).sort((a,b)=>b.timeMs-a.timeMs||a.index-b.index);
   const longest=positive.slice(0,Math.min(5,Math.ceil(positive.length*.2))).map(row=>row.index),longestSet=new Set(longest);
@@ -68,7 +68,7 @@ function markdownReport(attempt,scope='all'){
   const longest=new Set(model.longest),references=new Set();
   for(const row of selected){
     const q=attempt.questions[row.index],answer=attempt.answers[row.index],format=q.format||'text';
-    const status=[row.correct?'Correct':'Incorrect',...(longest.has(row.index)?['Most time spent']:[])].join(' · ');
+    const status=[row.correct?'Correct':'Incorrect',...(attempt.selfCorrectedIndices?.includes(row.index)?['Self-corrected by the learner']:[]),...(longest.has(row.index)?['Most time spent']:[])].join(' · ');
     add(`### Question ${row.index+1} — ${status}\n`);
     add(`- Type: ${questions.typeOf(q).label}`);
     if(questions.isChoice(q)){

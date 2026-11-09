@@ -1304,5 +1304,19 @@
   "Only this question shows this hint. Markdown and math are supported.": "Only this question shows this hint. Markdown and math are supported.",
   "Choose question numbers, such as 1, 3-5.": "Choose question numbers, such as 1, 3-5.",
   "Choose question numbers within this quiz.": "Choose question numbers within this quiz.",
-  "Select valid questions for the reference sheet.": "Select valid questions for the reference sheet."
+  "Select valid questions for the reference sheet.": "Select valid questions for the reference sheet.",
+  "Marked correct by you": "Marked correct by you",
+  "Review correction": "Review correction",
+  "My answer is correct": "My answer is correct",
+  "Answer accepted in the original quiz.": "Answer accepted in the original quiz.",
+  "Response marked correct.": "Response marked correct.",
+  "Self-correction removed.": "Self-correction removed.",
+  "Review written answer": "Review written answer",
+  "Accept a different wording only if it answers the question correctly.": "Accept a different wording only if it answers the question correctly.",
+  "Also accept this answer in the original quiz": "Also accept this answer in the original quiz",
+  "The original question is unavailable or has changed. You can still correct this response.": "The original question is unavailable or has changed. You can still correct this response.",
+  "This question already has 20 accepted answers. You can still correct this response.": "This question already has 20 accepted answers. You can still correct this response.",
+  "Other past results and saved question copies keep their original answer keys.": "Other past results and saved question copies keep their original answer keys.",
+  "Undo correction": "Undo correction",
+  "Mark correct": "Mark correct"
 }
