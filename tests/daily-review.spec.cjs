@@ -32,7 +32,7 @@ test('configure daily review, answer and rate, resume, enforce cap, restore, and
   await page.screenshot({path:path.join(outputs,'Quiznet-daily-review-complete.png')});
   expect(await page.evaluate(async()=>{try{await window.quiznet.change({type:'reviewBegin'});return false;}catch{return true;}})).toBe(true);
   const backup=path.join(directory,'backup.json');await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},backup);
-  await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
+  await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Data & recovery settings',exact:true}).click();await page.getByRole('button',{name:'Save backup',exact:true}).click();await expect(page.locator('#toast')).toContainText('Backup saved');
   const saved=JSON.parse(await fs.readFile(backup));expect(saved.dailyReview).toEqual(d.dailyReview);
   await page.getByRole('button',{name:'Restore',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:'Restore',exact:true}).click();expect((await library()).dailyReview).toEqual(d.dailyReview);
   const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(12,0,0,0);

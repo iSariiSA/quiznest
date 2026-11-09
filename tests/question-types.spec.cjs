@@ -3,9 +3,10 @@ const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const os=require('node:os');
+const {sampleLibrary}=require('./fixtures/choice-library.cjs');
 let app,page,directory;
 async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
-test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-types-ui-'));await launch();});
+test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-types-ui-'));await fs.mkdir(path.join(directory,'data'),{recursive:true});await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(sampleLibrary()));await launch();});
 test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true,force:true});});
 
 test('mixed question editor, answer toggles, restart, exact scoring, export and backup',async()=>{

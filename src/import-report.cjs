@@ -2,7 +2,12 @@ const {createHash}=require('node:crypto');
 const questions=require('./ui/question-types.js'),brief=require('./ui/instructions.js');
 function fingerprint(q){
   // IDs and answer-set order do not change question content.
-  return createHash('sha256').update(JSON.stringify([q.type||'single-choice',q.format||'text',q.prompt,q.options,q.correctAnswers?[...q.correctAnswers].sort((a,b)=>a-b):q.correctAnswer,q.explanation||'',q.code??null,q.codeLanguage??null,q.image??null,q.imageAlt||''])).digest('hex');
+  const fields=[q.type||'single-choice',q.format||'text',q.prompt,q.options,q.correctAnswers?[...q.correctAnswers].sort((a,b)=>a-b):q.correctAnswer,q.explanation||'',q.code??null,q.codeLanguage??null,q.image??null,q.imageAlt||''];
+  // Preserve existing choice fingerprints: saved stars and review schedules use them.
+  if(q.type==='written-answer')fields.push(questions.answerKey(q));
+  if(q.type==='matching')fields.push(q.pairs);
+  if(q.hint)fields.push({hint:q.hint});
+  return createHash('sha256').update(JSON.stringify(fields)).digest('hex');
 }
 function importReport(packs,library,preferences){
   const expected=preferences==null?null:brief.validate(preferences),existing=new Set(),seen=new Map(),stems=new Map();
@@ -19,13 +24,14 @@ function importReport(packs,library,preferences){
     if(!q.explanation?.trim()){withoutExplanation++;addIssue(ref,{code:'explanation'});}
     // These are conservative content checks, not factual or semantic grading.
     if(q.format!=='html'){
-      if(new Set(q.options.map(normalize)).size!==q.options.length)addIssue(ref,{code:'similar-options'});
-      if([q.prompt,...q.options].some(v=>placeholder.test(v.trim())))addIssue(ref,{code:'placeholder'});
+      if(q.options&&new Set(q.options.map(normalize)).size!==q.options.length)addIssue(ref,{code:'similar-options'});
+      if([q.prompt,...questions.answerFields(q)].some(v=>placeholder.test(v.trim())))addIssue(ref,{code:'placeholder'});
     }
     if(q.type==='multiple-answer'&&q.correctAnswers.length===q.options.length)addIssue(ref,{code:'all-correct'});
     if(q.image&&!q.imageAlt?.trim())addIssue(ref,{code:'image-description'});
-    const stem=createHash('sha256').update(JSON.stringify([q.type||'single-choice',q.format||'text',q.prompt,q.options,q.code??null,q.codeLanguage??null,q.image??null,q.imageAlt||''])).digest('hex');
-    const answer=JSON.stringify(questions.correctIndices(q).slice().sort((a,b)=>a-b));
+    const matching=q.type==='matching',stemFields=matching?[q.pairs.map(pair=>pair.left),q.pairs.map(pair=>pair.right).sort()]:q.options;
+    const stem=createHash('sha256').update(JSON.stringify([q.type||'single-choice',q.format||'text',q.prompt,stemFields,q.code??null,q.codeLanguage??null,q.image??null,q.imageAlt||''])).digest('hex');
+    const answer=JSON.stringify(matching?q.pairs.map(pair=>[pair.left,pair.right]):questions.isChoice(q)?questions.correctIndices(q).slice().sort((a,b)=>a-b):questions.answerKey(q));
     if(!stems.has(stem))stems.set(stem,[]);
     const answers=stems.get(stem),different=answers.find(a=>a.answer!==answer);
     if(different){addIssue(ref,{code:'conflicting-answer',related:different.ref});addIssue(different.ref,{code:'conflicting-answer',related:ref});}

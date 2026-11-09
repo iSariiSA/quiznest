@@ -2,9 +2,10 @@ const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const example=require('../examples/math-diagrams.json');
+const {sampleLibrary}=require('./fixtures/choice-library.cjs');
 let app,page,directory;
 async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
-test.beforeEach(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-math-'));await launch();});
+test.beforeEach(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-math-'));await fs.mkdir(path.join(directory,'data'),{recursive:true});await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(sampleLibrary()));await launch();});
 test.afterEach(async()=>{await app?.close();const resolved=path.resolve(directory);if(!resolved.startsWith(path.resolve(os.tmpdir())+path.sep)||!path.basename(resolved).startsWith('quiznet-math-'))throw new Error('Unexpected test directory');await fs.rm(resolved,{recursive:true,force:true});});
 async function menu(item){await command(page,item);}
 async function pick(file){await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},file);}

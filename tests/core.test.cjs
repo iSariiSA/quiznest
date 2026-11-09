@@ -5,7 +5,7 @@ const os=require('node:os');
 const path=require('node:path');
 const core=require('../src/core.cjs');
 const {Store}=require('../src/store.cjs');
-const {sampleLibrary}=require('../src/sample.cjs');
+const {sampleLibrary}=require('./fixtures/choice-library.cjs');
 const q={prompt:'A question?',options:['One','Two'],correctAnswer:0,explanation:'Because.'};
 const media=require('../examples/images-html.json').questions[0];
 const policy=require('../src/ui/content-policy.js');
@@ -158,7 +158,7 @@ test('quiz instructions have explicit automatic/ask policies and examples accept
 });
 
 test('question mix honors counts and exclusions, rejects impossible totals and supports ask counts',()=>{
-  const draft=instructions.defaults();draft.types.mode='value';draft.types.value=[{type:'single-choice',mode:'value',value:10},{type:'multiple-answer',mode:'omit',value:''},{type:'true-false',mode:'value',value:5}];
+  const draft=instructions.defaults();draft.types.mode='value';draft.types.value=[{type:'single-choice',mode:'value',value:10},{type:'multiple-answer',mode:'omit',value:''},{type:'true-false',mode:'value',value:5},...core.types.filter(t=>['written-answer','matching'].includes(t.id)).map(t=>({type:t.id,mode:'omit',value:''}))];
   let markdown=instructions.generate(draft);assert.match(markdown,/Exactly 10 questions/);assert.match(markdown,/Exactly 5 questions/);assert.match(markdown,/Multiple answers \(multiple-answer\): Exclude/);
   assert.match(markdown,/- Number of questions: 15/);assert.deepEqual(instructions.mixCounts(draft),{fixed:15,open:0,minimum:15});
   draft.count={mode:'value',value:10};assert.throws(()=>instructions.generate(draft),/must match the total/);

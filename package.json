@@ -1,11 +1,11 @@
 {
   "name": "quiznet",
-  "version": "1.26.0",
+  "version": "1.36.0",
   "quiznetRelease": {
     "stage": "alpha",
-    "number": 25
+    "number": 35
   },
-  "description": "Offline multiple-choice quizzes for Windows.",
+  "description": "Offline study quizzes for Windows.",
   "main": "src/main.cjs",
   "author": "iSariiSA",
   "license": "MIT",
@@ -13,8 +13,9 @@
     "assets:brand": "node scripts/build-brand.cjs",
     "assets:content": "node scripts/sync-content-vendor.cjs",
     "start": "electron .",
-    "check": "node scripts/check-syntax.cjs && node scripts/sync-content-vendor.cjs --check",
-    "test": "node --test tests/core.test.cjs tests/stability.test.cjs tests/recovery.test.cjs tests/updates.test.cjs tests/math.test.cjs tests/study-report.test.cjs tests/daily-review.test.cjs tests/mistake-notebook.test.cjs tests/saved-questions.test.cjs tests/release.test.cjs",
+    "check": "node scripts/check-syntax.cjs && node scripts/sync-content-vendor.cjs --check && node scripts/sync-locales.cjs --check",
+    "locales:sync": "node scripts/sync-locales.cjs",
+    "test": "node --test tests/core.test.cjs tests/stability.test.cjs tests/recovery.test.cjs tests/updates.test.cjs tests/math.test.cjs tests/study-report.test.cjs tests/daily-review.test.cjs tests/mistake-notebook.test.cjs tests/saved-questions.test.cjs tests/release.test.cjs tests/history.test.cjs tests/library-organization.test.cjs tests/display-preferences.test.cjs tests/settings.test.cjs tests/quiz-appearance.test.cjs tests/i18n.test.cjs tests/response-types.test.cjs tests/response-controls.test.cjs tests/response-materials.test.cjs tests/showcase.test.cjs tests/study-aids.test.cjs",
     "test:app": "install-electron && playwright test",
     "release:info": "node scripts/release-info.cjs",
     "build": "node scripts/release-info.cjs && electron-builder --win nsis --x64 --publish never",

@@ -1,9 +1,11 @@
 const {command}=require('./ui-actions.cjs');
 const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
+const {sampleLibrary}=require('./fixtures/choice-library.cjs');
 let app,page,directory;
 test.beforeEach(async()=>{
   directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-workspace-'));
+  await fs.mkdir(path.join(directory,'data'),{recursive:true});await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(sampleLibrary()));
   const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;
   app=await electron.launch({args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();
   await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();
@@ -17,7 +19,7 @@ test.afterEach(async()=>{
 const menu=async action=>{await command(page,action);};
 async function bounds(width,height){await app.evaluate(({BrowserWindow},size)=>BrowserWindow.getAllWindows()[0].setBounds(size),{width,height});await expect.poll(()=>page.evaluate(()=>innerWidth)).toBe(width);}
 test('dialogs focus their form, keep keyboard focus inside, and protect unsaved input from global search',async()=>{
-  const trigger=page.getByRole('button',{name:'Library actions',exact:true});await command(page,'New course…');
+  const trigger=page.getByRole('button',{name:'Add to library',exact:true});await command(page,'New course…');
   const name=page.getByRole('textbox',{name:'Course name',exact:true});await expect(name).toBeFocused();
   await name.fill('Unsaved course');await page.keyboard.press('Control+k');
   await expect(page.getByRole('dialog')).toHaveAccessibleName('New course');await expect(name).toHaveValue('Unsaved course');

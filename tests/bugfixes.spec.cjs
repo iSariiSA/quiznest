@@ -19,6 +19,7 @@ test.afterEach(async()=>{
 test('exact question mixes update the total when counts and included types change',async()=>{
   await command(page,'Prepare a quiz…');
   await page.getByLabel('Question types',{exact:true}).selectOption('value');
+  for(const name of ['Written answer','Matching'])await page.getByLabel(name,{exact:true}).selectOption('omit');
   await page.getByLabel('Multiple answers',{exact:true}).selectOption('omit');
   await page.getByLabel('True / false',{exact:true}).selectOption('omit');
   await page.getByLabel('Multiple choice (one answer)',{exact:true}).selectOption('value');

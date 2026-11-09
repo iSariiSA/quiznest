@@ -1,0 +1,2 @@
+# Generated language scripts must retain the bytes verified by locales:sync.
+/src/ui/locales/*.js text eol=lf

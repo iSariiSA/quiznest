@@ -1,9 +1,12 @@
 const { randomUUID } = require('node:crypto');
 const { MAX_HTML_LENGTH, imageData } = require('./ui/content-policy.js');
 const questionModel = require('./ui/question-types.js');
+const aids=require('./ui/study-aids.js');
 const codePolicy = require('./ui/code-policy.js');
 const timing = require('./ui/timing.js');
 const practice = require('./ui/practice.js');
+const courseFocus = require('./ui/course-focus.js');
+const organization=require('./library-organization.cjs');
 const notebook=require('./mistake-notebook.cjs');
 const savedQuestions=require('./saved-questions.cjs');
 const dailyReview = require('./ui/daily-review.js');
@@ -24,10 +27,28 @@ function question(raw, index = 0) {
   const contentLimit=format==='html'?MAX_HTML_LENGTH:format==='markdown'?codePolicy.MAX_MARKDOWN_LENGTH:10000;
   const contentText=(value,...args)=>{const checked=text(value,...args);return format==='markdown'?value:checked;};
   const prompt = contentText(raw.prompt ?? raw.question, `${label}: prompt`, contentLimit);
+  let fields;
+  if(type.selection==='text'||type.selection==='matching'){
+    if(['options','choices','correctAnswer','correctAnswers','correctIndex','answer'].some(key=>raw[key]!==undefined))throw new Error(`${label}: use ${type.selection==='text'?'acceptedAnswers':'pairs'} for this question type.`);
+    if(type.selection==='text'){
+      if(raw.pairs!==undefined||raw.caseSensitive!==undefined&&typeof raw.caseSensitive!=='boolean')throw new Error(`${label}: invalid written-answer settings.`);
+      if(!Array.isArray(raw.acceptedAnswers)||raw.acceptedAnswers.length<1||raw.acceptedAnswers.length>questionModel.responseLimits.maxAcceptedAnswers)throw new Error(`${label}: provide 1–20 accepted answers.`);
+      const acceptedAnswers=Array.from(raw.acceptedAnswers,(value,i)=>text(value,`${label}: accepted answer ${i+1}`,questionModel.responseLimits.maxWrittenLength)),caseSensitive=raw.caseSensitive===true;
+      if(new Set(acceptedAnswers.map(value=>questionModel.normalizeWritten(value,caseSensitive))).size!==acceptedAnswers.length)throw new Error(`${label}: accepted answers must be distinct.`);
+      fields={acceptedAnswers,caseSensitive};
+    }else{
+      if(raw.acceptedAnswers!==undefined||raw.caseSensitive!==undefined)throw new Error(`${label}: invalid matching settings.`);
+      if(!Array.isArray(raw.pairs)||raw.pairs.length<2||raw.pairs.length>questionModel.responseLimits.maxPairs)throw new Error(`${label}: provide 2–20 matching pairs.`);
+      const pairs=Array.from(raw.pairs,(pair,i)=>{if(!pair||typeof pair!=='object'||Array.isArray(pair)||Object.keys(pair).some(key=>!['left','right'].includes(key)))throw new Error(`${label}: invalid matching pair.`);return {left:text(pair.left,`${label}: left item ${i+1}`,questionModel.responseLimits.maxPairLength),right:text(pair.right,`${label}: right item ${i+1}`,questionModel.responseLimits.maxPairLength)};});
+      if(['left','right'].some(side=>new Set(pairs.map(pair=>questionModel.normalizeWritten(pair[side]))).size!==pairs.length))throw new Error(`${label}: matching items must be distinct on each side.`);
+      fields={pairs};
+    }
+  }else{
+  if(['acceptedAnswers','caseSensitive','pairs'].some(key=>raw[key]!==undefined))throw new Error(`${label}: use options for this question type.`);
   const choices = raw.options ?? raw.choices;
   if (!Array.isArray(choices) || choices.length < type.minOptions || choices.length > type.maxOptions)
     throw new Error(`${label}: ${type.label} needs ${type.minOptions}–${type.maxOptions} options.`);
-  const options = choices.map((v, i) => contentText(typeof v === 'object' && v ? v.text : v, `${label}: option ${i + 1}`, format==='text'?5000:contentLimit));
+  const options = Array.from(choices,(v, i) => contentText(typeof v === 'object' && v ? v.text : v, `${label}: option ${i + 1}`, format==='text'?5000:contentLimit));
   if (new Set(options).size !== options.length) throw new Error(`${label} has duplicate options.`);
   const multiple = type.selection === 'multiple';
   if (multiple ? raw.correctAnswer !== undefined || raw.correctIndex !== undefined : raw.correctAnswers !== undefined)
@@ -45,11 +66,15 @@ function question(raw, index = 0) {
   answer = multiple && Array.isArray(answer) ? answer.map(resolve) : resolve(answer);
   if (!questionModel.validAnswer({ type:type.id, options }, answer))
     throw new Error(`${label}: ${multiple ? 'correctAnswers must be a nonempty array of distinct' : 'answer must be a'} zero-based option ${multiple ? 'indices, letters, or exact option texts' : 'index, letter, or exact option text'}.`);
+  fields={options,...(multiple?{correctAnswers:answer.sort((a,b)=>a-b)}:{correctAnswer:answer})};
+  }
   const explanation = raw.explanation ?? '';
   if (typeof explanation !== 'string' || explanation.length > contentLimit) throw new Error(`${label}: invalid explanation.`);
-  const result = { id: typeof raw.id === 'string' ? raw.id : id(), prompt, options, ...(multiple ? { correctAnswers:answer.sort((a,b)=>a-b) } : { correctAnswer:answer }), explanation };
-  if (raw.type !== undefined || multiple) result.type=type.id;
+  const result = { id: typeof raw.id === 'string' ? raw.id : id(), prompt, ...fields, explanation };
+  if (raw.type !== undefined || type.selection==='multiple') result.type=type.id;
   if (format!=='text') result.format=format;
+  if(raw.hint!==undefined){const hint=aids.hint(raw.hint,true);if(hint.trim())result.hint=hint;}
+  if(raw.studyReference!==undefined)result.studyReference=aids.note(raw.studyReference);
   if (raw.code!==undefined) {
     if(typeof raw.code!=='string'||!raw.code.trim()||raw.code.length>codePolicy.MAX_CODE_LENGTH)throw new Error(`${label}: code must contain 1–${codePolicy.MAX_CODE_LENGTH.toLocaleString('en-US')} characters.`);
     result.code=raw.code;result.codeLanguage=codePolicy.language(raw.codeLanguage);
@@ -81,7 +106,7 @@ function parseCSV(source) {
   if (rows.length < 2) throw new Error('CSV needs a header and at least one question.');
   const headers = rows.shift().map(h => h.trim().toLowerCase());
   if (new Set(headers).size !== headers.length) throw new Error('CSV has duplicate column names.');
-  if (!headers.includes('question') || !headers.includes('answer')) throw new Error('CSV needs question and answer columns.');
+  if (!headers.includes('question') || !['answer','accepted_answers','pairs'].some(key=>headers.includes(key))) throw new Error('CSV needs question and answer columns, or accepted_answers/pairs for response questions.');
   return rows.map((r, i) => {
     if (r.length !== headers.length) throw new Error(`CSV row ${i + 2} has ${r.length} cells; expected ${headers.length}.`);
     return Object.fromEntries(headers.map((h, j) => [h, r[j]]));
@@ -104,10 +129,24 @@ function parseImport(source, extension = 'json', filename = 'Imported quiz') {
       if(options.some(v => !v?.trim())) throw new Error('CSV options must be consecutive, starting with option_a.');
       const type=r.type?.trim()||'single-choice';
       let answer=r.answer;
-      if (questionModel.typeOf({type}).selection==='multiple') {
+      const selection=questionModel.typeOf({type}).selection;
+      if (selection==='multiple') {
         try { answer=JSON.parse(answer); } catch { throw new Error('CSV multiple-answer answers must be a JSON array, such as [0,2] or ["A","C"].'); }
       }
-      groups.get(key).questions.push({ type, prompt: r.question, options, answer, explanation: r.explanation || '', format:r.format?.trim()||'text', image:r.image||undefined, imageAlt:r.image_alt||'', ...(r.code?.trim()?{code:r.code,codeLanguage:r.code_language?.trim()||'plaintext'}:{}) });
+      let fields={options,answer};
+      if(selection==='text'||selection==='matching'){
+        if(options.length)throw new Error('Written-answer and matching CSV rows cannot contain choice options.');
+        if(selection==='text'){
+          if(r.pairs?.trim())throw new Error('Written-answer CSV rows cannot contain matching pairs.');
+          let acceptedAnswers;if(r.accepted_answers?.trim()){if(r.answer?.trim())throw new Error('Written-answer CSV rows use answer or accepted_answers, not both.');try{acceptedAnswers=JSON.parse(r.accepted_answers);}catch{throw new Error('CSV accepted_answers must be a JSON array of strings.');}}else acceptedAnswers=[r.answer];
+          const sensitive=r.case_sensitive?.trim().toLowerCase();if(sensitive&&!['true','false'].includes(sensitive))throw new Error('CSV case_sensitive must be true or false.');
+          fields={acceptedAnswers,caseSensitive:sensitive==='true'};
+        }else{
+          if(r.answer?.trim()||r.accepted_answers?.trim()||r.case_sensitive?.trim())throw new Error('Matching CSV rows use only the pairs answer column.');
+          let pairs;try{pairs=JSON.parse(r.pairs);}catch{throw new Error('CSV pairs must be a JSON array of left/right objects.');}fields={pairs};
+        }
+      }else if(r.accepted_answers?.trim()||r.pairs?.trim()||r.case_sensitive?.trim())throw new Error('Choice CSV rows cannot contain written-answer or matching settings.');
+      groups.get(key).questions.push({ type, prompt: r.question, ...fields, explanation: r.explanation || '', format:r.format?.trim()||'text', image:r.image||undefined, imageAlt:r.image_alt||'',...(r.hint?.trim()?{hint:r.hint}:{}), ...(r.code?.trim()?{code:r.code,codeLanguage:r.code_language?.trim()||'plaintext'}:{}) });
     }
     packs = [...groups.values()];
   } else {
@@ -123,7 +162,7 @@ function parseImport(source, extension = 'json', filename = 'Imported quiz') {
     if(count>10000)throw new Error('Import up to 10,000 questions at a time.');
     return {
       course: text(p.course || 'Imported course', 'Course'), unit: text(p.unit || 'Unit 1', 'Unit'),
-      title: text(p.title || filename, 'Quiz title'), questions: p.questions.map((q, n) => ({ ...question(q, n), id: id() }))
+      title: text(p.title || filename, 'Quiz title'), ...(p.reference!==undefined?{reference:aids.reference(p.reference,p.questions.length)}:{}), questions: p.questions.map((q, n) => ({ ...question(q, n), id: id() }))
     };
   });
   if (count > 10000) throw new Error('Import up to 10,000 questions at a time.');
@@ -131,7 +170,7 @@ function parseImport(source, extension = 'json', filename = 'Imported quiz') {
 }
 function emptyLibrary() { return { version: 1, courses: [], attempts: [], activeSession: null }; }
 function exportQuiz({course,unit,quiz}){
-  const portable={course:course.title,unit:unit.title,title:quiz.title,questions:quiz.questions.map(({id,...q})=>q)};
+  const portable={course:course.title,unit:unit.title,title:quiz.title,...(quiz.reference?{reference:quiz.reference}:{}),questions:quiz.questions.map(({id,...q})=>q)};
   const formatted=JSON.stringify(portable,null,2);
   if(Buffer.byteLength(formatted)<=MAX_IMPORT_BYTES)return formatted;
   const compact=JSON.stringify(portable);
@@ -142,25 +181,30 @@ function validateLibrary(raw) {
   if (!raw || raw.version !== 1 || !Array.isArray(raw.courses) || !Array.isArray(raw.attempts)) throw new Error('Unsupported or damaged Quiznet backup.');
   const ids = new Set();
   const checkedID = value => { if (typeof value !== 'string' || !value || ids.has(value)) throw new Error('Backup contains missing or duplicate IDs.'); ids.add(value); return value; };
+  const collections=raw.collections===undefined?undefined:organization.collections(raw.collections,checkedID);
   const courses = raw.courses.map(c => ({
     id: checkedID(c.id), title: text(c.title, 'Course'), description: typeof c.description === 'string' ? c.description.slice(0,1000) : '',
     color: COLORS.includes(c.color) ? c.color : 'sage',
+    ...(c.studyFocus!==undefined?{studyFocus:courseFocus.validate(c.studyFocus)}:{}),
+    ...organization.metadata(c),
     units: (Array.isArray(c.units) ? c.units : (() => { throw new Error('Course is missing units.'); })()).map(u => ({
       id: checkedID(u.id), title: text(u.title, 'Unit'),
       quizzes: (Array.isArray(u.quizzes) ? u.quizzes : (() => { throw new Error('Unit is missing quizzes.'); })()).map(q => ({
-        id: checkedID(q.id), title: text(q.title, 'Quiz'), createdAt: q.createdAt || new Date().toISOString(),
+        id: checkedID(q.id), title: text(q.title, 'Quiz'), ...(q.reference!==undefined?{reference:aids.reference(q.reference,q.questions?.length||0)}:{}), createdAt: q.createdAt || new Date().toISOString(),
         questions: (Array.isArray(q.questions) ? q.questions : (() => { throw new Error('Quiz is missing questions.'); })()).map((item, i) => { const n = question(item,i); n.id = checkedID(item.id); return n; })
       }))
     }))
   }));
   const library = { version: 1, courses, attempts: [], activeSession: null };
+  if(collections!==undefined)library.collections=collections;
+  organization.references(library);
   if(raw.practicePresets!==undefined)library.practicePresets=practice.validatePresets(raw.practicePresets);
   library.attempts = raw.attempts.map(a => {
     if (!a || typeof a.quizId !== 'string' || !Array.isArray(a.questions) || !Array.isArray(a.answers) || !Number.isFinite(a.elapsedSeconds) || a.elapsedSeconds < 0 || !Number.isFinite(Date.parse(a.completedAt))) throw new Error('Backup contains an invalid attempt.');
-    const questions = a.questions.map(question);
-    if (!questions.length || a.answers.length !== questions.length || a.answers.some((v,i) => !questionModel.validAnswer(questions[i],v))) throw new Error('Backup contains invalid answers.');
+    const questions = Array.from(a.questions,question);
+    if (!questions.length || a.answers.length !== questions.length || Array.from(a.answers).some((v,i) => !questionModel.validAnswer(questions[i],v))) throw new Error('Backup contains invalid answers.');
     if(a.missedOnly!==undefined&&typeof a.missedOnly!=='boolean')throw new Error('Backup has invalid attempt scope.');
-    return { id: checkedID(a.id), quizId: a.quizId, title: text(a.title, 'Attempt title'), completedAt: a.completedAt, elapsedSeconds: a.elapsedSeconds, questions, answers: structuredClone(a.answers), total: questions.length, score: questions.filter((q,i)=>questionModel.isCorrect(q,a.answers[i])).length, ...timing.validateAttempt(a,questions.length), ...(a.practice!==undefined?{practice:practice.validate(a.practice)}:{}),...(a.missedOnly!==undefined?{missedOnly:a.missedOnly}:{}) };
+    return { id: checkedID(a.id), quizId: a.quizId, title: text(a.title, 'Attempt title'), ...(a.reference?{reference:aids.reference(a.reference,questions.length)}:{}), completedAt: a.completedAt, elapsedSeconds: a.elapsedSeconds, questions, answers: structuredClone(a.answers), total: questions.length, score: questions.filter((q,i)=>questionModel.isCorrect(q,a.answers[i])).length, ...timing.validateAttempt(a,questions.length), ...(a.practice!==undefined?{practice:practice.validate(a.practice)}:{}),...(a.missedOnly!==undefined?{missedOnly:a.missedOnly}:{}) };
   });
   if (raw.activeSession) {
     const s = raw.activeSession, q = practice.sessionQuiz(library,s),byId=new Map(q?.questions.map(item=>[item.id,item])),questionIds=new Set(Array.isArray(s.questionIds)?s.questionIds:[]),checkedIds=new Set(Array.isArray(s.checkedQuestionIds)?s.checkedQuestionIds:[]);
@@ -172,6 +216,10 @@ function validateLibrary(raw) {
       answers[key] = structuredClone(value);
     }
     library.activeSession = { quizId:s.quizId, questionIds:s.questionIds, answers, position:s.position, startedAt:s.startedAt };
+    if(s.optionOrders!==undefined){
+      if(!s.optionOrders||typeof s.optionOrders!=='object'||Array.isArray(s.optionOrders)||Object.keys(s.optionOrders).length!==q.questions.filter(questionModel.isChoice).length)throw new Error('Backup has invalid answer order.');
+      library.activeSession.optionOrders={};for(const [key,order] of Object.entries(s.optionOrders)){const item=byId.get(key);if(!item||!questionModel.isChoice(item)||!Array.isArray(order)||order.length!==item.options.length||new Set(order).size!==order.length||Array.from(order).some(i=>!Number.isInteger(i)||i<0||i>=item.options.length))throw new Error('Backup has invalid answer order.');Object.defineProperty(library.activeSession.optionOrders,key,{value:[...order],enumerable:true,writable:true,configurable:true});}
+    }
     if(s.sourceAttemptId!==undefined){if(typeof s.sourceAttemptId!=='string')throw new Error('Backup has an invalid practice source.');library.activeSession.sourceAttemptId=s.sourceAttemptId;}
     if(s.flaggedQuestionIds!==undefined){if(!Array.isArray(s.flaggedQuestionIds)||new Set(s.flaggedQuestionIds).size!==s.flaggedQuestionIds.length||Array.from(s.flaggedQuestionIds).some(id=>!questionIds.has(id)))throw new Error('Backup has invalid review flags.');library.activeSession.flaggedQuestionIds=[...s.flaggedQuestionIds];}
     if(s.timing!==undefined)library.activeSession.timing=timing.validate(s.timing,s.questionIds);
@@ -180,7 +228,7 @@ function validateLibrary(raw) {
       if(s.practice?.feedback!=='instant'||!Array.isArray(s.checkedQuestionIds)||checkedIds.size!==s.checkedQuestionIds.length||Array.from(s.checkedQuestionIds).some(id=>!questionIds.has(id)||!questionModel.validAnswer(byId.get(id),answers[id])))throw new Error('Backup has invalid checked answers.');
       library.activeSession.checkedQuestionIds=[...s.checkedQuestionIds];
     }
-    if(s.practice?.feedback==='instant'&&(!s.checkedQuestionIds||q.questions.some(item=>questionModel.typeOf(item).selection!=='multiple'&&questionModel.validAnswer(item,answers[item.id])&&!checkedIds.has(item.id))))throw new Error('Backup has inconsistent instant feedback.');
+    if(s.practice?.feedback==='instant'&&(!s.checkedQuestionIds||q.questions.some(item=>questionModel.typeOf(item).selection==='single'&&questionModel.validAnswer(item,answers[item.id])&&!checkedIds.has(item.id))))throw new Error('Backup has inconsistent instant feedback.');
   }
   if(raw.dailyReview!==undefined)library.dailyReview=dailyReview.validate(raw.dailyReview,library);
   if(raw.mistakeNotebook!==undefined)library.mistakeNotebook=notebook.validate(raw.mistakeNotebook,question);
@@ -229,14 +277,15 @@ function importPacks(data, packs, target) {
       const ending=` (${suffix++})`;
       title = `${p.title.slice(0,200-ending.length).trimEnd()}${ending}`;
     }
-    unit.quizzes.push({ id:id(), title, questions, createdAt:new Date().toISOString() });
+    unit.quizzes.push({ id:id(), title, questions, ...(p.reference?{reference:aids.reference(p.reference,questions.length)}:{}), createdAt:new Date().toISOString() });
   }
 }
 function mutate(data, action, now=Date.now()) {
   if (!action || typeof action.type !== 'string') throw new Error('Invalid action.');
+  if(organization.TYPES.includes(action.type)){organization.mutate(data,action);return data;}
   if(['savedAdd','savedRemove','savedStart','savedAnswer','savedCheck','savedNext','savedDiscard'].includes(action.type)){savedQuestions.mutate(data,action,now,question);return data;}
   if(['mistakeRemove','mistakeNote','mistakeStart','mistakeAnswer','mistakeCheck','mistakeNext'].includes(action.type)){notebook.mutate(data,action);return data;}
-  if(['reviewSettings','reviewBegin','reviewAnswer','reviewCheck','reviewRate'].includes(action.type)){const unchecked=action.type==='reviewCheck'&&!data.dailyReview?.active?.checked;dailyReview.mutate(data,action,now,id);if(unchecked){const item=dailyReview.current(data);notebook.record(data,item.question,data.dailyReview.active.answer,item.quiz.title,now);}return data;}
+  if(['reviewSettings','reviewBegin','reviewAnswer','reviewCheck','reviewRate'].includes(action.type)){const unchecked=action.type==='reviewCheck'&&!data.dailyReview?.active?.checked;dailyReview.mutate(data,action,now,id);if(unchecked){const item=dailyReview.current(data);notebook.record(data,aids.capture(item.question,item.quiz),data.dailyReview.active.answer,item.quiz.title,now);}return data;}
   const course = data.courses.find(c => c.id === action.courseId);
   const unit = course?.units.find(u => u.id === action.unitId);
   const found = action.quizId ? findQuiz(data, action.quizId) : null;
@@ -246,6 +295,12 @@ function mutate(data, action, now=Date.now()) {
     if(action.courseId && !course) throw new Error('Course not found.');
   }
   switch (action.type) {
+    case 'courseStudyFocus': {
+      if(!course)throw new Error('Course not found.');
+      const focus=courseFocus.validate(action.focus);
+      if(focus==='unset')delete course.studyFocus;else course.studyFocus=focus;
+      break;
+    }
     case 'savePreset': {
       const name=text(action.name,'Preset name',60),presets=data.practicePresets||[],existing=presets.find(p=>p.name.toLowerCase()===name.toLowerCase());
       const next={id:existing?.id||id(),name,options:practice.validate(action.practice),shuffle:action.shuffle};
@@ -255,21 +310,22 @@ function mutate(data, action, now=Date.now()) {
       if(!data.practicePresets?.some(p=>p.id===action.id))throw new Error('Preset not found.');
       data.practicePresets=data.practicePresets.filter(p=>p.id!==action.id);break;
     }
-    case 'createCourse': data.courses.push({id:id(),title:text(action.title,'Course title'),description:action.description ? text(action.description,'Description',1000):'',color:COLORS.includes(action.color)?action.color:'sage',units:[]}); break;
+    case 'createCourse': {const collectionId=organization.destination(data,action.collectionId);data.courses.push({id:id(),title:text(action.title,'Course title'),description:action.description ? text(action.description,'Description',1000):'',color:COLORS.includes(action.color)?action.color:'sage',units:[],...(collectionId?{collectionId}:{})});break;}
     case 'createUnit': if (!course) throw new Error('Course not found.'); course.units.push({id:id(),title:text(action.title,'Unit title'),quizzes:[]}); break;
     case 'saveQuiz': {
       if(action.quizId&&(!found||!unit||found.unit.id!==unit.id))throw new Error('Quiz not found.');
       if(action.quizId&&data.activeSession?.quizId===action.quizId)throw new Error('Finish or discard this quiz attempt before editing it.');
       if (!Array.isArray(action.questions) || !action.questions.length || action.questions.length > 10000) throw new Error('Add at least one question (up to 10,000).');
       const questions = Array.from(action.questions,(q,i)=>({...question(q,i),id:id()}));
+      const reference=aids.reference(action.reference,questions.length);
       const title=text(action.title,'Quiz title');
       const place=planDestination(data,action.quizId?{courseId:course.id,unitId:unit.id}:action.target||{courseId:action.courseId,unitId:action.unitId});
-      const portable={course:place.course.title,unit:place.unit.title,title,questions:questions.map(({id,...q})=>q)};
+      const portable={course:place.course.title,unit:place.unit.title,title,...(reference?{reference}:{}),questions:questions.map(({id,...q})=>q)};
       if (Buffer.byteLength(JSON.stringify(portable,null,2))>19*1024*1024) throw new Error('Keep a quiz below 19 MB so it can be exported and imported. Use smaller images or split it into quizzes.');
       if (action.quizId) {
         dailyReview.remapQuiz(data,found.quiz.questions,questions);
-        found.quiz.title = title; found.quiz.questions = questions;
-      } else {commitDestination(data,place);place.unit.quizzes.push({id:id(),title,questions,createdAt:new Date().toISOString()});}
+        found.quiz.title = title; found.quiz.questions = questions;if(reference)found.quiz.reference=reference;else delete found.quiz.reference;
+      } else {commitDestination(data,place);place.unit.quizzes.push({id:id(),title,questions,...(reference?{reference}:{}),createdAt:new Date().toISOString()});}
       break;
     }
     case 'moveQuiz': {
@@ -304,7 +360,8 @@ function mutate(data, action, now=Date.now()) {
       const options=action.practice===undefined?undefined:practice.validate(action.practice);
       const questionIds=quiz.questions.map(q=>q.id);
       if (action.shuffle) for (let i=questionIds.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [questionIds[i],questionIds[j]]=[questionIds[j],questionIds[i]]; }
-      data.activeSession={quizId:quiz.id,questionIds,answers:{},position:0,startedAt:new Date(now).toISOString(),...(source?{sourceAttemptId:source.id}:{}),...(options?{practice:options,...(options.feedback==='instant'?{checkedQuestionIds:[]}: {})}:{})};timing.begin(data.activeSession,now);break;
+      const optionOrders=options?.shuffleAnswers?Object.fromEntries(quiz.questions.filter(questionModel.isChoice).map(q=>{const order=q.options.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}return [q.id,order];})):null;
+      data.activeSession={quizId:quiz.id,questionIds,answers:{},position:0,startedAt:new Date(now).toISOString(),...(optionOrders?{optionOrders}:{}),...(source?{sourceAttemptId:source.id}:{}),...(options?{practice:options,...(options.feedback==='instant'?{checkedQuestionIds:[]}: {})}:{})};timing.begin(data.activeSession,now);break;
     }
     case 'answer': {
       const s=data.activeSession; if (!s) throw new Error('No quiz in progress.');
@@ -313,7 +370,7 @@ function mutate(data, action, now=Date.now()) {
       if(s.checkedQuestionIds?.includes(q.id))throw new Error('This answer is already checked. Start a new attempt to try again.');
       timing.settle(s,now);
       s.answers[q.id]=structuredClone(action.answer);
-      if(s.practice?.feedback==='instant'&&questionModel.typeOf(q).selection!=='multiple')s.checkedQuestionIds.push(q.id);
+      if(s.practice?.feedback==='instant'&&questionModel.typeOf(q).selection==='single')s.checkedQuestionIds.push(q.id);
       break;
     }
     case 'checkAnswer': {
@@ -347,7 +404,7 @@ function mutate(data, action, now=Date.now()) {
       if(s.practice?.feedback==='instant'&&s.questionIds.some(key=>!checked.has(key)))throw new Error('Check every answer before finishing.');
       timing.settle(s,now);
       const answers=s.questionIds.map(key=>s.answers[key]);
-      data.attempts.push({id:id(),quizId:q.id,title:q.title,questions:structuredClone(questions),answers:structuredClone(answers),score:questions.filter((q,i)=>questionModel.isCorrect(q,answers[i])).length,total:questions.length,completedAt:new Date(now).toISOString(),elapsedSeconds:s.timing?Math.round(s.timing.elapsedMs/1000):Math.max(0,Math.round((now-Date.parse(s.startedAt))/1000)),...timing.attemptFields(s),...(s.practice?{practice:{...s.practice}}:{}),...(s.sourceAttemptId?{missedOnly:true}:{})});
+      data.attempts.push({id:id(),quizId:q.id,title:q.title,questions:structuredClone(questions),...(aids.remap(q.reference,q.questions,questions)?{reference:aids.remap(q.reference,q.questions,questions)}:{}),answers:structuredClone(answers),score:questions.filter((q,i)=>questionModel.isCorrect(q,answers[i])).length,total:questions.length,completedAt:new Date(now).toISOString(),elapsedSeconds:s.timing?Math.round(s.timing.elapsedMs/1000):Math.max(0,Math.round((now-Date.parse(s.startedAt))/1000)),...timing.attemptFields(s),...(s.practice?{practice:{...s.practice}}:{}),...(s.sourceAttemptId?{missedOnly:true}:{})});
       data.activeSession=null; break;
     }
     default: throw new Error('Unknown action.');

@@ -1,0 +1,168 @@
+{
+  "course": "Welcome to Quiznet",
+  "unit": "First steps",
+  "title": "Discover what you can do",
+  "questions": [
+    {
+      "type": "single-choice",
+      "format": "markdown",
+      "prompt": "## Welcome!\n\nThis short tour lets you try real question types, diagrams, code and math. You can explore at your own pace.\n\nA robot uses a **sensor** to measure its surroundings. Which part collects information?",
+      "options": [
+        "A wheel",
+        "A sensor",
+        "A battery",
+        "A motor"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A sensor collects information. This was a **single-answer** question: choose one option.\n\nUse the numbered question markers to move around, or flag a question to revisit it. Use **Exit** to pause and keep an unfinished attempt on this device.",
+      "hint": "This is a guided tour. Read each explanation to discover another Quiznet tool."
+    },
+    {
+      "type": "multiple-answer",
+      "format": "markdown",
+      "prompt": "## More than one answer\n\nA camera measures light, and a temperature sensor measures heat. A motor creates movement; a wheel supports it.\n\nSelect **all** components that collect measurements.",
+      "options": [
+        "Camera",
+        "Motor",
+        "Temperature sensor",
+        "Wheel"
+      ],
+      "correctAnswers": [
+        0,
+        2
+      ],
+      "explanation": "The camera and temperature sensor collect measurements. A multiple-answer question needs **all correct choices and no extra choices**; there is no partial credit. Click an option again to deselect it."
+    },
+    {
+      "type": "true-false",
+      "format": "markdown",
+      "prompt": "## True or false\n\nQuiznet keeps your library, answers and progress locally.\n\n**You can study in Quiznet without an internet connection.**",
+      "options": [
+        "True",
+        "False"
+      ],
+      "correctAnswer": 0,
+      "explanation": "True. Questions, embedded images, code formatting and math work **offline**. Optional update checking is separate from studying. A full library backup includes your material, history and unfinished progress."
+    },
+    {
+      "type": "written-answer",
+      "format": "markdown",
+      "prompt": "## Your turn to type\n\nThe device that measures a robot’s surroundings is called a **sensor**.\n\nType that English word as your answer. Try uppercase letters or spaces around it if you like.",
+      "acceptedAnswers": [
+        "sensor"
+      ],
+      "caseSensitive": false,
+      "explanation": "**sensor** is accepted, as are **SENSOR** and extra surrounding spaces. Quiznet compares short written answers with the alternatives saved by the author. Case is ignored by default; accents and punctuation still matter. It does not guess meaning or use an AI grader."
+    },
+    {
+      "type": "matching",
+      "format": "markdown",
+      "prompt": "## Make the connections\n\nMatch each robot component to its job. Use each answer once. The answer column is mixed so the rows do not give away the pairs.",
+      "pairs": [
+        {
+          "left": "Sensor",
+          "right": "Measures the surroundings"
+        },
+        {
+          "left": "Motor",
+          "right": "Creates movement"
+        },
+        {
+          "left": "Battery",
+          "right": "Supplies electrical energy"
+        }
+      ],
+      "explanation": "A sensor measures, a motor moves and a battery supplies energy. Matching questions need every connection to be correct. You can change a connection before checking your answer."
+    },
+    {
+      "type": "single-choice",
+      "format": "markdown",
+      "prompt": "## A picture is part of the question\n\nThis triangle is right-angled at **A**. Its shorter sides measure **3** and **4**. Find the hypotenuse $c$.",
+      "image": "data:image/png;base64,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",
+      "imageAlt": "Right triangle ABC: AB is 4, AC is 3, BC is unknown c. The angle at A is 90 degrees.",
+      "options": [
+        "$7$",
+        "$12$",
+        "$5$",
+        "$\\sqrt{7}$"
+      ],
+      "correctAnswer": 2,
+      "explanation": "The Pythagorean theorem gives $c^2=3^2+4^2=25$, so $c=5$.\n\nThe diagram is embedded in this quiz. It travels with exports, backups and saved questions; no online image or original image file is needed."
+    },
+    {
+      "type": "written-answer",
+      "format": "markdown",
+      "prompt": "## Read real code\n\nIn this Python snippet, `range(3)` supplies **0, 1, 2**. What single number is printed? Type the number. Quiznet displays this code; it never runs it.",
+      "code": "total = 2\nfor step in range(3):\n    total += step\nprint(total)",
+      "codeLanguage": "python",
+      "acceptedAnswers": [
+        "5"
+      ],
+      "explanation": "The total becomes $2+0+1+2=5$. Code attachments preserve indentation and use offline syntax highlighting. You can also put fenced code blocks in Markdown questions, options and explanations."
+    },
+    {
+      "type": "single-choice",
+      "format": "markdown",
+      "prompt": "## Math you can read\n\nA small rover travels at $v=3\\,\\mathrm{m/s}$ for $t=4\\,\\mathrm{s}$. Use:\n\n$$\nd=v\\times t\n$$\n\nHow far does it travel?",
+      "options": [
+        "$7\\,\\mathrm{m}$",
+        "$12\\,\\mathrm{m}$",
+        "$1\\,\\mathrm{m}$",
+        "$24\\,\\mathrm{m}$"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Substitute the values: $d=3\\times4=12\\,\\mathrm{m}$. Markdown supports inline formulas, display equations, lists and emphasis. Math is rendered locally and remains readable in reports as its original source."
+    },
+    {
+      "type": "single-choice",
+      "format": "html",
+      "prompt": "<h2>Structured study material</h2><p>This question uses <strong>HTML formatting</strong> and a small table.</p><table><thead><tr><th>LED color</th><th>Count</th></tr></thead><tbody><tr><td>Red</td><td>2</td></tr><tr><td>Blue</td><td>3</td></tr></tbody></table><p>How many LEDs are there in total?</p>",
+      "options": [
+        "1",
+        "6",
+        "23",
+        "5"
+      ],
+      "correctAnswer": 3,
+      "explanation": "<p>There are <strong>2 + 3 = 5</strong> LEDs. Text, Markdown and safe HTML are available in the editor, alongside image and code attachments. Preview a question before saving it.</p>"
+    },
+    {
+      "type": "matching",
+      "format": "markdown",
+      "prompt": "## Make Quiznet yours\n\nFinish by connecting a study goal to its tool. The tools are named for what they do. You can try them after this tour.",
+      "pairs": [
+        {
+          "left": "Keep a question for later",
+          "right": "Star it in Saved questions"
+        },
+        {
+          "left": "Ask an AI chat about a question",
+          "right": "Copy question with its choices"
+        },
+        {
+          "left": "Build a regular recall habit",
+          "right": "Choose quizzes in Daily review"
+        },
+        {
+          "left": "Keep a separate copy of the library",
+          "right": "Save backup in Settings"
+        },
+        {
+          "left": "Change reading sizes, colors or language",
+          "right": "Open Appearance or Language in Settings"
+        }
+      ],
+      "explanation": "You have tried all five question types, diagrams, code, Markdown, math and HTML.\n\n- **Star** questions worth keeping; saved copies stay available even if the original quiz changes.\n- **Copy question** prepares text for another chat without uploading anything or revealing the answer key. Attach diagrams separately.\n- **Daily review** lets you choose quizzes, set a daily limit and rate recall.\n- **Settings** holds appearance, languages, help and backups.\n\nThis is your editable starter course. Add your own material when you are ready; your results and unfinished work stay local."
+    }
+  ],
+  "reference": {
+    "title": "Quick reference",
+    "content": "### A few useful rules\n\n- Speed: $v = d/t$. Distance: $d = vt$.\n- In Python, `range(n)` starts at zero and stops before `n`.\n- Matching uses every answer once.\n\nThis book button can hold the formulas, rules or notes provided in an exam. Authors choose which questions can use it.",
+    "scope": "selected",
+    "questions": [
+      5,
+      6,
+      7
+    ]
+  }
+}

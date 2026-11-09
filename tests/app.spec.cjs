@@ -3,11 +3,12 @@ const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const os=require('node:os');
+const {sampleLibrary}=require('./fixtures/choice-library.cjs');
 const {spawn}=require('node:child_process');
 let app,page,directory;
 const outputs=process.env.QUIZNET_SCREENSHOTS || path.resolve(__dirname,'../test-results/screenshots');
 async function launch(){const env={...process.env,QUIZNET_TEST_DATA:directory};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:process.env.QUIZNET_ELECTRON_PATH||undefined,args:[path.resolve(__dirname,'..')],env});page=await app.firstWindow();await expect(page.locator('.brand')).toBeVisible();await page.getByRole('button',{name:'Library',exact:true}).click();}
-test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-app-'));await launch();});
+test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-app-'));await fs.mkdir(path.join(directory,'data'),{recursive:true});await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(sampleLibrary()));await launch();});
 test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true,force:true});});
 test('real desktop workflow: hierarchy, scoring, resume, import/export and backup',async()=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -99,9 +100,11 @@ test('real desktop workflow: hierarchy, scoring, resume, import/export and backu
   const backup=path.join(directory,'exported-backup.json');
   await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},backup);
   await command(page,'Settings');
+  await page.getByRole('button',{name:'About settings',exact:true}).click();
   await expect(page.locator('.version-label')).toHaveText(`Quiznet ${require('../package.json').version}`);
   await expect(page.getByText('Release plan',{exact:true})).toHaveCount(0);
   await expect(page.locator('#main')).not.toContainText('Alpha');
+  await page.getByRole('button',{name:'Data & recovery settings',exact:true}).click();
   await page.getByRole('button',{name:'Save backup',exact:true}).click();
   await expect(page.locator('#toast')).toContainText('Backup saved');
   const saved=JSON.parse(await fs.readFile(backup,'utf8'));expect(saved.courses).toHaveLength(4);expect(saved.attempts).toHaveLength(1);

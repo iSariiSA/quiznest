@@ -14,10 +14,15 @@ function questionClipboard(q){
   if(q.image)pieces.push(imageNote(q.imageAlt));
   if(q.code){const fence='`'.repeat(Math.max(3,...(q.code.match(/`+/g)||[]).map(run=>run.length+1)));pieces.push(`${fence}${q.codeLanguage||''}\n${q.code}\n${fence}`);}
   pieces.push(questionModel.typeOf(q).instruction);
-  pieces.push(q.options.map((option,i)=>`${optionLabel(i)}. ${field(option)}`).join('\n\n'));
+  if(questionModel.isChoice(q))pieces.push(q.options.map((option,i)=>`${optionLabel(i)}. ${field(option)}`).join('\n\n'));
+  else if(q.type==='matching'){
+    pieces.push('Match each numbered item to one lettered answer. Use each answer once.');
+    pieces.push(q.pairs.map((pair,i)=>`${i+1}. ${pair.left}`).join('\n\n'));
+    pieces.push(questionModel.matchingOrder(q).map((index,i)=>`${optionLabel(i)}. ${q.pairs[index].right}`).join('\n\n'));
+  }
   return {text:pieces.join('\n\n'),hasImages};
 }
-function copyQuestionButton(attrs='',q){return `<div class="question-actions">${button('Copy question','copyQuestion','text',attrs)}${q?savedQuestionButton(attrs,q):''}</div>`;}
+function copyQuestionButton(attrs='',q){return `<div class="question-actions">${button(tr('Copy question'),'copyQuestion','text',attrs)}${q?savedQuestionButton(attrs,q):''}${studyAidButton(attrs,q)}</div>`;}
 function questionFromButton(button){
   const source=button.dataset.copySource;let q;
   if(source==='quiz'){const s=data.activeSession;q=sessionQuiz()?.questions.find(q=>q.id===s?.questionIds[s.position]);}
@@ -41,6 +46,7 @@ function questionSourceFrom(button){
 async function copyQuestionFrom(button){
   const q=questionFromButton(button);
   if(!q)throw new Error('Open the question again before copying.');
-  const copied=questionClipboard(q);await api.copyQuestion(copied.text);
+  const order=button.dataset.copySource==='quiz'?data.activeSession?.optionOrders?.[q.id]:null;
+  const copied=questionClipboard(order?{...q,options:order.map(i=>q.options[i])}:q);await api.copyQuestion(copied.text);
   toast(copied.hasImages?'Question and choices copied. Attach any diagrams separately in your chat.':'Question and choices copied. Paste them into your chat.');
 }

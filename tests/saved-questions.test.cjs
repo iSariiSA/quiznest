@@ -67,3 +67,39 @@ test('serialized concurrent stars, failed saves and removal, restart, and backup
   await opened.change(d=>core.mutate(d,{type:'savedRemove',key},now),{snapshotReason:'delete'});assert.equal(opened.data.savedQuestions.items.length,0);assert.ok((await opened.recovery.list()).some(item=>item.reason==='delete'));await opened.replace(backup);assert.deepEqual(opened.data,backup);
  }finally{await fs.rm(dir,{recursive:true,force:true});}
 });
+
+test('hierarchy filters resolve legacy and shared copies read-only, with pagination before practice selection',()=>{
+ const d=fixture(25);for(let i=0;i<25;i++)add(d,i);for(const item of d.savedQuestions.items)delete item.origin;
+ const first=d.courses[0],unit=first.units[0],quiz=unit.quizzes[0];
+ core.importPacks(d,core.parseImport(JSON.stringify({course:'Other course',unit:'Other unit',title:'Other quiz',questions:[quiz.questions[0],{prompt:'Other question',options:['A','B'],correctAnswer:0}]})));
+ const other=d.courses[1],otherUnit=other.units[0],otherQuiz=otherUnit.quizzes[0];
+ core.mutate(d,{type:'start',quizId:otherQuiz.id},now);core.mutate(d,{type:'position',position:1},now);core.mutate(d,{type:'savedAdd',source:{source:'quiz',questionId:otherQuiz.questions[1].id}},now);core.mutate(d,{type:'discard'},now);
+ const before=structuredClone(d),filter={courseId:first.id,unitId:unit.id,quizId:quiz.id};
+ const page=saved.page(d,1,filter);assert.equal(page.total,25);assert.equal(page.collectionTotal,26);assert.equal(page.items.length,5);assert.deepEqual(d,before);
+ assert.equal(saved.page(d,0,{courseId:other.id}).total,2);assert.equal(saved.page(d).options.courses.length,2);
+ assert.equal(saved.page(d,0,{courseId:first.id,unitId:otherUnit.id}).total,0);
+ core.mutate(d,{type:'savedStart',limit:100,filter:{courseId:other.id}},now);assert.equal(d.savedQuestions.session.keys.length,2);
+ const session=structuredClone(d.savedQuestions.session);core.mutate(d,{type:'savedStart',limit:1,filter},now);assert.deepEqual(d.savedQuestions.session,session);
+ core.mutate(d,{type:'savedDiscard',token:session.token},now);assert.throws(()=>core.mutate(d,{type:'savedStart',limit:1,filter:{courseId:'missing'}},now),/No saved questions match/);
+ for(const filter of [null,[],{unitId:unit.id},{courseId:3},{courseId:first.id,quizId:quiz.id},{unlinked:true,courseId:first.id},{question:{}}])assert.throws(()=>saved.page(d,0,filter),/valid saved-question filters/);
+});
+
+test('stored origins survive edits, moves, deletion and restore; unlinked legacy copies remain accessible',()=>{
+ const d=fixture();add(d);const item=d.savedQuestions.items[0],quiz=d.courses[0].units[0].quizzes[0];assert.equal(item.origin.quizId,quiz.id);
+ core.mutate(d,{type:'moveQuiz',quizId:quiz.id,target:{courseTitle:'Moved course',unitTitle:'Moved unit'}},now);
+ const place=core.findQuiz(d,quiz.id),filter={courseId:place.course.id,unitId:place.unit.id,quizId:quiz.id};
+ core.mutate(d,{type:'saveQuiz',courseId:place.course.id,unitId:place.unit.id,quizId:quiz.id,title:'Edited quiz',questions:quiz.questions.map(q=>({...q,prompt:'Revised content'}))},now);
+ assert.equal(saved.page(d,0,filter).total,1);assert.match(saved.page(d,0,filter).items[0].sourceLabel,/Moved course.*Edited quiz/);
+ const originalFilter={courseId:item.origin.courseId,unitId:item.origin.unitId,quizId:quiz.id};
+ core.mutate(d,{type:'delete',quizId:quiz.id},now);assert.equal(saved.page(core.validateLibrary(d),0,originalFilter).total,1);
+ const legacy=structuredClone(d);delete legacy.savedQuestions.items[0].origin;const before=structuredClone(legacy);
+ assert.equal(saved.page(legacy,0,{unlinked:true}).total,1);assert.equal(saved.page(legacy).total,1);assert.deepEqual(legacy,before);
+ core.mutate(legacy,{type:'savedStart',limit:1,filter:{unlinked:true}},now);finishSaved(legacy);assert.equal(legacy.savedQuestions.lastResult.correct,1);
+ for(const value of [null,[],{}, {...item.origin,courseId:''},{...item.origin,quizTitle:3}]){const copy=structuredClone(d);copy.savedQuestions.items[0].origin=value;assert.throws(()=>core.validateLibrary(copy),/invalid saved questions/);}
+});
+
+test('source metadata preserves custom hierarchy IDs accepted by older library backups',()=>{
+ const d=fixture(),c=d.courses[0],u=c.units[0],q=u.quizzes[0];c.id='@unlinked';u.id='u'.repeat(201);q.id=' ';d.attempts[0].quizId=q.id;
+ add(d);const loaded=core.validateLibrary(d);assert.equal(loaded.savedQuestions.items[0].origin.quizId,' ');
+ assert.equal(saved.page(loaded,0,{courseId:c.id,unitId:u.id,quizId:q.id}).total,1);assert.equal(saved.page(loaded,0,{unlinked:true}).total,0);
+});

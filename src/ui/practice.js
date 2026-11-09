@@ -1,15 +1,15 @@
 /* Optional per-attempt presentation and feedback choices; legacy attempts use these defaults. */
 (function(root,factory){
-  const api=factory(typeof module==='object'&&module.exports?require('./question-types.js'):root.QuiznetQuestions);
+  const api=factory(typeof module==='object'&&module.exports?require('./question-types.js'):root.QuiznetQuestions,typeof module==='object'&&module.exports?require('./study-aids.js'):root.QuiznetStudyAids);
   if(typeof module==='object'&&module.exports)module.exports=api;else root.QuiznetPractice=api;
-})(globalThis,questions=>{
+})(globalThis,(questions,aids)=>{
   const defaults=Object.freeze({showTotalTimer:true,showQuestionTimer:false,feedback:'review',showNavigator:true,showProgress:true,allowFlags:true});
   const displays=[['showTotalTimer','Show total timer'],['showQuestionTimer','Show question timer'],['showNavigator','Question squares'],['showProgress','Progress bar'],['allowFlags','Flag for review']];
   const builtins=[{id:'test',name:'Test yourself',options:{...defaults},shuffle:false},{id:'practice',name:'Practice',options:{...defaults,feedback:'instant',showTotalTimer:false},shuffle:false}];
   function validate(value){
     if(!value||typeof value!=='object'||Array.isArray(value)||typeof value.showTotalTimer!=='boolean'||typeof value.showQuestionTimer!=='boolean'||!['review','instant'].includes(value.feedback))throw new Error('Choose valid quiz practice options.');
     const result={showTotalTimer:value.showTotalTimer,showQuestionTimer:value.showQuestionTimer,feedback:value.feedback};
-    for(const key of ['showNavigator','showProgress','allowFlags'])if(value[key]!==undefined){if(typeof value[key]!=='boolean')throw new Error('Choose valid quiz display options.');result[key]=value[key];}
+    for(const key of ['showNavigator','showProgress','allowFlags','shuffleAnswers'])if(value[key]!==undefined){if(typeof value[key]!=='boolean')throw new Error('Choose valid quiz display options.');result[key]=value[key];}
     return result;
   }
   function validatePresets(value){
@@ -24,7 +24,7 @@
   const missedTitle=title=>`${title.slice(0,180)} · Missed questions`;
   function sessionQuiz(data,s){
     if(!s)return undefined;
-    if(s.sourceAttemptId!==undefined){const a=data.attempts.find(a=>a.id===s.sourceAttemptId&&a.quizId===s.quizId);return a?{id:a.quizId,title:missedTitle(a.title),questions:missed(a)}:undefined;}
+    if(s.sourceAttemptId!==undefined){const a=data.attempts.find(a=>a.id===s.sourceAttemptId&&a.quizId===s.quizId);return a?{id:a.quizId,title:missedTitle(a.title),questions:missed(a),...(aids.remap(a.reference,a.questions,missed(a))?{reference:aids.remap(a.reference,a.questions,missed(a))}:{})}:undefined;}
     for(const c of data.courses)for(const u of c.units){const q=u.quizzes.find(q=>q.id===s.quizId);if(q)return q;}
   }
   const answered=(session,q)=>session.practice?.feedback==='instant'?session.checkedQuestionIds.includes(q.id):questions.validAnswer(q,session.answers[q.id]);

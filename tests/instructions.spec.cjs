@@ -25,6 +25,7 @@ test('prepare, validate, preview, copy and save instructions; import the complet
   const shots=process.env.QUIZNET_SCREENSHOTS||path.resolve(__dirname,'../test-results/screenshots');await fs.mkdir(shots,{recursive:true});
   await page.screenshot({path:path.join(shots,'Quiznet-prepare-quiz.png')});
   await page.getByLabel('Question types',{exact:true}).selectOption('value');
+  for(const name of ['Written answer','Matching'])await page.getByLabel(name,{exact:true}).selectOption('omit');
   await page.getByLabel('Multiple choice (one answer)',{exact:true}).selectOption('value');await page.getByLabel('Multiple choice (one answer) count',{exact:true}).fill('10');
   await page.getByLabel('Multiple answers',{exact:true}).selectOption('omit');
   await page.getByLabel('True / false',{exact:true}).selectOption('value');await page.getByLabel('True / false count',{exact:true}).fill('5');

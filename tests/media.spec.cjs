@@ -3,6 +3,7 @@ const {test,expect,_electron:electron}=require('@playwright/test');
 const fs=require('node:fs/promises');
 const path=require('node:path');
 const os=require('node:os');
+const {sampleLibrary}=require('./fixtures/choice-library.cjs');
 const example=require('../examples/images-html.json');
 let app,page,directory;
 async function launch() {
@@ -14,7 +15,7 @@ async function openMenu(item) { await command(page,item); }
 async function pick(file) { await app.evaluate(({dialog},file)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[file]});},file); }
 async function saveTo(file) { await app.evaluate(({dialog},file)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:file});},file); }
 async function loadedImage(locator) { await expect.poll(()=>locator.evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true); }
-test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-media-'));await launch();});
+test.beforeAll(async()=>{directory=await fs.mkdtemp(path.join(os.tmpdir(),'quiznet-media-'));await fs.mkdir(path.join(directory,'data'),{recursive:true});await fs.writeFile(path.join(directory,'data/library.json'),JSON.stringify(sampleLibrary()));await launch();});
 test.afterAll(async()=>{await app?.close();await fs.rm(directory,{recursive:true,force:true});});
 
 test('editor images and HTML survive export, import, restart, review and backup',async()=>{

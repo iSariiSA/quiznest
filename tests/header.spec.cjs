@@ -39,7 +39,7 @@ test('one library search finds courses, empty units and question text, with keyb
 test('named page actions stay separate from App, with correct destinations and compact layouts',async()=>{
   await page.getByRole('button',{name:'Library',exact:true}).click();
   await expect(page.getByRole('button',{name:'Library actions',exact:true})).toBeVisible();
-  await expect(page.getByRole('button',{name:'New quiz',exact:true})).toHaveCount(1);
+  await expect(page.getByRole('button',{name:'Add to library',exact:true})).toHaveCount(1);
   await page.locator('.course-row .row-link').click();
   const courseActions=page.getByRole('button',{name:'Course actions',exact:true});
   await courseActions.click();await page.getByRole('menuitem',{name:'Rename…',exact:true}).click();
@@ -68,20 +68,21 @@ test('named page actions stay separate from App, with correct destinations and c
   await page.locator('#navigation-toggle').click();await expect(page.locator('#sidebar')).toBeHidden();
   await expect(page.getByRole('button',{name:'App menu',exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:'Settings',exact:true}).click();
-  await page.getByRole('button',{name:'Open help',exact:true}).click();await expect(page.getByRole('dialog')).toHaveAccessibleName('Help');
-  await page.keyboard.press('Escape');await searchButton().click();await expect(searchInput()).toBeFocused();
+  await page.getByRole('button',{name:'Help settings',exact:true}).click();await page.getByRole('button',{name:'Open help',exact:true}).click();await expect(page.getByRole('dialog')).toHaveAccessibleName('Help');
+  await page.keyboard.press('Escape');await page.keyboard.press('Control+k');await expect(searchInput()).toBeFocused();
   expect(await fs.readFile(file,'utf8')).toBe(original);
 });
 
 test('browsing pages share one creation entry and Help belongs to Settings',async()=>{
   for(const name of ['Home','Library','Daily review','History','Settings','Explore']){
     await page.getByRole('button',{name,exact:true}).click();
-    await expect(page.getByRole('button',{name:'New quiz',exact:true})).toHaveCount(1);
+    await expect(page.getByRole('button',{name:name==='Library'?'Add to library':'New quiz',exact:true})).toHaveCount(['Settings','Explore'].includes(name)?0:1);
     await expect(page.getByRole('button',{name:'Prepare a quiz',exact:true})).toHaveCount(0);
     await expect(page.getByRole('button',{name:'Import quiz',exact:true})).toHaveCount(0);
     await expect(page.locator('[data-action="appMenu"]')).toHaveCount(0);
-    await expect(page.getByRole('button',{name:'Open help',exact:true})).toHaveCount(name==='Settings'?1:0);
-    await page.getByRole('button',{name:'New quiz',exact:true}).click();
+    await expect(page.getByRole('button',{name:'Open help',exact:true})).toHaveCount(0);
+    if(['Settings','Explore'].includes(name))continue;
+    await command(page,'New quiz…');
     await expect(page.getByRole('dialog').getByRole('button').filter({hasText:/Write manually|Prepare with an agent|Import file/})).toHaveCount(3);
     await page.keyboard.press('Escape');
   }
@@ -90,7 +91,7 @@ test('browsing pages share one creation entry and Help belongs to Settings',asyn
   await page.getByRole('button',{name:'Back to Home',exact:true}).click();
   await page.getByRole('button',{name:'Daily review',exact:true}).click();await page.getByRole('button',{name:'Mistake notebook',exact:true}).click();
   await expect(page.locator('.breadcrumbs')).toContainText('Mistake notebook');await expect(page.getByRole('button',{name:'New quiz',exact:true})).toHaveCount(1);
-  await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Open help',exact:true}).click();
+  await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Help settings',exact:true}).click();await page.getByRole('button',{name:'Open help',exact:true}).click();
   await expect(page.getByRole('dialog')).toHaveAccessibleName('Help');await page.keyboard.press('Escape');
   await expect(page.getByRole('button',{name:'Open help',exact:true})).toBeFocused();
   expect(await fs.readFile(file,'utf8')).toBe(original);

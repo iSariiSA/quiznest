@@ -5,5 +5,5 @@
   if(typeof module==='object'&&module.exports)module.exports=api;
   else root.QuiznetQuestionIdentity=api;
 })(globalThis,()=>({
-  signature:q=>JSON.stringify(Object.fromEntries(Object.entries({...q,type:q.type??'single-choice',format:q.format??'text'}).filter(([key])=>key!=='id').sort(([a],[b])=>a.localeCompare(b))))
+  signature:q=>JSON.stringify(Object.fromEntries(Object.entries({...q,type:q.type??'single-choice',format:q.format??'text'}).filter(([key])=>key!=='id'&&key!=='studyReference').sort(([a],[b])=>a.localeCompare(b))))
 }));

@@ -9,6 +9,8 @@ These are the current limits, checked against the parser, editor, storage code, 
 | Saving an edited quiz | At most 19 MiB of formatted portable JSON, leaving room for export/import |
 | Export | At most 20 MiB; compact JSON is used when indentation would exceed that limit |
 | Choice questions | 2–100 choices; true/false has exactly 2 |
+| Written answers | 1–20 accepted alternatives; each alternative and typed response at most 2,000 characters. Deterministic Unicode/whitespace normalization; optional case sensitivity; no fuzzy/AI grading |
+| Matching | 2–20 pairs; each side at most 1,000 plain-text characters, unique within its side. One-to-one responses; all pairs required for credit |
 | Plain text | Prompt/explanation: 10,000 characters; each choice: 5,000 |
 | Markdown | 100,000 characters per prompt, choice, or explanation |
 | Markdown math | 4,000 characters per formula; at most 64 formulas and 16,000 formula-source characters rendered per field. Unsupported/oversized formulas remain readable; display-budget overflow retains the source with a note. Macro expansions and visual dimensions are capped. Math displays notation; it does not run Python or calculate answers |

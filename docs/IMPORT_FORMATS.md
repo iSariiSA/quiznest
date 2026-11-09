@@ -4,7 +4,7 @@
 
 Create a quiz file yourself or use one of the [complete examples](../examples/). In Quiznet, choose **New quiz → Import file** inside a unit, or **… → Import…**. Preview the file and choose its destination before importing.
 
-Import JSON/CSV quiz files here; restore whole-library backups through **… → Settings → Restore**. Restoring replaces the current library and preserves a separate pre-restore copy.
+Import JSON/CSV through **New quiz → Import file**. Restore whole-library backups through **Settings → Data & recovery → Restore**. Restoring replaces the current library and preserves a separate pre-restore copy.
 
 ## Import questions
 
@@ -30,9 +30,46 @@ Import JSON/CSV quiz files here; restore whole-library backups through **… →
 
 Set `"type": "multiple-answer"` and use `"correctAnswers": [0, 2]` for a question with several correct choices. The array must contain at least one distinct valid option; letters or exact option texts also work. During practice, click again to deselect a choice. Scoring requires the complete correct set without extra choices; there is no partial credit. At least one selection is required to finish.
 
-Set `"type": "true-false"` with two `options` and one `correctAnswer` for true/false questions. The two labels are editable content, so you can use other languages. All types support images and HTML. Mix types in any quiz; see [mixed-questions.json](../examples/mixed-questions.json).
+Set `"type": "true-false"` with two `options` and one `correctAnswer` for true/false questions. The two labels are editable content, so you can use other languages. All types support formatted prompts/explanations, images and code. Mix types in any quiz; [showcase.json](../examples/showcase.json) demonstrates all five types alongside pictures, code, Markdown, math and HTML.
 
-Aliases: `question` for `prompt`, `choices` for `options`, and `answer` or `correctIndex` for `correctAnswer` (`answer` may be an array for multiple-answer questions). Arrays of `{ "text": "…", "isCorrect": true/false }` options are accepted with one marked correct for single answers, or one or more for multiple answers. A bare questions array is accepted. To import several quizzes, use `{ "quizzes": [<quiz>, <quiz>] }`.
+### Written answers
+
+Use `"type": "written-answer"` with `acceptedAnswers`: 1–20 distinct, nonempty plain-text answers, up to 2,000 characters each. `caseSensitive` is an optional boolean and defaults to false. Omit `options`, `correctAnswer`, `correctAnswers` and their aliases for this type.
+
+```json
+{
+  "type": "written-answer",
+  "prompt": "What is the name of a device that measures its surroundings?",
+  "acceptedAnswers": ["sensor", "detector"],
+  "caseSensitive": false,
+  "explanation": "A sensor collects measurements from its environment."
+}
+```
+
+The user types a short response. Grading normalizes Unicode using NFKC, trims/collapses whitespace, and ignores case unless `caseSensitive` is true. Accents, punctuation and wording still matter: add genuinely equivalent alternatives explicitly. Quiznet does not grade essays, infer meaning or ask an AI to judge the response. Responses are limited to 2,000 characters. In Practice, written answers require an explicit check before they lock; ordinary tests keep them editable until finishing.
+
+### Matching
+
+Use `"type": "matching"` with `pairs`: 2–20 objects, each containing a correct `left`/`right` relationship. Each side is nonempty plain text, up to 1,000 characters. Both sets of labels must be distinct after Unicode/case/whitespace normalization. Omit `options`, `correctAnswer`, `correctAnswers`, `acceptedAnswers` and their aliases.
+
+```json
+{
+  "type": "matching",
+  "prompt": "Match each component to its job.",
+  "pairs": [
+    {"left": "Sensor", "right": "Measures the surroundings"},
+    {"left": "Motor", "right": "Creates movement"},
+    {"left": "Battery", "right": "Supplies electrical energy"}
+  ],
+  "explanation": "Each component performs one distinct job."
+}
+```
+
+The app mixes the right-hand choices and keeps that order stable while answering or resuming. Every answer is used once. All pairs must be correct for credit; there is no partial credit. Matching has an explicit check in Practice. Keep relationships unambiguous and one-to-one. Prompts and explanations can use Markdown/HTML, but pair labels remain plain text. Copied questions list the two sets separately without revealing the correct connections.
+
+### Shared JSON fields
+
+Aliases for choice questions: `question` for `prompt`, `choices` for `options`, and `answer` or `correctIndex` for `correctAnswer` (`answer` may be an array for multiple-answer questions). Arrays of `{ "text": "…", "isCorrect": true/false }` options are accepted with one marked correct for single answers, or one or more for multiple answers. `question` also aliases `prompt` for written/matching, but their type-specific answer fields remain required. A bare questions array is accepted. To import several quizzes, use `{ "quizzes": [<quiz>, <quiz>] }`.
 
 Missing course/unit names default to `Imported course` and `Unit 1`. The preview lets you override the destination. Matching course/unit names reuse the existing items; duplicate quiz titles receive a numeric suffix so existing quizzes are preserved.
 
@@ -65,7 +102,9 @@ Biology,Unit 1: Cells,Quiz 1,Where is most DNA stored?,Nucleus,Ribosome,A,Inside
 
 Use consecutive `option_a`, `option_b`, …, `option_z`, `option_aa`, … columns for 2–100 choices. Trailing empty option cells are ignored so rows can have different choice counts. CSV answers are letters or exact option text. Course, unit, title, and explanation are optional columns. Quotes support commas, escaped double quotes, and multiline text. Rows are grouped by course/unit/title.
 
-The optional `type` column accepts `single-choice`, `multiple-answer`, and `true-false`. For multiple answers, the `answer` cell is a JSON array, quoted as CSV requires, such as `"[0,2]"` or `"[""A"",""C""]"`. True/false rows need two nonempty option cells and one answer. Missing type uses single answer.
+The optional `type` column accepts `single-choice`, `multiple-answer`, `true-false`, `written-answer` and `matching`. For multiple answers, the `answer` cell is a JSON array, quoted as CSV requires, such as `"[0,2]"` or `"[""A"",""C""]"`. True/false rows need two nonempty option cells and one answer. Missing type uses single answer.
+
+Written rows use `accepted_answers` containing a JSON string array, or a plain `answer` cell for one accepted variant. Optional `case_sensitive` accepts `true` or `false`. Matching rows use `pairs` containing the JSON pair array and leave `answer` empty. Keep the shared `question` and `answer` headers; leave all option columns empty on written/matching rows. Quote nested JSON with CSV's doubled double quotes. JSON is usually easier to author for matching questions.
 
 Optional `format`, `image`, and `image_alt` columns support the same HTML mode and embedded images. Quote data URLs because they contain a comma, and escape double quotes in HTML as CSV requires.
 
@@ -102,3 +141,8 @@ Double each LaTeX backslash in JSON strings. Matrices can use `\begin{bmatrix}..
 An agent may prepare a labelled triangle, coordinate plot, or other diagram externally, then embed its real PNG/JPEG/GIF/WebP bytes in the existing `image` and `imageAlt` fields. Diagrams may also appear in Markdown prompts, choices, and explanations using `![description](data:image/png;base64,...)` with a complete valid data URL. The same 2 MiB per-image validation and overall field/file limits apply. Keep worked-solution images in `explanation` so import preview reveals them only with **Show correct answer**. Quiznet does not execute drawing code, fetch remote assets, or accept SVG images.
 
 See [math-diagrams.json](../examples/math-diagrams.json) for a complete geometry, matrix, and calculus quiz with embedded question and solution diagrams.
+
+
+### Optional study aids
+
+A question can include `"hint": "Think about **units**."` (Markdown, at most 10,000 characters). JSON quizzes can include `"reference": {"title":"Formulas","content":"$v = d/t$","scope":"all"}`. To restrict the sheet use `"scope":"selected","questions":[0,2]`; indices are zero-based within that quiz. A reference supports 50,000 characters and a 120-character title. CSV supports question hints through `hint`; use JSON for quiz-wide reference sheets. Aids are shown only on request and do not change grading.

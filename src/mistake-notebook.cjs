@@ -1,11 +1,11 @@
 const {createHash,randomUUID}=require('node:crypto');
-const questions=require('./ui/question-types.js');
+const questions=require('./ui/question-types.js'),studyAids=require('./ui/study-aids.js');
 const empty=()=>({version:1,entries:[],session:null});
-const keyFor=q=>createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(q).filter(([k])=>k!=='id').sort(([a],[b])=>a.localeCompare(b))))).digest('hex');
+const keyFor=q=>createHash('sha256').update(JSON.stringify(Object.fromEntries(Object.entries(q).filter(([k])=>k!=='id'&&k!=='studyReference').sort(([a],[b])=>a.localeCompare(b))))).digest('hex');
 function collect(data){
   const map=new Map();
   const add=(entry,count)=>{const old=map.get(entry.key);if(!old)map.set(entry.key,{...structuredClone(entry),count});else{old.count+=count;if(Date.parse(entry.lastAt)>Date.parse(old.lastAt))Object.assign(old,{question:structuredClone(entry.question),answer:structuredClone(entry.answer),title:entry.title,lastAt:entry.lastAt});}};
-  for(const a of data.attempts)for(let i=0;i<a.questions.length;i++){const q=a.questions[i];if(!questions.isCorrect(q,a.answers[i]))add({key:keyFor(q),question:q,answer:a.answers[i],title:a.title,lastAt:a.completedAt,note:''},1);}
+  for(const a of data.attempts)for(let i=0;i<a.questions.length;i++){const q=a.questions[i];if(!questions.isCorrect(q,a.answers[i]))add({key:keyFor(q),question:studyAids.capture(q,a),answer:a.answers[i],title:a.title,lastAt:a.completedAt,note:''},1);}
   for(const e of data.mistakeNotebook?.entries||[]){add(e,e.dailyCount);map.get(e.key).note=e.note;}
   return [...map.values()].sort((a,b)=>Date.parse(b.lastAt)-Date.parse(a.lastAt)||a.key.localeCompare(b.key));
 }
