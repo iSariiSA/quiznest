@@ -1,5 +1,14 @@
 # Changelog
 
+## Quiznet v1.36.1
+
+Includes the scoped reference sheets, question hints, Settings cleanup and study updates described below. The development stage remains Alpha; this release is a prerelease. The v1.36.0 installer was verified locally but its release remained a draft while GitHub found the Windows-path issue fixed here.
+
+Fixed startup from Windows paths containing a tilde, including 8.3 temporary-directory names. Node percent-encodes that character while Chromium keeps it literal; the trusted-page check now uses the same representation without accepting any other page or expanding IPC/network access. The missing-language fallback regression deliberately runs from a tilde-containing path and checks preserved preferences, study data and draft recovery.
+
+The targeted fallback regression passed. Complete release validation, installer checksum and in-place installation results are recorded in the GitHub release notes and attached checksum file.
+
+
 ## Quiznet v1.36.0
 
 Internal stage remains `alpha`; this release is a prerelease. The owner authorized the interface cleanup, hints/reference feature and GitHub publication on 9 November 2026.

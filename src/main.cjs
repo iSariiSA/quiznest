@@ -22,7 +22,8 @@ app.setAppUserModelId('com.quiznet.desktop');
 const primaryInstance=app.requestSingleInstanceLock();
 if (!primaryInstance) app.quit();
 app.commandLine.appendSwitch('disable-background-networking');
-const entry=pathToFileURL(path.join(__dirname,'ui/index.html')).href;
+// Chromium keeps the unreserved tilde literal; Node escapes it in Windows file URLs.
+const entry=pathToFileURL(path.join(__dirname,'ui/index.html')).href.replace(/%7E/gi,'~');
 let window, store,updates,display;
 let readyToQuit=false,quitSaving=false,recoveringRenderer=false;
 let runtimeNotice='';
